@@ -24,8 +24,10 @@
 - About the author
 - Welcome Page
 - Login/Register Modal
-- Blogs/Article Page
-- Documentation page organized by project, then date and then time(date and time uses a tree layout display)
+- My Blogs/Article Page shown to users
+- My blogs/articles which still haven't been exposed to public
+- Documentation page organized by project, then date and then time(date and time uses a tree layout display) to users
+- Documentation page organized by project, then date and then time(date and time uses a tree layout display) to me only
 - Cool Articles, Videos display(need to figure out how to display it)
 - Create a new field of an article, video record etc.
 - Game
