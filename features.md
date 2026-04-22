@@ -3,9 +3,8 @@
 
 # Tech Stack:
 
-- Java, Spring boot, Spring JPA, Hibernate
+- Go
 - React JS
-- RxJS
 - Which DB needs to be decided(RDBMS v/s NON-RDBMS) -> Simple MongoDB should serve the purpose as primarily storing markdown files in DB is the purpose, but maybe storing the blogs markdown data in an S3 bucket is better, and storing the reference of this data in RDBMS tables. But then RDBMS tables dont really serve the purpose here as I dont have strict relationships defined yet in this website. Probably will depend on further development of features. 
 
 # Features:
@@ -44,11 +43,12 @@
 - Checkpoint graphic popup
 - CI/CD pipeline using github actions(will be implemented at a later point of time, but how to enable a github action pipeline for each microservice if applicable?)
 - UX needs to be smooth, smooth transitions etc. 
+- Offline mode detection, and storing blogs locally, once network access is achieved, we send local updates to server to sync changes.
+- Article feature where articles are written and stored as markdown files as well?
 
 ### (SHOULD BE ADDED?)
 - A little game to play if bored?(tic tac toe using minimax)
 - A little game to play that takes you through the user's profile?
 - Enable authorizing users who register to view blogs?
 - Add role based access? 
-- Article feature where articles are written and stored as markdown files as well?
 - Allow for incremental changes, like new small projects/intersting stuff to be integrated as something that can be checked in the website only?
