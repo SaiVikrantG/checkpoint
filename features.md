@@ -20,7 +20,7 @@
 ## Pages:
 - Admin stats
 - About the website 
-- About the author
+- About the author/portfolio
 - Welcome Page
 - Login/Register Modal
 - My Blogs/Article Page shown to users
