@@ -110,3 +110,43 @@ func NewLoggerWithService(cfg *config.ObservabilityConfig, loggerService *Logger
 
 	return logger
 }
+
+func (loggerService *LoggerService) NewPgxLogger(level zerolog.Level) zerolog.Logger {
+	writer := zerolog.ConsoleWriter{
+		Out:        os.Stdout,
+		TimeFormat: "2006-01-02 15:04:05",
+		FormatFieldValue: func(i any) string {
+			switch v := i.(type) {
+			case string:
+				if len(v) > 200 {
+					return v[:200] + "..."
+				}
+				return v
+			default:
+				return fmt.Sprintf("%v", v)
+			}
+		},
+	}
+
+	return zerolog.New(writer).
+		Level(level).
+		With().
+		Timestamp().
+		Str("component", "database").
+		Logger()
+}
+
+func (loggerService *LoggerService) GetPgxTraceLogLevel(globalLevel zerolog.Level) int {
+	switch globalLevel {
+	case zerolog.DebugLevel:
+		return 6
+	case zerolog.InfoLevel:
+		return 4
+	case zerolog.WarnLevel:
+		return 3
+	case zerolog.ErrorLevel:
+		return 2
+	default:
+		return 0
+	}
+}

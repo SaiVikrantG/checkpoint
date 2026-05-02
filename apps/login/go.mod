@@ -12,7 +12,13 @@ require (
 	github.com/rs/zerolog v1.35.1
 )
 
-require github.com/newrelic/go-agent/v3/integrations/logcontext-v2/nrwriter v1.0.0 // indirect
+require (
+	github.com/jackc/pgx-zerolog v0.0.0-20230315001418-f978528409eb // indirect
+	github.com/jackc/puddle/v2 v2.2.2 // indirect
+	github.com/newrelic/go-agent/v3/integrations/logcontext-v2/nrwriter v1.0.0 // indirect
+	github.com/newrelic/go-agent/v3/integrations/nrpgx5 v1.3.4 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+)
 
 require (
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
