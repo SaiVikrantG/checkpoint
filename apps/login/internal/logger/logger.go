@@ -14,6 +14,7 @@ import (
 )
 
 // LoggerService manages New Relic integration and logger creation
+// TODO: Swap this out with grafana
 type LoggerService struct {
 	nrApp *newrelic.Application
 }
@@ -149,4 +150,18 @@ func (loggerService *LoggerService) GetPgxTraceLogLevel(globalLevel zerolog.Leve
 	default:
 		return 0
 	}
+}
+
+func WithTraceContext(logger zerolog.Logger, txn *newrelic.Transaction) zerolog.Logger {
+	if txn == nil {
+		return logger
+	}
+
+	// Get trace metadata from transaction
+	metadata := txn.GetTraceMetadata()
+
+	return logger.With().
+		Str("trace.id", metadata.TraceID).
+		Str("span.id", metadata.SpanID).
+		Logger()
 }
