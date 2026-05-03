@@ -35,6 +35,8 @@
 ## Features:
 - Embedded Markdown editor for writing documentation
 - Render markdown files
+- Like dislike feature for each blog
+- An interactive project board
 - Store markdown files in a day wise organization, and show time wise additions(in a tree manner?)
 - JWT Authentication
 - Button to render daily docuentation public

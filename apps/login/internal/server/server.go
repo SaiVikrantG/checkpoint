@@ -40,8 +40,7 @@ func ServerInit(cfg *config.Config, loggerService *logger.LoggerService, logger 
 	return server, nil
 }
 
-// need to fix this import for router
-func (server *Server) ConfigureHTTPServer(handler *http.Handler) {
+func (server *Server) ConfigureHTTPServer(handler http.Handler) {
 	server.httpServer = &http.Server{
 		Addr:         ":" + server.config.Server.Port,
 		Handler:      handler,
