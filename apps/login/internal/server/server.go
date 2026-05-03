@@ -13,11 +13,11 @@ import (
 )
 
 type Server struct {
-	logger        *zerolog.Logger
-	db            *database.Database
-	config        *config.Config
-	loggerService *logger.LoggerService
-	httpServer    *http.Server
+	Logger        *zerolog.Logger
+	Db            *database.Database
+	Config        *config.Config
+	LoggerService *logger.LoggerService
+	HttpServer    *http.Server
 }
 
 func ServerInit(cfg *config.Config, loggerService *logger.LoggerService, logger *zerolog.Logger) (*Server, error) {
@@ -31,45 +31,45 @@ func ServerInit(cfg *config.Config, loggerService *logger.LoggerService, logger 
 	//job service system initialization(not doing that right now)
 
 	server := &Server{
-		logger:        logger,
-		db:            db,
-		config:        cfg,
-		loggerService: loggerService,
+		Logger:        logger,
+		Db:            db,
+		Config:        cfg,
+		LoggerService: loggerService,
 	}
 
 	return server, nil
 }
 
 func (server *Server) ConfigureHTTPServer(handler http.Handler) {
-	server.httpServer = &http.Server{
-		Addr:         ":" + server.config.Server.Port,
+	server.HttpServer = &http.Server{
+		Addr:         ":" + server.Config.Server.Port,
 		Handler:      handler,
-		ReadTimeout:  time.Duration(server.httpServer.ReadTimeout) * time.Second,
-		WriteTimeout: time.Duration(server.httpServer.WriteTimeout) * time.Second,
-		IdleTimeout:  time.Duration(server.httpServer.IdleTimeout) * time.Second,
+		ReadTimeout:  time.Duration(server.HttpServer.ReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(server.HttpServer.WriteTimeout) * time.Second,
+		IdleTimeout:  time.Duration(server.HttpServer.IdleTimeout) * time.Second,
 	}
 }
 
 func (s *Server) StartServer() error {
-	if s.httpServer == nil {
+	if s.HttpServer == nil {
 		return fmt.Errorf("server instance is not initialized")
 	}
 
-	s.logger.Info().
-		Str("port", s.config.Server.Port).
-		Str("env", s.config.Primary.Env).
+	s.Logger.Info().
+		Str("port", s.Config.Server.Port).
+		Str("env", s.Config.Primary.Env).
 		Msg("Starting server")
 
-	return s.httpServer.ListenAndServe()
+	return s.HttpServer.ListenAndServe()
 }
 
 func (server *Server) ShutDown(ctx context.Context) error {
-	err := server.httpServer.Shutdown(ctx)
+	err := server.HttpServer.Shutdown(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to shut down server: %w", err)
 	}
 
-	err = server.db.CloseDBConnection()
+	err = server.Db.CloseDBConnection()
 	if err != nil {
 		return fmt.Errorf("failed to close db connection: %w", err)
 	}
