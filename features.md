@@ -36,7 +36,7 @@
 - Embedded Markdown editor for writing documentation
 - Render markdown files
 - Like dislike feature for each blog
-- An interactive project board
+- An interactive project board(this can be made into a knoweldge graph to connect similar ideas, need to check how this would work, and how to render it on my page)
 - Store markdown files in a day wise organization, and show time wise additions(in a tree manner?)
 - JWT Authentication
 - Button to render daily docuentation public
