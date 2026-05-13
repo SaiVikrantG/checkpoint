@@ -13,6 +13,7 @@ require (
 	github.com/knadh/koanf/v2 v2.3.4
 	github.com/labstack/echo/v4 v4.15.2
 	github.com/newrelic/go-agent/v3 v3.43.3
+	github.com/newrelic/go-agent/v3/integrations/nrecho-v4 v1.1.5
 	github.com/newrelic/go-agent/v3/integrations/nrpgx5 v1.3.2
 	github.com/newrelic/go-agent/v3/integrations/nrpkgerrors v1.1.0
 	github.com/rs/zerolog v1.35.1

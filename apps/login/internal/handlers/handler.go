@@ -5,8 +5,18 @@ import (
 	"github.com/SaiVikrantG/checkpoint/internal/service"
 )
 
-type Handlers struct{}
+// handlers needed for services
+// will basically be embedded in this struct
+type Handlers struct {
+	Health  *HealthHandler
+	OpenAPI *OpenAPIHandler
+}
 
-func InitHandlers(s server.Server, services *service.Services) *Handlers {
-	return &Handlers{}
+// handler instances for handlers of each service will be passed
+// to this init function to succesfully initialize and return the
+// handlers struct, such that each handler can be called conveniently from one handler struct
+func InitHandlers(s *server.Server, services *service.Services) *Handlers {
+	return &Handlers{
+		Health: NewHealthHandler(s),
+	}
 }

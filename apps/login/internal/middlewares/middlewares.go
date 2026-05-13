@@ -9,6 +9,7 @@ type Middlewares struct {
 	Auth            *AuthMiddleWare
 	ContextEnhancer *ContextEnhancer
 	RateLimit       *RateLimitMiddleware
+	Tracing         *TracingMiddleware
 }
 
 func NewMiddlewares(s *server.Server) *Middlewares {

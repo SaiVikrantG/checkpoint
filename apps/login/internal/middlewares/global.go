@@ -12,6 +12,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
+//CHECK: How does this work?
+
 type GlobalMiddlewares struct {
 	server *server.Server
 }
