@@ -17,6 +17,7 @@ require (
 	github.com/newrelic/go-agent/v3/integrations/nrpgx5 v1.3.2
 	github.com/newrelic/go-agent/v3/integrations/nrpkgerrors v1.1.0
 	github.com/rs/zerolog v1.35.1
+	golang.org/x/time v0.15.0
 )
 
 require (
@@ -27,7 +28,6 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/time v0.15.0 // indirect
 )
 
 require (
