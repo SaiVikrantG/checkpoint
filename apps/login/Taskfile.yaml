@@ -21,7 +21,7 @@ tasks:
   run:
     desc: run the checkpoint application
     cmds:
-    - go run ./login/cmd/login/main.go
+    - go run ./cmd/login/main.go
 
   migrations:new:
     desc: create a new database migration
