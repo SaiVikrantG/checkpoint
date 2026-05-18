@@ -67,9 +67,9 @@ func buildConnString(dc *config.DatabaseConfig) string {
 	encodedPassword := url.QueryEscape(dc.Password)
 	dsn := fmt.Sprintf(
 		"postgres://%s:%s@%s/%s?sslmode=%s",
-		hostPort,
-		dc.Name,
+		dc.User,
 		encodedPassword,
+		hostPort,
 		dc.Name,
 		dc.SSLMode,
 	)
