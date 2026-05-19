@@ -1,0 +1,15 @@
+So let's see, weare gonna compare this wih the features we need
+
+- We need project wise storage of devlogs, and we need tables for authentication as well, but it isnt needed right now
+- So, 1 TABLE say for PROJECTS  and 1 TABLE FOR DEVLOGS which would reference the PROJECTS table
+- I guess having a table for project ideas shouldnt hurt as well, just a very detatched table though, need to think about this
+- Let's also have a seperate table for articles which I can link to a project essentially, so a seperate table for blogs/articles and a referebce back to the projects again.
+- Essentially, lets also plan the authentication and authroization tables.
+- We would have a TABLE for the ROLES we can assign to users, such that this can keep growing as we plan to add more roles
+- We can have a table for users details such as password hashed, and username
+- Another table for linking the users and the roles table
+- Finally we can have a table that basically stores the user authentication tokens along with the metadata for the user the token belongs to basically
+- We can ignore the tables for authentication for now though
+- Finally, we need to plan what kind of user statistics we can collect in house, or if we can collect any user statistics in house at all
+- Lets have like, a table for storing the likes, dislikes for each article as well. Here we can introduce some heavy batch processing technique such that we process like hits to the db in batches rather than doing it in one full go.
+

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/SaiVikrantG/checkpoint/internal/config"
+	"github.com/SaiVikrantG/checkpoint/internal/database"
 	handler "github.com/SaiVikrantG/checkpoint/internal/handlers"
 	"github.com/SaiVikrantG/checkpoint/internal/logger"
 	repository "github.com/SaiVikrantG/checkpoint/internal/repositories"
@@ -31,13 +32,11 @@ func main() {
 
 	log := logger.NewLoggerWithService(cfg.Observability, loggerService)
 
-	//CHECK: Need to implement migration method fo prroduction
-
-	// if cfg.Primary.Env != "local" {
-	// 	if err := database.Migrate(context.Background(), &log, cfg); err != nil {
-	// 		log.Fatal().Err(err).Msg("failed to migrate database")
-	// 	}
-	// }
+	if cfg.Primary.Env != "local" {
+		if err := database.Migrate(context.Background(), &log, cfg); err != nil {
+			log.Fatal().Err(err).Msg("failed to migrate database")
+		}
+	}
 
 	// Initialize server
 	srv, err := server.ServerInit(cfg, loggerService, &log)
