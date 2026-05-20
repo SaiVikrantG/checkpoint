@@ -47,6 +47,7 @@
 - UX needs to be smooth, smooth transitions etc. 
 - Offline mode detection, and storing blogs locally, once network access is achieved, we send local updates to server to sync changes.
 - Article feature where articles are written and stored as markdown files as well?
+- Collab feature?
 
 ### (SHOULD BE ADDED?)
 - A little game to play if bored?(tic tac toe using minimax)
