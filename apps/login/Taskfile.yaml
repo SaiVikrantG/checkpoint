@@ -1,13 +1,27 @@
 version: '3'
 
 vars:
-  BOILERPLATE_DB_DSN: '{{.BOILERPLATE_DB_DSN | default ""}}'
+  CHECKPOINT_DB_DSN:
+    sh: |
+      HOST=$(grep "^CHECKPOINT_DATABASE.HOST=" .env | cut -d'=' -f2 | tr -d '"')
+      PORT=$(grep "^CHECKPOINT_DATABASE.PORT=" .env | cut -d'=' -f2 | tr -d '"')
+      USER=$(grep "^CHECKPOINT_DATABASE.USER=" .env | cut -d'=' -f2 | tr -d '"')
+      PASSWORD=$(grep "^CHECKPOINT_DATABASE.PASSWORD=" .env | cut -d'=' -f2 | tr -d '"')
+      NAME=$(grep "^CHECKPOINT_DATABASE.NAME=" .env | cut -d'=' -f2 | tr -d '"')
+      SSL_MODE=$(grep "^CHECKPOINT_DATABASE.SSL_MODE=" .env | cut -d'=' -f2 | tr -d '"')
+      echo "postgres://${USER}:${PASSWORD}@${HOST}:${PORT}/${NAME}?sslmode=${SSL_MODE}"
 
 tasks:
   help:
     desc: print this help message
     cmds:
     - task --list-all
+    silent: true
+
+  printDSN:
+    desc: print db DSN
+    cmds:
+    - echo "{{.CHECKPOINT_DB_DSN}}"
     silent: true
 
   confirm:
@@ -42,7 +56,7 @@ tasks:
     deps: [ confirm ]
     cmds:
     - echo 'Running up migrations...'
-    - tern migrate -m ./internal/database/migrations --conn-string {{.BOILERPLATE_DB_DSN}}
+    - tern migrate -m ./internal/database/migrations --conn-string {{.CHECKPOINT_DB_DSN}}
 
   tidy:
     desc: format all .go files, and tidy and vendor module dependencies
