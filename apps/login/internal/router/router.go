@@ -20,6 +20,10 @@ func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services
 	router.HTTPErrorHandler = middlewares.Global.GlobalErrorHandler
 
 	// global middlewares
+
+	// TODO: Can implement this in redis because this is an in memory store - any crash would
+	//  cause the in memory store to go away and also crash the service. Uses token bucket algorithm.
+	//This part can cause a problem if traffic somewhat increases ig. Need to research more
 	router.Use(
 		echoMiddleware.RateLimiterWithConfig(echoMiddleware.RateLimiterConfig{
 			Store: echoMiddleware.NewRateLimiterMemoryStore(rate.Limit(20)),

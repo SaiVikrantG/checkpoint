@@ -36,7 +36,6 @@ response := handler(request)
 */
 //Conceptually this is what happens under the hood, once the middleware has been generated and all routes are registered, the chain that is built above executes.
 
-// CHECK: Echo middleware chain building
 func RequestID() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {

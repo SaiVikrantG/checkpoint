@@ -4,7 +4,7 @@ import (
 	"github.com/SaiVikrantG/checkpoint/internal/server"
 )
 
-//TODO: Need to implenment repository methods based onrequirements here
+// TODO: Need to implenment repository methods based onrequirements here
 
 type Repository struct {
 }
