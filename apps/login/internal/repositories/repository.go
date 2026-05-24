@@ -4,11 +4,14 @@ import (
 	"github.com/SaiVikrantG/checkpoint/internal/server"
 )
 
-// TODO: Need to implenment repository methods based onrequirements here
-
 type Repository struct {
+	ProjectRepo *ProjectRepository
 }
 
 func RepositoryInit(server *server.Server) *Repository {
-	return &Repository{}
+	projectRepo := NewProjectRepository(server)
+
+	return &Repository{
+		ProjectRepo: projectRepo,
+	}
 }

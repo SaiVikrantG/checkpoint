@@ -8,8 +8,9 @@ import (
 // handlers needed for services
 // will basically be embedded in this struct
 type Handlers struct {
-	Health  *HealthHandler
-	OpenAPI *OpenAPIHandler
+	Health   *HealthHandler
+	OpenAPI  *OpenAPIHandler
+	Projects *ProjectHandler
 }
 
 // handler instances for handlers of each service will be passed
@@ -17,6 +18,7 @@ type Handlers struct {
 // handlers struct, such that each handler can be called conveniently from one handler struct
 func InitHandlers(s *server.Server, services *service.Services) *Handlers {
 	return &Handlers{
-		Health: NewHealthHandler(s),
+		Health:   NewHealthHandler(s),
+		Projects: NewProjectHandler(s, services.Projects),
 	}
 }
