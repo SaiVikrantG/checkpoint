@@ -6,5 +6,5 @@ import (
 )
 
 func registerProjectRoutes(g *echo.Group, h *handlers.Handlers) {
-	g.GET("/api/v1/projects/:id", h.Projects.GetProjectByID)
+	g.GET("/projects/:id", h.Projects.GetProjectByID)
 }
