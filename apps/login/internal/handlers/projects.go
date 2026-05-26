@@ -22,21 +22,26 @@ func NewProjectHandler(server *server.Server, services *service.ProjectService) 
 }
 
 type GetProjectByIDRequest struct {
-	id *int64
+	ID int64 `param:"id"`
 }
 
 func (r GetProjectByIDRequest) Validate() error {
-	if r.id == nil {
-		return fmt.Errorf("Id cant be null")
+	if r.ID < 0 {
+		return fmt.Errorf("Id cant be negative")
 	}
 
 	return nil
 }
 
 func (h *ProjectHandler) handleGetProjectLogic(c echo.Context, req GetProjectByIDRequest) (model.Project, error) {
+	project, err := h.projectServices.GetProjectByID(c, req.ID)
+	if err != nil {
+		return model.Project{}, err
+	}
 
+	return project, nil
 }
 
 func (h *ProjectHandler) GetProjectByID() echo.HandlerFunc {
-	return Handle(h.Handler, h.handleGetProjectLogic, 200, GetProjectByIDRequest{})
+	return Handle(h.Handler, h.handleGetProjectLogic, 200, GetProjectByIDRequest{ID: 0})
 }

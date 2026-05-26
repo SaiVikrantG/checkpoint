@@ -2,9 +2,9 @@ package model
 
 type Project struct {
 	Base
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	IsPublic    bool   `json:"is_public"`
-	CreatedBy   string `json:"created_by"`
-	UpdatedBy   string `json:"updated_by"`
+	Name        string  `json:"name" db:"name"`
+	Description *string `json:"description" db:"description"`
+	IsPublic    bool    `json:"isPublic" db:"is_public"`
+	CreatedBy   string  `json:"createdBy" db:"created_by"`
+	UpdatedBy   *string `json:"updatedBy" db:"updated_by"`
 }

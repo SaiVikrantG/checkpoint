@@ -3,6 +3,7 @@ package handlers
 import (
 	"time"
 
+	"github.com/SaiVikrantG/checkpoint/internal/errors"
 	middleware "github.com/SaiVikrantG/checkpoint/internal/middlewares"
 	"github.com/SaiVikrantG/checkpoint/internal/server"
 	validation "github.com/SaiVikrantG/checkpoint/internal/validator"
@@ -138,7 +139,23 @@ func handleRequest[Req validation.Validatable](
 
 	// Validation with observability
 	validationStart := time.Now()
-	if err := validation.BindAndValidate(c, req); err != nil {
+	if err := c.Bind(&req); err != nil {
+		validationDuration := time.Since(validationStart)
+		bindErr := errors.NewBadRequestError(err.Error(), false, nil, nil)
+
+		logger.Error().
+			Err(bindErr).
+			Dur("validation_duration", validationDuration).
+			Msg("request validation failed")
+
+		if txn != nil {
+			txn.NoticeError(nrpkgerrors.Wrap(bindErr))
+			txn.AddAttribute("validation.status", "failed")
+			txn.AddAttribute("validation.duration_ms", validationDuration.Milliseconds())
+		}
+		return bindErr
+	}
+	if err := req.Validate(); err != nil {
 		validationDuration := time.Since(validationStart)
 
 		logger.Error().
@@ -207,6 +224,16 @@ func handleRequest[Req validation.Validatable](
 }
 
 // Handle wraps a handler with validation, error handling, logging, metrics, and tracing
+
+// The handle function here is used to easily create a handler with the above advantages
+// How it basically works is by returning a echo.HandlerFunc,
+//  This Handle(wrapped by a function which is actually called) is basically called in a route, returning a echo.HandlerFunc
+// The echo.HandlerFunc returned in the route is called when the route is hit
+
+// Here Handle returns a function which follows the basic signature of echo.HandlerFunc as well
+// The function which is returned internally calls another function which, essentially accepts the logic handler
+//
+//	actually handles the request using the logic handler and returns an approproate response
 func Handle[Req validation.Validatable, Res any](
 	h Handler,
 	handler HandlerFunc[Req, Res],
