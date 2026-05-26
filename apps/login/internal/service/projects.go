@@ -1,11 +1,10 @@
 package service
 
 import (
-	"context"
-
 	"github.com/SaiVikrantG/checkpoint/internal/model"
 	"github.com/SaiVikrantG/checkpoint/internal/repositories"
 	"github.com/SaiVikrantG/checkpoint/internal/server"
+	"github.com/labstack/echo/v4"
 )
 
 type ProjectService struct {
@@ -20,11 +19,11 @@ func NewProjectService(server *server.Server, projectRepo *repositories.ProjectR
 	}
 }
 
-func (s *ProjectService) GetProjectByID(ctx context.Context, id int64) (model.Project, error) {
+func (s *ProjectService) GetProjectByID(ctx echo.Context, id int64) (*model.Project, error) {
 	project, err := s.repository.GetProjectByID(ctx, id)
 	if err != nil {
 		// TODO: Where do we actually need to do logging?
-		return model.Project{}, err
+		return &model.Project{}, err
 	}
 
 	return project, nil

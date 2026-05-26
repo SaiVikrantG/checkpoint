@@ -5,6 +5,7 @@ import (
 
 	"github.com/SaiVikrantG/checkpoint/internal/model"
 	"github.com/SaiVikrantG/checkpoint/internal/server"
+	"github.com/labstack/echo/v4"
 )
 
 type ProjectRepository struct {
@@ -17,11 +18,13 @@ func NewProjectRepository(server *server.Server) *ProjectRepository {
 	}
 }
 
-func (r *ProjectRepository) GetProjectByID(ctx context.Context, id int64) (model.Project, error) {
+func (r *ProjectRepository) GetProjectByID(echoCtx echo.Context, id int64) (*model.Project, error) {
 	db := r.server.Db
-	var project model.Project
+	var project *model.Project
+	ctx := echoCtx.Request().Context()
+
 	err := db.Pool.QueryRow(ctx,
-		"SELECT id, name, description, is_public, created_by, updated_by, created_at, updated_at FROM projects WHERE id = $1 RETURNING *",
+		"SELECT id, name, description, is_public, created_by, updated_by, created_at, updated_at FROM projects WHERE id = $1",
 		id,
 	).Scan(
 		project.ID,
@@ -35,7 +38,7 @@ func (r *ProjectRepository) GetProjectByID(ctx context.Context, id int64) (model
 	)
 
 	if err != nil {
-		return model.Project{}, err
+		return &model.Project{}, err
 	}
 
 	return project, nil

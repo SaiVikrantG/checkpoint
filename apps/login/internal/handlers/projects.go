@@ -1,40 +1,42 @@
 package handlers
 
 import (
-	"strconv"
+	"fmt"
 
+	"github.com/SaiVikrantG/checkpoint/internal/model"
 	"github.com/SaiVikrantG/checkpoint/internal/server"
 	"github.com/SaiVikrantG/checkpoint/internal/service"
 	"github.com/labstack/echo/v4"
 )
 
 type ProjectHandler struct {
-	server          *server.Server
+	Handler
 	projectServices *service.ProjectService
 }
 
 func NewProjectHandler(server *server.Server, services *service.ProjectService) *ProjectHandler {
 	return &ProjectHandler{
-		server:          server,
+		Handler:         NewHandler(server),
 		projectServices: services,
 	}
 }
 
-func (h *ProjectHandler) GetProjectByID(c echo.Context) error {
-	projectID := c.Param("id") // Get from URL
+type GetProjectByIDRequest struct {
+	id *int64
+}
 
-	// Convert to int64
-	id, err := strconv.ParseInt(projectID, 10, 64)
-	if err != nil {
-		return echo.NewHTTPError(400, "invalid project id")
+func (r GetProjectByIDRequest) Validate() error {
+	if r.id == nil {
+		return fmt.Errorf("Id cant be null")
 	}
 
-	// Call service
-	project, err := h.projectServices.GetProjectByID(c.Request().Context(), id)
-	if err != nil {
-		return err // Global error handler catches it
-	}
+	return nil
+}
 
-	// Return response
-	return c.JSON(200, project)
+func (h *ProjectHandler) handleGetProjectLogic(c echo.Context, req GetProjectByIDRequest) (model.Project, error) {
+
+}
+
+func (h *ProjectHandler) GetProjectByID() echo.HandlerFunc {
+	return Handle(h.Handler, h.handleGetProjectLogic, 200, GetProjectByIDRequest{})
 }
