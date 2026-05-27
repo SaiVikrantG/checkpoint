@@ -27,6 +27,7 @@ func NewBadRequestError(message string, override bool, errors []FieldError, acti
 		Override: override,
 		Errors:   errors,
 		Actn:     action,
+		Status:   http.StatusBadRequest,
 	}
 }
 
