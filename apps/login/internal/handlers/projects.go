@@ -1,8 +1,7 @@
 package handlers
 
 import (
-	"fmt"
-
+	"github.com/SaiVikrantG/checkpoint/internal/errors"
 	"github.com/SaiVikrantG/checkpoint/internal/model"
 	"github.com/SaiVikrantG/checkpoint/internal/server"
 	"github.com/SaiVikrantG/checkpoint/internal/service"
@@ -26,10 +25,11 @@ type GetProjectByIDRequest struct {
 }
 
 func (r GetProjectByIDRequest) Validate() error {
-	if r.ID < 0 {
-		return fmt.Errorf("Id cant be negative")
+	if r.ID <= 0 {
+		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
+			{Field: "id", Error: "must be a positive integer"},
+		}, nil)
 	}
-
 	return nil
 }
 
