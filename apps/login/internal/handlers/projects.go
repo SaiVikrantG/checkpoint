@@ -132,3 +132,30 @@ func (h *ProjectHandler) CreateProject() echo.HandlerFunc {
 	return Handle(h.Handler, h.handleCreateProjectLogic, 201, CreateProjectRequest{})
 }
 
+type DeleteProjectRequest struct {
+	ID int64 `param:"id"`
+}
+
+func (r DeleteProjectRequest) Validate() error {
+	if r.ID <= 0 {
+		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
+			{Field: "id", Error: "must be a positive integer"},
+		}, nil)
+	}
+	return nil
+}
+
+func (h *ProjectHandler) handleDeleteProjectLogic(c echo.Context, req DeleteProjectRequest) (map[string]string, error) {
+	err := h.projectServices.DeleteProject(c.Request().Context(), req.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]string{
+		"message": "project deleted successfully",
+	}, nil
+}
+
+func (h *ProjectHandler) DeleteProject() echo.HandlerFunc {
+	return Handle(h.Handler, h.handleDeleteProjectLogic, 200, DeleteProjectRequest{ID: 0})
+}

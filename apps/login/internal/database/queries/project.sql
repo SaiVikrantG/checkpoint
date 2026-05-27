@@ -16,3 +16,8 @@ LIMIT $1 OFFSET $2;
 
 -- name: GetProjectsCount :one
 SELECT COUNT(*) FROM projects;
+
+-- name: DeleteProject :exec
+DELETE FROM projects
+WHERE id = $1;
+

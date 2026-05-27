@@ -55,3 +55,7 @@ func (s *ProjectService) GetProjectByID(ctx echo.Context, id int64) (model.Proje
 func (s *ProjectService) CreateProject(ctx context.Context, project *model.Project) (*model.Project, error) {
 	return s.repository.CreateProject(ctx, project)
 }
+
+func (s *ProjectService) DeleteProject(ctx context.Context, id int64) error {
+	return s.repository.DeleteProject(ctx, id)
+}

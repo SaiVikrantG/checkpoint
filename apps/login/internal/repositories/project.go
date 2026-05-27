@@ -63,6 +63,10 @@ func (r *ProjectRepository) CreateProject(ctx context.Context, project *model.Pr
 	return &result, nil
 }
 
+func (r *ProjectRepository) DeleteProject(ctx context.Context, id int64) error {
+	return r.queries.DeleteProject(ctx, id)
+}
+
 func toModelProject(p db.Project) model.Project {
 	return model.Project{
 		Base: model.Base{
