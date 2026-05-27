@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"time"
+
 	"github.com/SaiVikrantG/checkpoint/internal/errors"
 	"github.com/SaiVikrantG/checkpoint/internal/model"
 	"github.com/SaiVikrantG/checkpoint/internal/server"
@@ -75,3 +77,58 @@ func (h *ProjectHandler) GetAllProjects() echo.HandlerFunc {
 func (h *ProjectHandler) GetProjectByID() echo.HandlerFunc {
 	return Handle(h.Handler, h.handleGetProjectLogic, 200, GetProjectByIDRequest{ID: 0})
 }
+
+type CreateProjectRequest struct {
+	Name        string  `json:"name" validate:"required,min=1,max=255"`
+	Description *string `json:"description" validate:"omitempty,max=1000"`
+	IsPublic    bool    `json:"isPublic"`
+	UserID      string  `json:"userId" validate:"required"`
+}
+
+func (r CreateProjectRequest) Validate() error {
+	if r.Name == "" {
+		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
+			{Field: "name", Error: "name is required"},
+		}, nil)
+	}
+	if len(r.Name) > 255 {
+		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
+			{Field: "name", Error: "name must not exceed 255 characters"},
+		}, nil)
+	}
+	if r.Description != nil && len(*r.Description) > 1000 {
+		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
+			{Field: "description", Error: "description must not exceed 1000 characters"},
+		}, nil)
+	}
+	if r.UserID == "" {
+		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
+			{Field: "userId", Error: "userId is required"},
+		}, nil)
+	}
+	return nil
+}
+
+func (h *ProjectHandler) handleCreateProjectLogic(c echo.Context, req CreateProjectRequest) (model.Project, error) {
+	project := &model.Project{
+		Name:        req.Name,
+		Description: req.Description,
+		IsPublic:    req.IsPublic,
+		CreatedBy:   req.UserID,
+		Base: model.Base{
+			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: time.Now()},
+		},
+	}
+
+	createdProject, err := h.projectServices.CreateProject(c.Request().Context(), project)
+	if err != nil {
+		return model.Project{}, err
+	}
+
+	return *createdProject, nil
+}
+
+func (h *ProjectHandler) CreateProject() echo.HandlerFunc {
+	return Handle(h.Handler, h.handleCreateProjectLogic, 201, CreateProjectRequest{})
+}
+
