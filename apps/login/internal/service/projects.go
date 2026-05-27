@@ -1,6 +1,9 @@
 package service
 
 import (
+	"context"
+	"math"
+
 	"github.com/SaiVikrantG/checkpoint/internal/errors"
 	"github.com/SaiVikrantG/checkpoint/internal/model"
 	"github.com/SaiVikrantG/checkpoint/internal/repositories"
@@ -19,6 +22,23 @@ func NewProjectService(server *server.Server, projectRepo *repositories.ProjectR
 		server:     server,
 		repository: projectRepo,
 	}
+}
+
+func (s *ProjectService) GetAllProjects(ctx context.Context, page, limit int) (model.PaginatedResponse[model.Project], error) {
+	projects, total, err := s.repository.GetAllProjects(ctx, page, limit)
+	if err != nil {
+		return model.PaginatedResponse[model.Project]{}, err
+	}
+
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+
+	return model.PaginatedResponse[model.Project]{
+		Data:       projects,
+		Page:       page,
+		Limit:      limit,
+		Total:      int(total),
+		TotalPages: totalPages,
+	}, nil
 }
 
 func (s *ProjectService) GetProjectByID(ctx echo.Context, id int64) (model.Project, error) {

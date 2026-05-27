@@ -26,6 +26,28 @@ func (r *ProjectRepository) GetProjectByID(echoCtx echo.Context, id int64) (mode
 	return toModelProject(row), nil
 }
 
+func (r *ProjectRepository) GetAllProjects(ctx context.Context, page, limit int) ([]model.Project, int64, error) {
+	rows, err := r.queries.GetAllProjects(ctx, db.GetAllProjectsParams{
+		Limit:  int32(limit),
+		Offset: int32((page - 1) * limit),
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	total, err := r.queries.GetProjectsCount(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	projects := make([]model.Project, len(rows))
+	for i, row := range rows {
+		projects[i] = toModelProject(row)
+	}
+
+	return projects, total, nil
+}
+
 func (r *ProjectRepository) CreateProject(ctx context.Context, project *model.Project) (*model.Project, error) {
 	row, err := r.queries.CreateProject(ctx, db.CreateProjectParams{
 		Name:        project.Name,

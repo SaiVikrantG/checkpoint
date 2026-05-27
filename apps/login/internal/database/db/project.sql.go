@@ -47,6 +47,47 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 	return i, err
 }
 
+const getAllProjects = `-- name: GetAllProjects :many
+SELECT id, name, description, is_public, created_by, updated_by, created_at, updated_at
+FROM projects
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type GetAllProjectsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) GetAllProjects(ctx context.Context, arg GetAllProjectsParams) ([]Project, error) {
+	rows, err := q.db.Query(ctx, getAllProjects, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Project
+	for rows.Next() {
+		var i Project
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.IsPublic,
+			&i.CreatedBy,
+			&i.UpdatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getProjectByID = `-- name: GetProjectByID :one
 SELECT id, name, description, is_public, created_by, updated_by, created_at, updated_at
 FROM projects
@@ -67,4 +108,15 @@ func (q *Queries) GetProjectByID(ctx context.Context, id int64) (Project, error)
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getProjectsCount = `-- name: GetProjectsCount :one
+SELECT COUNT(*) FROM projects
+`
+
+func (q *Queries) GetProjectsCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getProjectsCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
