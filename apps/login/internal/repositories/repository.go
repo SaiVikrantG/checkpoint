@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	db "github.com/SaiVikrantG/checkpoint/internal/database/db"
 	"github.com/SaiVikrantG/checkpoint/internal/server"
 )
 
@@ -9,9 +10,8 @@ type Repository struct {
 }
 
 func RepositoryInit(server *server.Server) *Repository {
-	projectRepo := NewProjectRepository(server)
-
+	queries := db.New(server.Db.Pool)
 	return &Repository{
-		ProjectRepo: projectRepo,
+		ProjectRepo: NewProjectRepository(queries),
 	}
 }
