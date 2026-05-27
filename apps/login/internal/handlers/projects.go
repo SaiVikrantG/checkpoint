@@ -36,7 +36,7 @@ func (r GetProjectByIDRequest) Validate() error {
 }
 
 func (h *ProjectHandler) handleGetProjectLogic(c echo.Context, req GetProjectByIDRequest) (model.Project, error) {
-	project, err := h.projectServices.GetProjectByID(c, req.ID)
+	project, err := h.projectServices.GetProjectByID(c.Request().Context(), req.ID)
 	if err != nil {
 		return model.Project{}, err
 	}
@@ -158,4 +158,63 @@ func (h *ProjectHandler) handleDeleteProjectLogic(c echo.Context, req DeleteProj
 
 func (h *ProjectHandler) DeleteProject() echo.HandlerFunc {
 	return Handle(h.Handler, h.handleDeleteProjectLogic, 200, DeleteProjectRequest{ID: 0})
+}
+
+type UpdateProjectRequest struct {
+	ID          int64   `param:"id"`
+	Name        *string `json:"name" validate:"omitempty,min=1,max=255"`
+	Description *string `json:"description" validate:"omitempty,max=1000"`
+	IsPublic    *bool   `json:"isPublic"`
+}
+
+func (r UpdateProjectRequest) Validate() error {
+	if r.ID <= 0 {
+		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
+			{Field: "id", Error: "must be a positive integer"},
+		}, nil)
+	}
+	if r.Name != nil && len(*r.Name) > 255 {
+		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
+			{Field: "name", Error: "name must not exceed 255 characters"},
+		}, nil)
+	}
+	if r.Description != nil && len(*r.Description) > 1000 {
+		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
+			{Field: "description", Error: "description must not exceed 1000 characters"},
+		}, nil)
+	}
+	return nil
+}
+
+func (h *ProjectHandler) handleUpdateProjectLogic(c echo.Context, req UpdateProjectRequest) (model.Project, error) {
+	project := &model.Project{
+		Name:        derefStr(req.Name),
+		Description: req.Description,
+		IsPublic:    derefBool(req.IsPublic),
+	}
+
+	updatedProject, err := h.projectServices.UpdateProject(c.Request().Context(), req.ID, project)
+	if err != nil {
+		return model.Project{}, err
+	}
+
+	return *updatedProject, nil
+}
+
+func (h *ProjectHandler) UpdateProject() echo.HandlerFunc {
+	return Handle(h.Handler, h.handleUpdateProjectLogic, 200, UpdateProjectRequest{ID: 0})
+}
+
+func derefStr(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func derefBool(b *bool) bool {
+	if b == nil {
+		return false
+	}
+	return *b
 }

@@ -141,12 +141,12 @@ func handleRequest[Req validation.Validatable](
 	validationStart := time.Now()
 	if err := c.Bind(&req); err != nil {
 		validationDuration := time.Since(validationStart)
-		bindErr := errors.NewBadRequestError(err.Error(), false, nil, nil)
+		bindErr := errors.NewBadRequestError("Invalid request parameters or format", false, nil, nil)
 
 		logger.Error().
-			Err(bindErr).
+			Err(err).
 			Dur("validation_duration", validationDuration).
-			Msg("request validation failed")
+			Msg("request binding failed")
 
 		if txn != nil {
 			txn.NoticeError(nrpkgerrors.Wrap(bindErr))

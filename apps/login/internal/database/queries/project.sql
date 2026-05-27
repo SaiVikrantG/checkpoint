@@ -21,3 +21,11 @@ SELECT COUNT(*) FROM projects;
 DELETE FROM projects
 WHERE id = $1;
 
+-- name: UpdateProject :one
+UPDATE projects
+SET name = COALESCE($2, name),
+    description = COALESCE($3, description),
+    is_public = COALESCE($4, is_public),
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING *;

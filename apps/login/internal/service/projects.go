@@ -9,7 +9,6 @@ import (
 	"github.com/SaiVikrantG/checkpoint/internal/repositories"
 	"github.com/SaiVikrantG/checkpoint/internal/server"
 	"github.com/jackc/pgx/v5"
-	"github.com/labstack/echo/v4"
 )
 
 type ProjectService struct {
@@ -41,7 +40,7 @@ func (s *ProjectService) GetAllProjects(ctx context.Context, page, limit int) (m
 	}, nil
 }
 
-func (s *ProjectService) GetProjectByID(ctx echo.Context, id int64) (model.Project, error) {
+func (s *ProjectService) GetProjectByID(ctx context.Context, id int64) (model.Project, error) {
 	project, err := s.repository.GetProjectByID(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -58,4 +57,23 @@ func (s *ProjectService) CreateProject(ctx context.Context, project *model.Proje
 
 func (s *ProjectService) DeleteProject(ctx context.Context, id int64) error {
 	return s.repository.DeleteProject(ctx, id)
+}
+
+func (s *ProjectService) UpdateProject(ctx context.Context, id int64, project *model.Project) (*model.Project, error) {
+	existingProject, err := s.repository.GetProjectByID(ctx, id)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, errors.NewNotFoundError("project not found", true)
+		}
+		return nil, err
+	}
+
+	if project.Name == "" {
+		project.Name = existingProject.Name
+	}
+	if project.Description == nil {
+		project.Description = existingProject.Description
+	}
+
+	return s.repository.UpdateProject(ctx, id, project)
 }

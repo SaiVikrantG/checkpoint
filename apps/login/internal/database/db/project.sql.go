@@ -130,3 +130,41 @@ func (q *Queries) GetProjectsCount(ctx context.Context) (int64, error) {
 	err := row.Scan(&count)
 	return count, err
 }
+
+const updateProject = `-- name: UpdateProject :one
+UPDATE projects
+SET name = COALESCE($2, name),
+    description = COALESCE($3, description),
+    is_public = COALESCE($4, is_public),
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING id, name, description, is_public, created_by, updated_by, created_at, updated_at
+`
+
+type UpdateProjectParams struct {
+	ID          int64       `json:"id"`
+	Name        string      `json:"name"`
+	Description pgtype.Text `json:"description"`
+	IsPublic    pgtype.Bool `json:"is_public"`
+}
+
+func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (Project, error) {
+	row := q.db.QueryRow(ctx, updateProject,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.IsPublic,
+	)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.IsPublic,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

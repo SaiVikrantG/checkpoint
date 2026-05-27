@@ -7,7 +7,6 @@ import (
 	db "github.com/SaiVikrantG/checkpoint/internal/database/db"
 	"github.com/SaiVikrantG/checkpoint/internal/model"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/labstack/echo/v4"
 )
 
 type ProjectRepository struct {
@@ -18,8 +17,8 @@ func NewProjectRepository(q *db.Queries) *ProjectRepository {
 	return &ProjectRepository{queries: q}
 }
 
-func (r *ProjectRepository) GetProjectByID(echoCtx echo.Context, id int64) (model.Project, error) {
-	row, err := r.queries.GetProjectByID(echoCtx.Request().Context(), id)
+func (r *ProjectRepository) GetProjectByID(ctx context.Context, id int64) (model.Project, error) {
+	row, err := r.queries.GetProjectByID(ctx, id)
 	if err != nil {
 		return model.Project{}, err
 	}
@@ -65,6 +64,20 @@ func (r *ProjectRepository) CreateProject(ctx context.Context, project *model.Pr
 
 func (r *ProjectRepository) DeleteProject(ctx context.Context, id int64) error {
 	return r.queries.DeleteProject(ctx, id)
+}
+
+func (r *ProjectRepository) UpdateProject(ctx context.Context, id int64, project *model.Project) (*model.Project, error) {
+	row, err := r.queries.UpdateProject(ctx, db.UpdateProjectParams{
+		ID:          id,
+		Name:        project.Name,
+		Description: pgtype.Text{String: derefStr(project.Description), Valid: project.Description != nil},
+		IsPublic:    pgtype.Bool{Bool: project.IsPublic, Valid: true},
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := toModelProject(row)
+	return &result, nil
 }
 
 func toModelProject(p db.Project) model.Project {
