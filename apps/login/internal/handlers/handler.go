@@ -12,6 +12,7 @@ type Handlers struct {
 	OpenAPI  *OpenAPIHandler
 	Projects *ProjectHandler
 	Articles *ArticleHandler
+	Devlogs  *DevlogHandler
 }
 
 // handler instances for handlers of each service will be passed
@@ -22,5 +23,6 @@ func InitHandlers(s *server.Server, services *service.Services) *Handlers {
 		Health:   NewHealthHandler(s),
 		Projects: NewProjectHandler(s, services.Projects),
 		Articles: NewArticleHandler(s, services.Articles),
+		Devlogs:  NewDevlogHandler(s, services.Devlogs),
 	}
 }
