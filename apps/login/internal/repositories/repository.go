@@ -7,11 +7,13 @@ import (
 
 type Repository struct {
 	ProjectRepo *ProjectRepository
+	ArticleRepo *ArticleRepository
 }
 
 func RepositoryInit(server *server.Server) *Repository {
 	queries := db.New(server.Db.Pool)
 	return &Repository{
 		ProjectRepo: NewProjectRepository(queries),
+		ArticleRepo: NewArticleRepository(queries),
 	}
 }

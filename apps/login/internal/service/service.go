@@ -8,6 +8,7 @@ import (
 type Services struct {
 	Auth     *AuthService
 	Projects *ProjectService
+	Articles *ArticleService
 }
 
 // TODO: Need to implement services logic with all the logical resources in my backend
@@ -17,9 +18,11 @@ func NewService(server *server.Server, repos *repositories.Repository) (*Service
 	authService := NewAuthService(server)
 
 	projectService := NewProjectService(server, repos.ProjectRepo)
+	articleService := NewArticleService(server, repos.ArticleRepo)
 
 	return &Services{
 		Auth:     authService,
 		Projects: projectService,
+		Articles: articleService,
 	}, nil
 }
