@@ -27,6 +27,7 @@ SET title = COALESCE($2, title),
     content = COALESCE($3, content),
     slug = COALESCE($4, slug),
     is_public = COALESCE($5, is_public),
+    project_id = COALESCE($6, project_id),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING *;

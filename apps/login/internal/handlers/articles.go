@@ -134,11 +134,12 @@ func (h *ArticleHandler) CreateArticle() echo.HandlerFunc {
 // UpdateArticle
 
 type UpdateArticleRequest struct {
-	ID       int64   `param:"id"`
-	Title    *string `json:"title" validate:"omitempty,min=1,max=255"`
-	Content  *string `json:"content" validate:"omitempty"`
-	Slug     *string `json:"slug" validate:"omitempty,max=255"`
-	IsPublic *bool   `json:"isPublic"`
+	ID        int64   `param:"id"`
+	ProjectID *int64  `json:"projectId"`
+	Title     *string `json:"title" validate:"omitempty,min=1,max=255"`
+	Content   *string `json:"content" validate:"omitempty"`
+	Slug      *string `json:"slug" validate:"omitempty,max=255"`
+	IsPublic  *bool   `json:"isPublic"`
 }
 
 func (r UpdateArticleRequest) Validate() error {
@@ -152,10 +153,11 @@ func (r UpdateArticleRequest) Validate() error {
 
 func (h *ArticleHandler) handleUpdateArticleLogic(c echo.Context, req UpdateArticleRequest) (model.Article, error) {
 	article := &model.Article{
-		Title:    derefStr(req.Title),
-		Content:  derefStr(req.Content),
-		Slug:     req.Slug,
-		IsPublic: derefBool(req.IsPublic),
+		ProjectID: req.ProjectID,
+		Title:     derefStr(req.Title),
+		Content:   derefStr(req.Content),
+		Slug:      req.Slug,
+		IsPublic:  derefBool(req.IsPublic),
 	}
 
 	updated, err := h.articleServices.UpdateArticle(c.Request().Context(), req.ID, article)

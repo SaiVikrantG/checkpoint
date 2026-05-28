@@ -8,6 +8,7 @@ import (
 	"github.com/SaiVikrantG/checkpoint/internal/model"
 	"github.com/SaiVikrantG/checkpoint/internal/repositories"
 	"github.com/SaiVikrantG/checkpoint/internal/server"
+	"github.com/SaiVikrantG/checkpoint/internal/sqlerr"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -52,7 +53,11 @@ func (s *ArticleService) GetArticleByID(ctx context.Context, id int64) (model.Ar
 }
 
 func (s *ArticleService) CreateArticle(ctx context.Context, article *model.Article) (*model.Article, error) {
-	return s.repository.CreateArticle(ctx, article)
+	result, err := s.repository.CreateArticle(ctx, article)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+	return result, nil
 }
 
 func (s *ArticleService) UpdateArticle(ctx context.Context, id int64, article *model.Article) (*model.Article, error) {
@@ -74,7 +79,11 @@ func (s *ArticleService) UpdateArticle(ctx context.Context, id int64, article *m
 		article.Slug = existing.Slug
 	}
 
-	return s.repository.UpdateArticle(ctx, id, article)
+	result, err := s.repository.UpdateArticle(ctx, id, article)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+	return result, nil
 }
 
 func (s *ArticleService) DeleteArticle(ctx context.Context, id int64) error {

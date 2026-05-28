@@ -56,6 +56,13 @@ func (s *ProjectService) CreateProject(ctx context.Context, project *model.Proje
 }
 
 func (s *ProjectService) DeleteProject(ctx context.Context, id int64) error {
+	_, err := s.repository.GetProjectByID(ctx, id)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return errors.NewNotFoundError("project not found", true)
+		}
+		return err
+	}
 	return s.repository.DeleteProject(ctx, id)
 }
 

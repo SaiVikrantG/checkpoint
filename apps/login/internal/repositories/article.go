@@ -69,12 +69,18 @@ func (r *ArticleRepository) CreateArticle(ctx context.Context, article *model.Ar
 }
 
 func (r *ArticleRepository) UpdateArticle(ctx context.Context, id int64, article *model.Article) (*model.Article, error) {
+	var projectID pgtype.Int8
+	if article.ProjectID != nil {
+		projectID = pgtype.Int8{Int64: *article.ProjectID, Valid: true}
+	}
+
 	row, err := r.queries.UpdateArticle(ctx, db.UpdateArticleParams{
-		ID:      id,
-		Title:   article.Title,
-		Content: article.Content,
-		Slug:    pgtype.Text{String: derefStr(article.Slug), Valid: article.Slug != nil},
-		IsPublic: pgtype.Bool{Bool: article.IsPublic, Valid: true},
+		ID:        id,
+		Title:     article.Title,
+		Content:   article.Content,
+		Slug:      pgtype.Text{String: derefStr(article.Slug), Valid: article.Slug != nil},
+		IsPublic:  pgtype.Bool{Bool: article.IsPublic, Valid: true},
+		ProjectID: projectID,
 	})
 	if err != nil {
 		return nil, err

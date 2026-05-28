@@ -147,17 +147,19 @@ SET title = COALESCE($2, title),
     content = COALESCE($3, content),
     slug = COALESCE($4, slug),
     is_public = COALESCE($5, is_public),
+    project_id = COALESCE($6, project_id),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING id, project_id, title, content, slug, is_public, created_by, updated_by, created_at, updated_at
 `
 
 type UpdateArticleParams struct {
-	ID       int64       `json:"id"`
-	Title    string      `json:"title"`
-	Content  string      `json:"content"`
-	Slug     pgtype.Text `json:"slug"`
-	IsPublic pgtype.Bool `json:"is_public"`
+	ID        int64       `json:"id"`
+	Title     string      `json:"title"`
+	Content   string      `json:"content"`
+	Slug      pgtype.Text `json:"slug"`
+	IsPublic  pgtype.Bool `json:"is_public"`
+	ProjectID pgtype.Int8 `json:"project_id"`
 }
 
 func (q *Queries) UpdateArticle(ctx context.Context, arg UpdateArticleParams) (Article, error) {
@@ -167,6 +169,7 @@ func (q *Queries) UpdateArticle(ctx context.Context, arg UpdateArticleParams) (A
 		arg.Content,
 		arg.Slug,
 		arg.IsPublic,
+		arg.ProjectID,
 	)
 	var i Article
 	err := row.Scan(

@@ -74,6 +74,9 @@ func formatUserFriendlyMessage(sqlErr *Error) string {
 
 	switch sqlErr.Code {
 	case ForeignKeyViolation:
+		if name := getEntityNameFromConstraint(sqlErr.ConstraintName); name != "" {
+			entityName = name
+		}
 		return fmt.Sprintf("The referenced %s does not exist", entityName)
 	case UniqueViolation:
 		return fmt.Sprintf("A %s with this identifier already exists", entityName)
@@ -96,24 +99,31 @@ func formatUserFriendlyMessage(sqlErr *Error) string {
 
 // getEntityName extracts entity name from database information with consistent rules
 func getEntityName(tableName, columnName string) string {
-	// First priority: column name logic (most reliable for FK relationships)
+	// First priority: column name (e.g. "project_id" → "project")
 	if columnName != "" && strings.HasSuffix(strings.ToLower(columnName), "_id") {
-		entity := strings.TrimSuffix(strings.ToLower(columnName), "_id")
-		return humanizeText(entity)
+		return humanizeText(strings.TrimSuffix(strings.ToLower(columnName), "_id"))
 	}
 
-	// Second priority: table name (fallback option)
-	if tableName != "" {
-		// Use singular form
-		entity := tableName
-		if strings.HasSuffix(entity, "s") && len(entity) > 1 {
-			entity = entity[:len(entity)-1]
-		}
-		return humanizeText(entity)
-	}
-
-	// Default fallback
+	// Second priority: constraint name (e.g. "articles_project_id_fkey" → "project")
+	// Postgres names FK constraints as <table>_<col>_fkey
 	return "record"
+}
+
+func getEntityNameFromConstraint(constraintName string) string {
+	if constraintName == "" {
+		return ""
+	}
+	// Strip _fkey suffix, then find the _id segment
+	name := strings.TrimSuffix(strings.ToLower(constraintName), "_fkey")
+	if idx := strings.LastIndex(name, "_id"); idx > 0 {
+		// extract the word before _id
+		prefix := name[:idx]
+		if last := strings.LastIndex(prefix, "_"); last >= 0 {
+			return humanizeText(prefix[last+1:])
+		}
+		return humanizeText(prefix)
+	}
+	return ""
 }
 
 // humanizeText converts snake_case to human-readable text
