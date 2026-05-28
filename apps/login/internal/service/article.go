@@ -87,5 +87,12 @@ func (s *ArticleService) UpdateArticle(ctx context.Context, id int64, article *m
 }
 
 func (s *ArticleService) DeleteArticle(ctx context.Context, id int64) error {
+	_, err := s.repository.GetArticleByID(ctx, id)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return errors.NewNotFoundError("article not found", true)
+		}
+		return err
+	}
 	return s.repository.DeleteArticle(ctx, id)
 }
