@@ -61,6 +61,7 @@ func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services
 	v1 := router.Group("/api/v1")
 
 	registerProjectRoutes(v1, h)
+	registerArticleRoutes(v1, h)
 
 	return router
 }
