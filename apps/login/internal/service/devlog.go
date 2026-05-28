@@ -75,5 +75,12 @@ func (s *DevlogService) UpdateDevlog(ctx context.Context, id int64, devlog *mode
 }
 
 func (s *DevlogService) DeleteDevlog(ctx context.Context, id int64) error {
+	_, err := s.repository.GetDevlogByID(ctx, id)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return errors.NewNotFoundError("devlog not found", true)
+		}
+		return err
+	}
 	return s.repository.DeleteDevlog(ctx, id)
 }
