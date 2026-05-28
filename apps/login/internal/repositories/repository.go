@@ -8,6 +8,7 @@ import (
 type Repository struct {
 	ProjectRepo *ProjectRepository
 	ArticleRepo *ArticleRepository
+	DevlogRepo  *DevlogRepository
 }
 
 func RepositoryInit(server *server.Server) *Repository {
@@ -15,5 +16,6 @@ func RepositoryInit(server *server.Server) *Repository {
 	return &Repository{
 		ProjectRepo: NewProjectRepository(queries),
 		ArticleRepo: NewArticleRepository(queries),
+		DevlogRepo:  NewDevlogRepository(queries),
 	}
 }
