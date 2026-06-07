@@ -26,18 +26,28 @@ const topPages = [
   { rank: '05', name: '/about', num: '617' },
 ];
 
-export default function AdminPage() {
-  const [activeTheme, setActiveTheme] = useState('serika dark');
-  const [customBg, setCustomBg] = useState('#323437');
-  const [customFg, setCustomFg] = useState('#d1d0c5');
-  const [customAc, setCustomAc] = useState('#e2b714');
+function getSavedTheme() {
+  try {
+    const saved = localStorage.getItem('checkpoint-theme');
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return null;
+}
 
-  const applyTheme = (bg, fg, ac) => {
+export default function AdminPage() {
+  const saved = getSavedTheme();
+  const [activeTheme, setActiveTheme] = useState(saved?.name || 'serika dark');
+  const [customBg, setCustomBg] = useState(saved?.bg || '#323437');
+  const [customFg, setCustomFg] = useState(saved?.fg || '#d1d0c5');
+  const [customAc, setCustomAc] = useState(saved?.ac || '#e2b714');
+
+  const applyTheme = (bg, fg, ac, name) => {
     document.documentElement.style.setProperty('--bg', bg);
     document.documentElement.style.setProperty('--bg-2', adjustColor(bg, 6));
     document.documentElement.style.setProperty('--bg-3', adjustColor(bg, -10));
     document.documentElement.style.setProperty('--fg', fg);
     document.documentElement.style.setProperty('--main', ac);
+    localStorage.setItem('checkpoint-theme', JSON.stringify({ name: name || 'custom', bg, fg, ac }));
   };
 
   const spark = [4, 7, 5, 9, 12, 8, 6, 11, 14, 10, 13, 9, 15, 12, 18, 14, 11, 16, 20, 17, 15, 19, 22, 18, 16, 21, 24, 20, 19, 23];
@@ -96,7 +106,7 @@ export default function AdminPage() {
                   setCustomBg(t.bg);
                   setCustomFg(t.fg);
                   setCustomAc(t.ac);
-                  applyTheme(t.bg, t.fg, t.ac);
+                  applyTheme(t.bg, t.fg, t.ac, t.name);
                 }}
               >
                 <div className="theme-preview" style={{ background: t.bg }}>
@@ -130,7 +140,7 @@ export default function AdminPage() {
                 style={{ padding: '5px 12px', fontSize: 11, marginLeft: 'auto' }}
                 onClick={() => {
                   setActiveTheme('custom');
-                  applyTheme(customBg, customFg, customAc);
+                  applyTheme(customBg, customFg, customAc, 'custom');
                 }}
               >
                 apply

@@ -11,8 +11,36 @@ import AdminPage from './pages/AdminPage';
 import DevlogsPage from './pages/DevlogsPage';
 import FinderModal from './components/FinderModal';
 
+function applyStoredTheme() {
+  try {
+    const saved = localStorage.getItem('checkpoint-theme');
+    if (saved) {
+      const { bg, fg, ac } = JSON.parse(saved);
+      document.documentElement.style.setProperty('--bg', bg);
+      document.documentElement.style.setProperty('--bg-2', adjustBg(bg, 6));
+      document.documentElement.style.setProperty('--bg-3', adjustBg(bg, -10));
+      document.documentElement.style.setProperty('--fg', fg);
+      document.documentElement.style.setProperty('--main', ac);
+    }
+  } catch {}
+}
+
+function adjustBg(hex, amount) {
+  let r = parseInt(hex.slice(1, 3), 16);
+  let g = parseInt(hex.slice(3, 5), 16);
+  let b = parseInt(hex.slice(5, 7), 16);
+  r = Math.max(0, Math.min(255, r + amount));
+  g = Math.max(0, Math.min(255, g + amount));
+  b = Math.max(0, Math.min(255, b + amount));
+  return '#' + [r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('');
+}
+
 export default function App() {
   const [finderOpen, setFinderOpen] = useState(false);
+
+  useEffect(() => {
+    applyStoredTheme();
+  }, []);
 
   const handleKeyDown = useCallback((e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {

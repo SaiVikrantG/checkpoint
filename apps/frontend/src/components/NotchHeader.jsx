@@ -6,7 +6,6 @@ const allNavItems = [
   { label: 'Articles', path: '/articles' },
   { label: 'Projects', path: '/projects' },
   { label: 'About', path: '/about' },
-  { label: 'Devlogs', path: '/devlogs' },
 ];
 
 export default function NotchHeader({ onFinderOpen }) {
@@ -17,10 +16,7 @@ export default function NotchHeader({ onFinderOpen }) {
   const itemRefs = useRef({});
   const [indicatorStyle, setIndicatorStyle] = useState({});
 
-  const isHome = location.pathname === '/';
-  const navItems = isHome
-    ? allNavItems.filter((item) => item.label !== 'Devlogs')
-    : allNavItems;
+  const navItems = allNavItems;
 
   useEffect(() => {
     const update = () => {
@@ -49,7 +45,7 @@ export default function NotchHeader({ onFinderOpen }) {
         width: itemRect.width,
       });
     }
-  }, [location.pathname, isHome]);
+  }, [location.pathname]);
 
   return (
     <div className="notch-wrap">
