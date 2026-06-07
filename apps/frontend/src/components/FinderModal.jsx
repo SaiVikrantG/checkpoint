@@ -36,11 +36,17 @@ export default function FinderModal({ onClose }) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(0);
   const inputRef = useRef(null);
+  const listRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    const row = listRef.current?.children[selected];
+    if (row) row.scrollIntoView({ block: 'nearest' });
+  }, [selected]);
 
   const filtered = query
     ? allResults.filter(
@@ -84,7 +90,7 @@ export default function FinderModal({ onClose }) {
         </div>
 
         <div className="finder-body">
-          <div className="finder-list">
+          <div className="finder-list" ref={listRef}>
             {filtered.map((r, i) => (
               <div
                 key={i}

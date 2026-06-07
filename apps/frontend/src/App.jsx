@@ -9,6 +9,9 @@ import ClickMePage from './pages/ClickMePage';
 import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
 import DevlogsPage from './pages/DevlogsPage';
+import ArticleViewPage from './pages/ArticleViewPage';
+import { lazy, Suspense } from 'react';
+const EditorPage = lazy(() => import('./pages/EditorPage'));
 import FinderModal from './components/FinderModal';
 
 function applyStoredTheme() {
@@ -64,11 +67,14 @@ export default function App() {
         <Route element={<Layout onFinderOpen={() => setFinderOpen(true)} />}>
           <Route index element={<HomePage />} />
           <Route path="/articles" element={<ArticlesPage />} />
+          <Route path="/articles/:slug" element={<ArticleViewPage />} />
           <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/clickme" element={<ClickMePage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/devlogs" element={<DevlogsPage />} />
+          <Route path="/editor/new" element={<Suspense fallback={null}><EditorPage /></Suspense>} />
+          <Route path="/editor/:id" element={<Suspense fallback={null}><EditorPage /></Suspense>} />
         </Route>
       </Routes>
       {finderOpen && <FinderModal onClose={() => setFinderOpen(false)} />}
