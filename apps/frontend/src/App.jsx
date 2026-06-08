@@ -9,6 +9,7 @@ import ClickMePage from './pages/ClickMePage';
 import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
 import DevlogsPage from './pages/DevlogsPage';
+import BoardPage from './pages/BoardPage';
 import ArticleViewPage from './pages/ArticleViewPage';
 import { lazy, Suspense } from 'react';
 const EditorPage = lazy(() => import('./pages/EditorPage'));
@@ -46,7 +47,7 @@ export default function App() {
   }, []);
 
   const handleKeyDown = useCallback((e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    if ((e.metaKey || e.ctrlKey) && e.key === '/') {
       e.preventDefault();
       setFinderOpen((prev) => !prev);
     }
@@ -73,6 +74,7 @@ export default function App() {
           <Route path="/clickme" element={<ClickMePage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/devlogs" element={<DevlogsPage />} />
+          <Route path="/board" element={<BoardPage />} />
           <Route path="/editor/new" element={<Suspense fallback={null}><EditorPage /></Suspense>} />
           <Route path="/editor/:id" element={<Suspense fallback={null}><EditorPage /></Suspense>} />
         </Route>

@@ -6,11 +6,12 @@ const allResults = [
   { kind: 'page', name: 'Articles', sub: '/articles', path: '/articles' },
   { kind: 'page', name: 'Projects', sub: '/projects', path: '/projects' },
   { kind: 'page', name: 'About', sub: '/about', path: '/about' },
+  { kind: 'page', name: 'Idea Board', sub: '/board', path: '/board' },
   { kind: 'page', name: 'Devlogs', sub: '/devlogs', path: '/devlogs' },
   { kind: 'page', name: 'Admin', sub: '/admin', path: '/admin' },
-  { kind: 'article', name: 'designing a notch header in css', sub: '/articles/notch-header', path: '/articles' },
-  { kind: 'article', name: 'the case for plain markdown', sub: '/articles/plain-markdown', path: '/articles' },
-  { kind: 'article', name: 'raymarching, but slowly', sub: '/articles/raymarching', path: '/articles' },
+  { kind: 'article', name: 'designing a notch header in css', sub: '/articles/notch-header', path: '/articles/notch-header' },
+  { kind: 'article', name: 'the case for plain markdown', sub: '/articles/plain-markdown', path: '/articles/plain-markdown' },
+  { kind: 'article', name: 'raymarching, but slowly', sub: '/articles/raymarching', path: '/articles/raymarching' },
   { kind: 'project', name: 'checkpoint', sub: 'github.com/user/checkpoint', path: '/projects' },
   { kind: 'project', name: 'rust-rays', sub: 'github.com/user/rust-rays', path: '/projects' },
   { kind: 'devlog', name: '2026-06-04 · 15:22', sub: 'wired theme picker into css vars', path: '/devlogs' },
@@ -86,7 +87,7 @@ export default function FinderModal({ onClose }) {
             onChange={(e) => { setQuery(e.target.value); setSelected(0); }}
             onKeyDown={handleKeyDown}
           />
-          <span className="finder-pill">⌘K</span>
+          <span className="finder-pill">⌘/ · Ctrl/</span>
         </div>
 
         <div className="finder-body">

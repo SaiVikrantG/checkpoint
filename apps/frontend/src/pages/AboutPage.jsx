@@ -2,16 +2,14 @@ export default function AboutPage() {
   return (
     <div className="about-grid">
       <div className="about-id">
-        <div className="about-avatar">avatar.png</div>
+        <img className="about-avatar" src="https://pbs.twimg.com/profile_images/1903540870831599617/kFSz4wRZ_400x400.jpg" alt="Vikrant" />
         <div className="about-name">
           <div className="about-name-line">user.</div>
           <div className="about-name-line about-name-line-2">name()</div>
         </div>
         <div className="about-meta">
-          <div><span className="dim">location  </span> ~/berlin, de</div>
-          <div><span className="dim">role      </span> infra engineer</div>
-          <div><span className="dim">timezone  </span> utc+01:00</div>
-          <div><span className="dim">status    </span> <span className="accent">○ available</span></div>
+          <div><span className="dim">location  </span> ~/bangalore, in</div>
+          <div><span className="dim">role      </span> swe @ oracle</div>
         </div>
       </div>
 
