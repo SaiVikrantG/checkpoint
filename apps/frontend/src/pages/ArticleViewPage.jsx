@@ -1,10 +1,37 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { marked } from 'marked';
+import mermaid from 'mermaid';
+
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#3a3c40',
+    primaryTextColor: '#d1d0c5',
+    primaryBorderColor: '#e2b714',
+    lineColor: '#646669',
+    secondaryColor: '#2c2e31',
+    tertiaryColor: '#25272a',
+    fontFamily: 'Roboto Mono, monospace',
+  },
+});
+
+const renderer = new marked.Renderer();
+const originalCode = renderer.code.bind(renderer);
+let mermaidId = 0;
+renderer.code = function ({ text, lang }) {
+  if (lang === 'mermaid') {
+    const id = `mermaid-${mermaidId++}`;
+    return `<div class="mermaid" id="${id}">${text}</div>`;
+  }
+  return originalCode({ text, lang });
+};
 
 marked.setOptions({
   gfm: true,
   breaks: true,
+  renderer,
 });
 
 const placeholderArticles = {
@@ -89,7 +116,7 @@ No build step. No component imports. No runtime. Just paragraphs, headings, link
 
 For diagrams, I use mermaid fenced blocks. For math, KaTeX. Both render from plain text. No special syntax beyond standard markdown extensions.
 
-\`\`\`
+\`\`\`mermaid
 graph TD
     A[Markdown] --> B[HTML]
     A --> C[PDF]
@@ -188,14 +215,25 @@ export default function ArticleViewPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [htmlContent, setHtmlContent] = useState('');
+  const articleRef = useRef(null);
 
   const article = placeholderArticles[slug];
 
   useEffect(() => {
     if (article) {
+      mermaidId = 0;
       setHtmlContent(marked(article.content));
     }
   }, [slug, article]);
+
+  useEffect(() => {
+    if (htmlContent && articleRef.current) {
+      const nodes = articleRef.current.querySelectorAll('.mermaid');
+      if (nodes.length > 0) {
+        mermaid.run({ nodes });
+      }
+    }
+  }, [htmlContent]);
 
   if (!article) {
     return (
@@ -221,6 +259,7 @@ export default function ArticleViewPage() {
         <span>{article.readTime} read</span>
       </div>
       <article
+        ref={articleRef}
         className="article-view-content"
         dangerouslySetInnerHTML={{ __html: htmlContent }}
       />

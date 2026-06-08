@@ -5,6 +5,7 @@ const allNavItems = [
   { label: 'Home', path: '/' },
   { label: 'Articles', path: '/articles' },
   { label: 'Projects', path: '/projects' },
+  { label: 'Board', path: '/board' },
   { label: 'About', path: '/about' },
 ];
 
@@ -74,7 +75,10 @@ export default function NotchHeader({ onFinderOpen }) {
         </div>
         <span className="notch-sep" />
         <span className="notch-kbd" onClick={onFinderOpen}>
-          {'⌘'}K
+          {'⌘/ · Ctrl/'}
+        </span>
+        <span className="notch-search" onClick={onFinderOpen}>
+          &#8981;
         </span>
       </div>
     </div>

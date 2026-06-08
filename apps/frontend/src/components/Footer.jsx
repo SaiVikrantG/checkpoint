@@ -3,13 +3,13 @@ export default function Footer() {
     <div className="page-footer">
       <div className="footer-left">
         <a className="footer-link" href="https://github.com/SaiVikrantG" target="_blank" rel="noopener noreferrer">
-          <span className="dot">&#9635;</span> github
+          &#8599; github
         </a>
-        <a className="footer-link" href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
-          <span className="dot">&#9636;</span> linkedin
+        <a className="footer-link" href="https://www.linkedin.com/in/saivikrantg" target="_blank" rel="noopener noreferrer">
+          &#8599; linkedin
         </a>
-        <a className="footer-link" href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-          <span className="dot">&#9637;</span> twitter
+        <a className="footer-link" href="https://x.com/whykrant" target="_blank" rel="noopener noreferrer">
+          &#8599; x
         </a>
       </div>
       <div className="footer-right">

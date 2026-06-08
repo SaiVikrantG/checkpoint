@@ -21,25 +21,7 @@ export default function LoginPage() {
           <input className="login-input" type="password" placeholder="••••••••••••" />
         </label>
 
-        <div className="login-row">
-          <label className="login-check">
-            <span className="login-box">&times;</span>
-            <span>remember this machine</span>
-          </label>
-          <span className="login-link">forgot?</span>
-        </div>
-
-        <button className="btn-primary login-btn">authenticate &rarr;</button>
-
-        <div className="login-or">&mdash; or &mdash;</div>
-        <div className="login-providers">
-          <button className="btn-ghost" style={{ display: 'block', width: '100%', textAlign: 'left' }}>
-            &#8599; continue with github
-          </button>
-          <button className="btn-ghost" style={{ display: 'block', width: '100%', textAlign: 'left' }}>
-            &#8599; continue with google
-          </button>
-        </div>
+<button className="btn-primary login-btn">authenticate &rarr;</button>
 
         <div className="login-foot">
           <span className="dim">// not you? </span>
