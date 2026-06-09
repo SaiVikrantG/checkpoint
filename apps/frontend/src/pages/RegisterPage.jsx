@@ -1,13 +1,13 @@
-import { SignIn } from '@clerk/clerk-react';
+import { SignUp } from '@clerk/clerk-react';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   return (
     <div className="login-wrap">
-      <SignIn
+      <SignUp
         routing="path"
-        path="/login"
-        signUpUrl="/register"
-        afterSignInUrl="/"
+        path="/register"
+        signInUrl="/login"
+        afterSignUpUrl="/"
       />
       <div className="login-aside">
         <div className="dim">checkpoint.dev</div>

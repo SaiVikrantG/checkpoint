@@ -7,6 +7,7 @@ import ProjectsPage from './pages/ProjectsPage';
 import AboutPage from './pages/AboutPage';
 import ClickMePage from './pages/ClickMePage';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import AdminPage from './pages/AdminPage';
 import DevlogsPage from './pages/DevlogsPage';
 import BoardPage from './pages/BoardPage';
@@ -64,7 +65,8 @@ export default function App() {
   return (
     <>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login/*" element={<LoginPage />} />
+        <Route path="/register/*" element={<RegisterPage />} />
         <Route element={<Layout onFinderOpen={() => setFinderOpen(true)} />}>
           <Route index element={<HomePage />} />
           <Route path="/articles" element={<ArticlesPage />} />
