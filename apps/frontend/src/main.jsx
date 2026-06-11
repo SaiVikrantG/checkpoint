@@ -5,6 +5,8 @@ import { ClerkProvider } from '@clerk/clerk-react';
 import App from './App';
 import './styles/theme.css';
 import './styles/pages.css';
+import './styles/user.css';
+import './styles/user2.css';
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 

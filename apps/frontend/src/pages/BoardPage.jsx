@@ -57,7 +57,7 @@ export default function BoardPage() {
   const navigate = useNavigate();
   const svgRef = useRef(null);
   const containerRef = useRef(null);
-  const [dims, setDims] = useState({ w: 1280, h: 900 });
+  const [dims, setDims] = useState({ w: 1280, h: 600 });
   const [nodePositions, setNodePositions] = useState(null);
   const [links, setLinks] = useState([]);
   const [dragging, setDragging] = useState(null);
@@ -70,7 +70,7 @@ export default function BoardPage() {
     if (!el) return;
     const obs = new ResizeObserver((entries) => {
       const { width, height } = entries[0].contentRect;
-      if (width > 0 && height > 0) setDims({ w: width, h: height });
+      if (width > 0 && height > 0) setDims({ w: width, h: Math.min(height, 600) });
     });
     obs.observe(el);
     return () => obs.disconnect();
