@@ -1,6 +1,6 @@
 /* ===== User-side shell + pages ===== */
 
-.user-page { display: flex; flex-direction: row; min-height: 100vh; }
+.user-page { display: flex; flex-direction: row; height: 100vh; overflow: hidden; }
 .user-side {
   width: 240px;
   background: var(--bg-3);
@@ -187,6 +187,9 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+}
+.user-body:has(.comp-layout) {
+  overflow: hidden;
 }
 
 /* shared user-page head */
@@ -409,13 +412,30 @@
 }
 .ut-views { color: var(--main); font-size: 12px; }
 .ut-checkbox {
-  display: inline-block;
+  appearance: none;
   width: 14px; height: 14px;
   border: 1px solid var(--border);
   border-radius: 3px;
-  text-align: center; line-height: 12px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+}
+.ut-checkbox:checked {
+  background: var(--main);
+  border-color: var(--main);
+}
+.ut-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 10px;
-  color: var(--main);
+  color: var(--bg);
+}
+.ut-row-selected {
+  background: color-mix(in srgb, var(--main) 8%, transparent);
 }
 .ut-menu { color: var(--sub); cursor: pointer; }
 .ut-menu:hover { color: var(--fg); }
