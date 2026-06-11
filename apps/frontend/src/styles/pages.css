@@ -661,7 +661,7 @@
 }
 
 /* ===== Admin ===== */
-.admin-head { margin-bottom: 24px; }
+.admin-head { margin-bottom: 24px; display: flex; align-items: flex-start; justify-content: space-between; }
 .admin-h1 {
   font-size: 48px;
   font-weight: 500;

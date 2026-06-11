@@ -9,6 +9,7 @@ import ClickMePage from './pages/ClickMePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import AdminPage from './pages/AdminPage';
+import RequireRole from './components/RequireRole';
 import DevlogsPage from './pages/DevlogsPage';
 import BoardPage from './pages/BoardPage';
 import ArticleViewPage from './pages/ArticleViewPage';
@@ -74,7 +75,7 @@ export default function App() {
           <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/clickme" element={<ClickMePage />} />
-          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin" element={<RequireRole role="admin"><AdminPage /></RequireRole>} />
           <Route path="/devlogs" element={<DevlogsPage />} />
           <Route path="/board" element={<BoardPage />} />
           <Route path="/editor/new" element={<Suspense fallback={null}><EditorPage /></Suspense>} />
