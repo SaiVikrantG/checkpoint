@@ -63,6 +63,7 @@ func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services
 	registerProjectRoutes(v1, h)
 	registerArticleRoutes(v1, h)
 	registerDevlogRoutes(v1, h)
+	registerWebhookRoutes(v1, h)
 
 	return router
 }

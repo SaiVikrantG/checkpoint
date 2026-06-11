@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useClerk } from '@clerk/clerk-react';
+import { useNavigate } from 'react-router-dom';
 
 const presetThemes = [
   { name: 'serika dark', bg: '#323437', fg: '#d1d0c5', ac: '#e2b714' },
@@ -35,6 +37,8 @@ function getSavedTheme() {
 }
 
 export default function AdminPage() {
+  const { signOut } = useClerk();
+  const navigate = useNavigate();
   const saved = getSavedTheme();
   const [activeTheme, setActiveTheme] = useState(saved?.name || 'serika dark');
   const [customBg, setCustomBg] = useState(saved?.bg || '#323437');
@@ -56,8 +60,16 @@ export default function AdminPage() {
   return (
     <>
       <div className="admin-head">
-        <h1 className="admin-h1">admin</h1>
-        <div className="admin-sub">// last sync 14s ago · all systems nominal</div>
+        <div>
+          <h1 className="admin-h1">admin</h1>
+          <div className="admin-sub">// last sync 14s ago · all systems nominal</div>
+        </div>
+        <button
+          className="btn-ghost"
+          onClick={() => signOut(() => navigate('/'))}
+        >
+          logout
+        </button>
       </div>
 
       <div className="admin-grid">

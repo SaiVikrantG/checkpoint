@@ -55,7 +55,9 @@ type IntegrationConfig struct {
 }
 
 type AuthConfig struct {
-	SecretKey string `koanf:"secret_key" validate:"required"`
+	SecretKey     string `koanf:"secret_key" validate:"required"`
+	WebhookSecret string `koanf:"webhook_secret" validate:"required"`
+	DefaultRole   string `koanf:"default_role" validate:"required"`
 }
 
 func LoadConfig() (*Config, error) {
