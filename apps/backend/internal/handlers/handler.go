@@ -13,6 +13,7 @@ type Handlers struct {
 	Projects *ProjectHandler
 	Articles *ArticleHandler
 	Devlogs  *DevlogHandler
+	Webhooks *WebhookHandler
 }
 
 // handler instances for handlers of each service will be passed
@@ -24,5 +25,6 @@ func InitHandlers(s *server.Server, services *service.Services) *Handlers {
 		Projects: NewProjectHandler(s, services.Projects),
 		Articles: NewArticleHandler(s, services.Articles),
 		Devlogs:  NewDevlogHandler(s, services.Devlogs),
+		Webhooks: NewWebhookHandler(s, services.Auth),
 	}
 }
