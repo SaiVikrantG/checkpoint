@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
 import Editor from '../components/Editor';
-import { getArticleById } from '../data/articles';
+import { getArticleById, updateArticle, createArticle } from '../data/articles';
 import { useNavigationGuard } from '../context/NavigationGuardContext';
 
 export default function UserNewArticlePage() {
@@ -75,11 +75,14 @@ export default function UserNewArticlePage() {
     setModal(null);
   };
 
+  const latestHtml = useRef('');
+
   const handleUpdate = useCallback((data) => {
     const text = data.text.trim();
     const words = text.split(/\s+/).filter(Boolean).length;
     setWordCount(words);
     currentContentText.current = text;
+    latestHtml.current = data.html;
     hasContent.current = text.length > 0;
     const changed = text !== savedState.current.contentText;
     setContentDirty(changed);
@@ -114,6 +117,19 @@ export default function UserNewArticlePage() {
   };
 
   const confirmSave = () => {
+    const data = {
+      title,
+      slug,
+      is_public: isPublic,
+      content: latestHtml.current,
+    };
+
+    if (isEdit) {
+      updateArticle(article.id, data);
+    } else {
+      createArticle({ ...data, tags: [], project_id: null, project_name: null });
+    }
+
     setStatus('saving...');
     savedState.current = {
       title,

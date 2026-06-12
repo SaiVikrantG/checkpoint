@@ -143,3 +143,32 @@ export function getArticles() {
 export function getArticleById(id) {
   return articles.find((a) => a.id === id) || null;
 }
+
+export function updateArticle(id, updates) {
+  const idx = articles.findIndex((a) => a.id === id);
+  if (idx === -1) return null;
+  articles[idx] = { ...articles[idx], ...updates, updated_at: new Date().toISOString() };
+  return articles[idx];
+}
+
+export function createArticle(data) {
+  const now = new Date().toISOString();
+  const article = {
+    id: Math.max(...articles.map((a) => a.id)) + 1,
+    views: 0,
+    created_by: 'user-123',
+    updated_by: null,
+    created_at: now,
+    updated_at: now,
+    ...data,
+  };
+  articles.push(article);
+  return article;
+}
+
+export function deleteArticles(ids) {
+  const idSet = new Set(ids);
+  const kept = articles.filter((a) => !idSet.has(a.id));
+  articles.length = 0;
+  articles.push(...kept);
+}

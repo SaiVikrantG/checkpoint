@@ -24,6 +24,7 @@ import UserProjectsPage from './pages/UserProjectsPage';
 import UserDevlogsPage from './pages/UserDevlogsPage';
 import UserStatsPage from './pages/UserStatsPage';
 import UserNewArticlePage from './pages/UserNewArticlePage';
+import UserArticleViewPage from './pages/UserArticleViewPage';
 import UserNewDevlogPage from './pages/UserNewDevlogPage';
 import AuthRedirect from './components/AuthRedirect';
 import NotFoundPage from './pages/NotFoundPage';
@@ -98,10 +99,12 @@ export default function App() {
           <Route path="/user" element={<UserDashboardPage />} />
           <Route path="/user/articles" element={<UserArticlesPage />} />
           <Route path="/user/articles/new" element={<UserNewArticlePage />} />
-          <Route path="/user/articles/:id" element={<UserNewArticlePage />} />
+          <Route path="/user/articles/:id/view" element={<UserArticleViewPage />} />
+          <Route path="/user/articles/:id/edit" element={<UserNewArticlePage />} />
           <Route path="/user/projects" element={<UserProjectsPage />} />
           <Route path="/user/devlogs" element={<UserDevlogsPage />} />
           <Route path="/user/devlogs/new" element={<UserNewDevlogPage />} />
+          <Route path="/user/devlogs/:id/edit" element={<UserNewDevlogPage />} />
           <Route path="/user/stats" element={<UserStatsPage />} />
         </Route>
       </Routes>
