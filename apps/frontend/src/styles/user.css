@@ -261,6 +261,7 @@
 .badge-public { color: #7ed4ad; border-color: #7ed4ad55; background: rgba(126,212,173,0.08); }
 .badge-draft  { color: var(--main); border-color: var(--main); background: var(--main-dim); }
 .badge-none   { color: var(--sub-2); }
+.badge-warn   { color: #e8c547; border-color: rgba(232,197,71,0.4); background: rgba(232,197,71,0.08); }
 
 /* ===== Dashboard ===== */
 .dash-hero { margin-bottom: 24px; }
@@ -381,7 +382,7 @@
 }
 .ut-head, .ut-row {
   display: grid;
-  grid-template-columns: 32px 1fr 160px 110px 80px 56px 24px;
+  grid-template-columns: 32px 1fr 160px 110px 80px 56px;
   align-items: center;
   gap: 14px;
   padding: 11px 18px;
@@ -550,8 +551,20 @@
   border-top: 1px solid var(--border-2);
   font-size: 11px;
 }
-.up-menu { margin-left: auto; cursor: pointer; }
-.up-menu:hover { color: var(--fg); }
+.up-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--sub);
+  font-size: 13px;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+.up-link:hover { color: var(--main); border-color: var(--main); }
 
 .up-new {
   border-style: dashed;
@@ -601,4 +614,88 @@
   .up-grid { grid-template-columns: 1fr; }
   .dl-entry { grid-template-columns: 1fr; gap: 4px; }
   .dl-time { font-size: 11px; }
+}
+
+/* ===== Confirm modal ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.modal-box {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+}
+.modal-title {
+  font-size: 15px;
+  color: var(--fg);
+  margin-bottom: 10px;
+}
+.modal-body {
+  font-size: 13px;
+  color: var(--sub);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.modal-btn-danger {
+  border-color: #c0392b !important;
+  color: #c0392b !important;
+}
+.modal-btn-danger:hover {
+  background: rgba(192, 57, 43, 0.1);
+}
+
+/* ===== Modal form ===== */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.modal-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--sub);
+}
+.modal-input {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: var(--fg);
+  outline: none;
+}
+.modal-input:focus {
+  border-color: var(--main);
+}
+.modal-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--sub);
+  padding-top: 4px;
+}
+
+/* ===== Project card selected ===== */
+.up-card-selected {
+  border-color: var(--main);
+  background: color-mix(in srgb, var(--main) 5%, var(--bg-2));
 }

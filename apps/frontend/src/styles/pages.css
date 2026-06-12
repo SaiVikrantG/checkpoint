@@ -1483,3 +1483,49 @@
   .board-h1 { font-size: 32px; }
   .board-legend { gap: 8px; font-size: 11px; }
 }
+
+/* ===== 404 page ===== */
+.nf-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  text-align: center;
+  padding: 40px 20px;
+}
+.nf-code {
+  font-size: 120px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--main);
+  text-shadow: 0 0 60px color-mix(in srgb, var(--main) 25%, transparent);
+}
+.nf-divider {
+  width: 60px;
+  height: 2px;
+  background: var(--border);
+  margin: 24px 0;
+}
+.nf-message {
+  font-size: 18px;
+  color: var(--fg);
+  margin-bottom: 8px;
+}
+.nf-hint {
+  font-size: 13px;
+  color: var(--sub);
+  max-width: 360px;
+  line-height: 1.6;
+}
+.nf-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+@media (max-width: 768px) {
+  .nf-code { font-size: 80px; }
+  .nf-message { font-size: 15px; }
+}

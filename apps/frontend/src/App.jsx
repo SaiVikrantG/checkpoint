@@ -26,6 +26,7 @@ import UserStatsPage from './pages/UserStatsPage';
 import UserNewArticlePage from './pages/UserNewArticlePage';
 import UserNewDevlogPage from './pages/UserNewDevlogPage';
 import AuthRedirect from './components/AuthRedirect';
+import NotFoundPage from './pages/NotFoundPage';
 
 function applyStoredTheme() {
   try {
@@ -91,11 +92,13 @@ export default function App() {
           <Route path="/board" element={<BoardPage />} />
           <Route path="/editor/new" element={<Suspense fallback={null}><EditorPage /></Suspense>} />
           <Route path="/editor/:id" element={<Suspense fallback={null}><EditorPage /></Suspense>} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
         <Route element={<RequireAuth><UserLayout onFinderOpen={() => setFinderOpen(true)} /></RequireAuth>}>
           <Route path="/user" element={<UserDashboardPage />} />
           <Route path="/user/articles" element={<UserArticlesPage />} />
           <Route path="/user/articles/new" element={<UserNewArticlePage />} />
+          <Route path="/user/articles/:id" element={<UserNewArticlePage />} />
           <Route path="/user/projects" element={<UserProjectsPage />} />
           <Route path="/user/devlogs" element={<UserDevlogsPage />} />
           <Route path="/user/devlogs/new" element={<UserNewDevlogPage />} />

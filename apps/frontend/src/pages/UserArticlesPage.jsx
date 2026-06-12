@@ -1,31 +1,21 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-
-const initialArticles = [
-  { id: 1, date: '2026-05-28', title: 'designing a notch header in css', proj: 'checkpoint', views: '3,214', isPublic: true },
-  { id: 2, date: '2026-05-19', title: 'the case for plain markdown', proj: '—', views: '1,884', isPublic: true },
-  { id: 3, date: '2026-05-02', title: 'raymarching, but slowly', proj: 'rust-rays', views: '3,180', isPublic: true },
-  { id: 4, date: '2026-04-21', title: 'a tiny job queue in 200 lines', proj: '—', views: '982', isPublic: true },
-  { id: 5, date: '2026-04-04', title: 'why i rewrote my dotfiles (again)', proj: 'dotfiles', views: '612', isPublic: true },
-  { id: 6, date: '2026-06-04', title: 'writing about writing', proj: '—', views: '—', isPublic: false },
-  { id: 7, date: '2026-06-02', title: 'notes on bvh traversal', proj: 'rust-rays', views: '—', isPublic: false },
-  { id: 8, date: '2026-03-12', title: 'voxel meshing without the pain', proj: 'voxel-engine', views: '742', isPublic: true },
-  { id: 9, date: '2026-02-28', title: 'shipping checkpoint v0', proj: 'checkpoint', views: '1,402', isPublic: true },
-];
+import { getArticles } from '../data/articles';
 
 const filters = ['all', 'public', 'private'];
 
 export default function UserArticlesPage() {
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState('all');
-  const [articles, setArticles] = useState(initialArticles);
+  const [articles, setArticles] = useState(getArticles);
   const [selected, setSelected] = useState(new Set());
 
   const filtered = activeFilter === 'all'
     ? articles
     : activeFilter === 'public'
-      ? articles.filter((a) => a.isPublic)
-      : articles.filter((a) => !a.isPublic);
+      ? articles.filter((a) => a.is_public)
+      : articles.filter((a) => !a.is_public);
 
   const toggleSelect = (id) => {
     setSelected((prev) => {
@@ -36,9 +26,12 @@ export default function UserArticlesPage() {
     });
   };
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const handleDelete = () => {
     setArticles((prev) => prev.filter((a) => !selected.has(a.id)));
     setSelected(new Set());
+    setShowDeleteModal(false);
   };
 
   return (
@@ -46,7 +39,7 @@ export default function UserArticlesPage() {
       <div className="user-head">
         <div>
           <h1 className="user-h1">articles</h1>
-          <div className="user-sub">// {articles.length} total · {articles.filter((a) => a.isPublic).length} public · {articles.filter((a) => !a.isPublic).length} private</div>
+          <div className="user-sub">// {articles.length} total · {articles.filter((a) => a.is_public).length} public · {articles.filter((a) => !a.is_public).length} private</div>
         </div>
         <div className="user-head-actions">
           <div className="user-tabs">
@@ -61,7 +54,7 @@ export default function UserArticlesPage() {
             ))}
           </div>
           {selected.size > 0 && (
-            <button className="btn-ghost" style={{ borderColor: '#c0392b', color: '#c0392b' }} onClick={handleDelete}>
+            <button className="btn-ghost" style={{ borderColor: '#c0392b', color: '#c0392b' }} onClick={() => setShowDeleteModal(true)}>
               delete ({selected.size})
             </button>
           )}
@@ -77,10 +70,9 @@ export default function UserArticlesPage() {
           <span>updated</span>
           <span>views</span>
           <span>public</span>
-          <span></span>
         </div>
         {filtered.map((a) => (
-          <div key={a.id} className={'ut-row' + (!a.isPublic ? ' ut-row-draft' : '') + (selected.has(a.id) ? ' ut-row-selected' : '')}>
+          <div key={a.id} className={'ut-row' + (!a.is_public ? ' ut-row-draft' : '') + (selected.has(a.id) ? ' ut-row-selected' : '')}>
             <span className="ut-cell ut-check">
               <input
                 type="checkbox"
@@ -89,24 +81,23 @@ export default function UserArticlesPage() {
                 onChange={() => toggleSelect(a.id)}
               />
             </span>
-            <span className="ut-cell ut-title">
+            <span className="ut-cell ut-title" onClick={() => navigate(`/user/articles/${a.id}`)} style={{ cursor: 'pointer' }}>
               <span className="ut-title-name">{a.title}</span>
-              {!a.isPublic && <span className="badge badge-draft">private</span>}
+              {!a.is_public && <span className="badge badge-draft">private</span>}
             </span>
             <span className="ut-cell ut-proj">
-              {a.proj === '—'
+              {!a.project_name
                 ? <span className="dim">standalone</span>
-                : <span className="ut-proj-chip">~/{a.proj}</span>
+                : <span className="ut-proj-chip">~/{a.project_name}</span>
               }
             </span>
-            <span className="ut-cell dim">{a.date}</span>
-            <span className="ut-cell ut-views">{a.views}</span>
+            <span className="ut-cell dim">{new Date(a.updated_at).toLocaleDateString()}</span>
+            <span className="ut-cell ut-views">{a.views > 0 ? a.views.toLocaleString() : '—'}</span>
             <span className="ut-cell">
-              <span className={'toggle' + (a.isPublic ? ' toggle-on' : '')}>
+              <span className={'toggle' + (a.is_public ? ' toggle-on' : '')}>
                 <span className="toggle-knob" />
               </span>
             </span>
-            <span className="ut-cell ut-menu">···</span>
           </div>
         ))}
       </div>
@@ -119,6 +110,22 @@ export default function UserArticlesPage() {
           <span className="kbd">→</span>
         </div>
       </div>
+
+      {showDeleteModal && createPortal(
+        <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-title">confirm delete</div>
+            <p className="modal-body">
+              are you sure you want to delete {selected.size} {selected.size === 1 ? 'article' : 'articles'}? this action cannot be undone.
+            </p>
+            <div className="modal-actions">
+              <button className="btn-ghost" onClick={() => setShowDeleteModal(false)}>cancel</button>
+              <button className="btn-ghost modal-btn-danger" onClick={handleDelete}>delete</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </>
   );
 }

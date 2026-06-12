@@ -108,6 +108,11 @@ input { font-family: var(--font-mono); }
   font-weight: 600;
 }
 .btn-primary:hover { filter: brightness(1.1); }
+.btn-primary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  filter: none;
+}
 .btn-ghost {
   background: transparent;
   color: var(--fg);

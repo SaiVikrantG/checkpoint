@@ -1,5 +1,6 @@
-import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useUser, useClerk } from '@clerk/clerk-react';
+import { useNavigationGuard } from '../context/NavigationGuardContext';
 
 const nav = [
   { id: 'dashboard', icon: '◐', name: 'dashboard', path: '/user', sub: 'overview' },
@@ -15,12 +16,17 @@ export default function UserLayout({ onFinderOpen }) {
   const { signOut } = useClerk();
   const navigate = useNavigate();
   const location = useLocation();
+  const { checkGuard } = useNavigationGuard();
 
   const currentNav = nav.find((n) =>
     n.path === '/user'
       ? location.pathname === '/user'
       : location.pathname.startsWith(n.path)
   ) || nav[0];
+
+  const guardedNavigate = (to) => {
+    if (checkGuard(to)) navigate(to);
+  };
 
   return (
     <div className="user-page">
@@ -42,23 +48,27 @@ export default function UserLayout({ onFinderOpen }) {
 
         <div className="user-side-eyebrow">// workspace</div>
         <ul className="user-nav">
-          {nav.map((n) => (
-            <li key={n.id}>
-              <NavLink
-                to={n.path}
-                end={n.path === '/user'}
-                className={({ isActive }) => 'user-nav-item' + (isActive ? ' active' : '')}
-              >
-                <span className="user-nav-icon">{n.icon}</span>
-                <span className="user-nav-name">{n.name}</span>
-                {n.sub && <span className="user-nav-sub">{n.sub}</span>}
-              </NavLink>
-            </li>
-          ))}
+          {nav.map((n) => {
+            const isActive = n.path === '/user'
+              ? location.pathname === '/user'
+              : location.pathname.startsWith(n.path);
+            return (
+              <li key={n.id}>
+                <div
+                  className={'user-nav-item' + (isActive ? ' active' : '')}
+                  onClick={() => guardedNavigate(n.path)}
+                >
+                  <span className="user-nav-icon">{n.icon}</span>
+                  <span className="user-nav-name">{n.name}</span>
+                  {n.sub && <span className="user-nav-sub">{n.sub}</span>}
+                </div>
+              </li>
+            );
+          })}
         </ul>
 
         <div className="user-side-foot">
-          <div className="user-side-item dim" onClick={() => navigate('/')}>
+          <div className="user-side-item dim" onClick={() => guardedNavigate('/')}>
             <span className="user-nav-icon">↗</span> view site
           </div>
           <div className="user-side-item user-logout" onClick={() => signOut(() => navigate('/'))}>
@@ -77,7 +87,7 @@ export default function UserLayout({ onFinderOpen }) {
           </div>
           <div className="user-topbar-right">
             <div className="user-search" onClick={onFinderOpen}>
-              <span className="dim">⌘K</span>
+              <span className="dim">⌘/</span>
               <span className="dim">jump to...</span>
             </div>
           </div>
