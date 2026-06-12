@@ -16,6 +16,17 @@ import ArticleViewPage from './pages/ArticleViewPage';
 import { lazy, Suspense } from 'react';
 const EditorPage = lazy(() => import('./pages/EditorPage'));
 import FinderModal from './components/FinderModal';
+import RequireAuth from './components/RequireAuth';
+import UserLayout from './components/UserLayout';
+import UserDashboardPage from './pages/UserDashboardPage';
+import UserArticlesPage from './pages/UserArticlesPage';
+import UserProjectsPage from './pages/UserProjectsPage';
+import UserDevlogsPage from './pages/UserDevlogsPage';
+import UserStatsPage from './pages/UserStatsPage';
+import UserNewArticlePage from './pages/UserNewArticlePage';
+import UserNewDevlogPage from './pages/UserNewDevlogPage';
+import AuthRedirect from './components/AuthRedirect';
+import NotFoundPage from './pages/NotFoundPage';
 
 function applyStoredTheme() {
   try {
@@ -68,6 +79,7 @@ export default function App() {
       <Routes>
         <Route path="/login/*" element={<LoginPage />} />
         <Route path="/register/*" element={<RegisterPage />} />
+        <Route path="/auth-redirect" element={<AuthRedirect />} />
         <Route element={<Layout onFinderOpen={() => setFinderOpen(true)} />}>
           <Route index element={<HomePage />} />
           <Route path="/articles" element={<ArticlesPage />} />
@@ -80,6 +92,17 @@ export default function App() {
           <Route path="/board" element={<BoardPage />} />
           <Route path="/editor/new" element={<Suspense fallback={null}><EditorPage /></Suspense>} />
           <Route path="/editor/:id" element={<Suspense fallback={null}><EditorPage /></Suspense>} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+        <Route element={<RequireAuth><UserLayout onFinderOpen={() => setFinderOpen(true)} /></RequireAuth>}>
+          <Route path="/user" element={<UserDashboardPage />} />
+          <Route path="/user/articles" element={<UserArticlesPage />} />
+          <Route path="/user/articles/new" element={<UserNewArticlePage />} />
+          <Route path="/user/articles/:id" element={<UserNewArticlePage />} />
+          <Route path="/user/projects" element={<UserProjectsPage />} />
+          <Route path="/user/devlogs" element={<UserDevlogsPage />} />
+          <Route path="/user/devlogs/new" element={<UserNewDevlogPage />} />
+          <Route path="/user/stats" element={<UserStatsPage />} />
         </Route>
       </Routes>
       {finderOpen && <FinderModal onClose={() => setFinderOpen(false)} />}

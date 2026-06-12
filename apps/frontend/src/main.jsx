@@ -3,8 +3,11 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { ClerkProvider } from '@clerk/clerk-react';
 import App from './App';
+import { NavigationGuardProvider } from './context/NavigationGuardContext';
 import './styles/theme.css';
 import './styles/pages.css';
+import './styles/user.css';
+import './styles/user2.css';
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -55,7 +58,9 @@ function ClerkApp() {
       }}
     >
       <BrowserRouter>
-        <App />
+        <NavigationGuardProvider>
+          <App />
+        </NavigationGuardProvider>
       </BrowserRouter>
     </ClerkProvider>
   );
