@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { getProjects } from '../data/projects';
 
+const PAGE_SIZE = 6;
 const filters = ['all', 'live', 'wip', 'archived'];
 const statusOptions = ['live', 'wip', 'archived'];
 
@@ -12,10 +13,40 @@ export default function UserProjectsPage() {
   const [modal, setModal] = useState(null);
   const [newProject, setNewProject] = useState({ name: '', description: '', url: '', status: 'wip', stack: '', is_public: true });
   const [editProject, setEditProject] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [loading, setLoading] = useState(false);
+  const sentinelRef = useRef(null);
 
   const filtered = activeFilter === 'all'
     ? projects
     : projects.filter((p) => p.status === activeFilter);
+
+  const visible = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [activeFilter]);
+
+  const loadMore = useCallback(() => {
+    if (!hasMore || loading) return;
+    setLoading(true);
+    setTimeout(() => {
+      setVisibleCount((v) => Math.min(v + PAGE_SIZE, filtered.length));
+      setLoading(false);
+    }, 400);
+  }, [hasMore, loading, filtered.length]);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) loadMore(); },
+      { rootMargin: '100px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   const toggleSelect = (id) => {
     setSelected((prev) => {
@@ -111,7 +142,7 @@ export default function UserProjectsPage() {
           <div className="up-new-sub dim">name, blurb, repo, stack</div>
         </div>
 
-        {filtered.map((p) => (
+        {visible.map((p) => (
           <div key={p.id} className={'up-card' + (selected.has(p.id) ? ' up-card-selected' : '')}>
             <div className="up-card-head">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -158,6 +189,15 @@ export default function UserProjectsPage() {
           </div>
         ))}
       </div>
+
+      {hasMore && (
+        <div className="up-sentinel" ref={sentinelRef}>
+          {loading && <div className="up-loader"><span className="up-loader-dot" /><span className="up-loader-dot" /><span className="up-loader-dot" /></div>}
+        </div>
+      )}
+      {!hasMore && filtered.length > PAGE_SIZE && (
+        <div className="up-end dim">// all {filtered.length} projects loaded</div>
+      )}
 
       {modal && createPortal(
         <div className="modal-overlay" onClick={() => setModal(null)}>

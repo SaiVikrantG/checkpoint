@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { getArticles } from '../data/articles';
+import { getArticles, deleteArticles } from '../data/articles';
 
 const filters = ['all', 'public', 'private'];
 
@@ -29,7 +29,8 @@ export default function UserArticlesPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleDelete = () => {
-    setArticles((prev) => prev.filter((a) => !selected.has(a.id)));
+    deleteArticles([...selected]);
+    setArticles(getArticles());
     setSelected(new Set());
     setShowDeleteModal(false);
   };
@@ -70,6 +71,7 @@ export default function UserArticlesPage() {
           <span>updated</span>
           <span>views</span>
           <span>public</span>
+          <span></span>
         </div>
         {filtered.map((a) => (
           <div key={a.id} className={'ut-row' + (!a.is_public ? ' ut-row-draft' : '') + (selected.has(a.id) ? ' ut-row-selected' : '')}>
@@ -81,7 +83,7 @@ export default function UserArticlesPage() {
                 onChange={() => toggleSelect(a.id)}
               />
             </span>
-            <span className="ut-cell ut-title" onClick={() => navigate(`/user/articles/${a.id}`)} style={{ cursor: 'pointer' }}>
+            <span className="ut-cell ut-title" onClick={() => navigate(`/user/articles/${a.id}/view`)} style={{ cursor: 'pointer' }}>
               <span className="ut-title-name">{a.title}</span>
               {!a.is_public && <span className="badge badge-draft">private</span>}
             </span>
@@ -97,6 +99,9 @@ export default function UserArticlesPage() {
               <span className={'toggle' + (a.is_public ? ' toggle-on' : '')}>
                 <span className="toggle-knob" />
               </span>
+            </span>
+            <span className="ut-cell">
+              <span className="ut-edit-btn" onClick={(e) => { e.stopPropagation(); navigate(`/user/articles/${a.id}/edit`); }}>edit</span>
             </span>
           </div>
         ))}
