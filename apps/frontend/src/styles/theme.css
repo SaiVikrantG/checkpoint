@@ -82,6 +82,13 @@ input { font-family: var(--font-mono); }
   color: var(--sub);
   font-size: 11px;
   margin: 0 2px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.kbd-disabled {
+  opacity: 0.3;
+  pointer-events: none;
 }
 
 .kbd-inline {
