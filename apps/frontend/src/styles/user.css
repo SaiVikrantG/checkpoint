@@ -142,17 +142,19 @@
 .user-crumbs { font-size: 13px; color: var(--fg); }
 .user-topbar-right { display: flex; align-items: center; gap: 12px; position: relative; }
 .user-search {
-  display: inline-flex; align-items: center; gap: 10px;
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
   padding: 6px 14px;
   font-size: 12px;
-  min-width: 280px;
-  cursor: pointer;
+  font-family: inherit;
+  color: var(--fg);
+  min-width: 220px;
+  outline: none;
   transition: border-color 0.15s;
 }
-.user-search:hover { border-color: var(--sub); }
+.user-search::placeholder { color: var(--sub); }
+.user-search:hover, .user-search:focus { border-color: var(--main); }
 .user-new { position: relative; }
 .user-new-btn { padding: 7px 14px; font-size: 12px; }
 .user-new-menu {
@@ -798,9 +800,6 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
   align-content: start;
 }
 .up-sentinel {

@@ -1,21 +1,36 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { getArticles, deleteArticles } from '../data/articles';
+import { getArticles, deleteArticles, updateArticle } from '../data/articles';
 
 const filters = ['all', 'public', 'private'];
+const PAGE_SIZE = 10;
 
 export default function UserArticlesPage() {
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState('all');
   const [articles, setArticles] = useState(getArticles);
   const [selected, setSelected] = useState(new Set());
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
 
-  const filtered = activeFilter === 'all'
-    ? articles
-    : activeFilter === 'public'
-      ? articles.filter((a) => a.is_public)
-      : articles.filter((a) => !a.is_public);
+  const filtered = useMemo(() => {
+    let result = articles;
+    if (activeFilter === 'public') result = result.filter((a) => a.is_public);
+    else if (activeFilter === 'private') result = result.filter((a) => !a.is_public);
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter((a) =>
+        a.title.toLowerCase().includes(q) ||
+        (a.project_name && a.project_name.toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [articles, activeFilter, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   const toggleSelect = (id) => {
     setSelected((prev) => {
@@ -27,12 +42,20 @@ export default function UserArticlesPage() {
   };
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [visibilityTarget, setVisibilityTarget] = useState(null);
 
   const handleDelete = () => {
     deleteArticles([...selected]);
     setArticles(getArticles());
     setSelected(new Set());
     setShowDeleteModal(false);
+  };
+
+  const handleVisibilityConfirm = () => {
+    if (!visibilityTarget) return;
+    updateArticle(visibilityTarget.id, { is_public: !visibilityTarget.is_public });
+    setArticles([...getArticles()]);
+    setVisibilityTarget(null);
   };
 
   return (
@@ -43,12 +66,19 @@ export default function UserArticlesPage() {
           <div className="user-sub">// {articles.length} total · {articles.filter((a) => a.is_public).length} public · {articles.filter((a) => !a.is_public).length} private</div>
         </div>
         <div className="user-head-actions">
+          <input
+            className="user-search"
+            type="text"
+            placeholder="search by title or project..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          />
           <div className="user-tabs">
             {filters.map((f) => (
               <button
                 key={f}
                 className={'chip' + (f === activeFilter ? ' chip-active' : '')}
-                onClick={() => setActiveFilter(f)}
+                onClick={() => { setActiveFilter(f); setPage(1); }}
               >
                 {f}
               </button>
@@ -73,7 +103,7 @@ export default function UserArticlesPage() {
           <span>public</span>
           <span></span>
         </div>
-        {filtered.map((a) => (
+        {paged.map((a) => (
           <div key={a.id} className={'ut-row' + (!a.is_public ? ' ut-row-draft' : '') + (selected.has(a.id) ? ' ut-row-selected' : '')}>
             <span className="ut-cell ut-check">
               <input
@@ -96,7 +126,7 @@ export default function UserArticlesPage() {
             <span className="ut-cell dim">{new Date(a.updated_at).toLocaleDateString()}</span>
             <span className="ut-cell ut-views">{a.views > 0 ? a.views.toLocaleString() : '—'}</span>
             <span className="ut-cell">
-              <span className={'toggle' + (a.is_public ? ' toggle-on' : '')}>
+              <span className={'toggle' + (a.is_public ? ' toggle-on' : '')} onClick={(e) => { e.stopPropagation(); setVisibilityTarget(a); }}>
                 <span className="toggle-knob" />
               </span>
             </span>
@@ -108,11 +138,11 @@ export default function UserArticlesPage() {
       </div>
 
       <div className="user-table-foot">
-        <span className="dim">// {filtered.length} of {articles.length} shown</span>
+        <span className="dim">// {Math.min((safePage - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length} shown</span>
         <div className="user-paging">
-          <span className="kbd">←</span>
-          <span className="dim">page 1 / 1</span>
-          <span className="kbd">→</span>
+          <span className={'kbd' + (safePage <= 1 ? ' kbd-disabled' : '')} onClick={() => safePage > 1 && setPage(safePage - 1)}>←</span>
+          <span className="dim">page {safePage} / {totalPages}</span>
+          <span className={'kbd' + (safePage >= totalPages ? ' kbd-disabled' : '')} onClick={() => safePage < totalPages && setPage(safePage + 1)}>→</span>
         </div>
       </div>
 
@@ -126,6 +156,27 @@ export default function UserArticlesPage() {
             <div className="modal-actions">
               <button className="btn-ghost" onClick={() => setShowDeleteModal(false)}>cancel</button>
               <button className="btn-ghost modal-btn-danger" onClick={handleDelete}>delete</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {visibilityTarget && createPortal(
+        <div className="modal-overlay" onClick={() => setVisibilityTarget(null)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-title">change visibility</div>
+            <p className="modal-body">
+              are you sure you want to make <strong>"{visibilityTarget.title}"</strong> {visibilityTarget.is_public ? 'private' : 'public'}?
+              {visibilityTarget.is_public
+                ? ' it will no longer be visible to others.'
+                : ' it will be visible to everyone.'}
+            </p>
+            <div className="modal-actions">
+              <button className="btn-ghost" onClick={() => setVisibilityTarget(null)}>cancel</button>
+              <button className="btn-primary" onClick={handleVisibilityConfirm}>
+                make {visibilityTarget.is_public ? 'private' : 'public'}
+              </button>
             </div>
           </div>
         </div>,

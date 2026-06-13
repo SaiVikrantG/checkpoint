@@ -64,6 +64,7 @@ function EditorToolbar({ editor }) {
     <button
       className={'toolbar-btn' + (isActive ? ' active' : '')}
       onClick={action}
+      tabIndex={-1}
       title={label}
     >
       {label}
