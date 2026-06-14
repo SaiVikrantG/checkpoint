@@ -125,12 +125,67 @@ func (q *Queries) GetDevlogByID(ctx context.Context, id int64) (Devlog, error) {
 	return i, err
 }
 
+const getDevlogsByProjectID = `-- name: GetDevlogsByProjectID :many
+SELECT id, project_id, title, content, is_public, created_by, updated_by, created_at, updated_at
+FROM devlogs
+WHERE project_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type GetDevlogsByProjectIDParams struct {
+	ProjectID int64 `json:"project_id"`
+	Limit     int32 `json:"limit"`
+	Offset    int32 `json:"offset"`
+}
+
+func (q *Queries) GetDevlogsByProjectID(ctx context.Context, arg GetDevlogsByProjectIDParams) ([]Devlog, error) {
+	rows, err := q.db.Query(ctx, getDevlogsByProjectID, arg.ProjectID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Devlog
+	for rows.Next() {
+		var i Devlog
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProjectID,
+			&i.Title,
+			&i.Content,
+			&i.IsPublic,
+			&i.CreatedBy,
+			&i.UpdatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getDevlogsCount = `-- name: GetDevlogsCount :one
 SELECT COUNT(*) FROM devlogs
 `
 
 func (q *Queries) GetDevlogsCount(ctx context.Context) (int64, error) {
 	row := q.db.QueryRow(ctx, getDevlogsCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getDevlogsCountByProjectID = `-- name: GetDevlogsCountByProjectID :one
+SELECT COUNT(*) FROM devlogs WHERE project_id = $1
+`
+
+func (q *Queries) GetDevlogsCountByProjectID(ctx context.Context, projectID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, getDevlogsCountByProjectID, projectID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

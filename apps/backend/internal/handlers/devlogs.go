@@ -54,6 +54,44 @@ func (h *DevlogHandler) GetAllDevlogs() echo.HandlerFunc {
 	return Handle(h.Handler, h.handleGetAllDevlogsLogic, 200, GetAllDevlogsRequest{})
 }
 
+// GetDevlogsByProjectID
+
+type GetDevlogsByProjectIDRequest struct {
+	ProjectID int64 `param:"projectId"`
+	Page      int   `query:"page"`
+	Limit     int   `query:"limit"`
+}
+
+func (r GetDevlogsByProjectIDRequest) Validate() error {
+	if r.ProjectID <= 0 {
+		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
+			{Field: "projectId", Error: "must be a positive integer"},
+		}, nil)
+	}
+	if r.Limit > 100 {
+		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
+			{Field: "limit", Error: "must not exceed 100"},
+		}, nil)
+	}
+	return nil
+}
+
+func (h *DevlogHandler) handleGetDevlogsByProjectIDLogic(c echo.Context, req GetDevlogsByProjectIDRequest) (model.PaginatedResponse[model.Devlog], error) {
+	page := req.Page
+	if page <= 0 {
+		page = 1
+	}
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 20
+	}
+	return h.devlogServices.GetDevlogsByProjectID(c.Request().Context(), req.ProjectID, page, limit)
+}
+
+func (h *DevlogHandler) GetDevlogsByProjectID() echo.HandlerFunc {
+	return Handle(h.Handler, h.handleGetDevlogsByProjectIDLogic, 200, GetDevlogsByProjectIDRequest{})
+}
+
 // GetDevlogByID
 
 type GetDevlogByIDRequest struct {

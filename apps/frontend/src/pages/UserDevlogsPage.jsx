@@ -4,6 +4,8 @@ import { getDevlogsGroupedByProject, createDevlog } from '../data/devlogs';
 import { getProjects } from '../data/projects';
 import Editor from '../components/Editor';
 
+const DEVLOG_PAGE_SIZE = 10;
+
 export default function UserDevlogsPage() {
   const [searchParams] = useSearchParams();
   const projects = getProjects();
@@ -48,19 +50,49 @@ export default function UserDevlogsPage() {
   const currentGroup = groups.find((g) => g.project_name === selectedProject);
   const totalCount = groups.reduce((s, g) => s + g.entries.length, 0);
 
+  const [visibleCount, setVisibleCount] = useState(DEVLOG_PAGE_SIZE);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const entrySentinelRef = useRef(null);
+
+  const allEntries = currentGroup?.entries ?? [];
+  const visibleEntries = allEntries.slice(0, visibleCount);
+  const hasMoreEntries = visibleCount < allEntries.length;
+
+  useEffect(() => {
+    setVisibleCount(DEVLOG_PAGE_SIZE);
+  }, [selectedProject]);
+
+  const loadMoreEntries = useCallback(() => {
+    if (!hasMoreEntries || loadingMore) return;
+    setLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((v) => Math.min(v + DEVLOG_PAGE_SIZE, allEntries.length));
+      setLoadingMore(false);
+    }, 400);
+  }, [hasMoreEntries, loadingMore, allEntries.length]);
+
+  useEffect(() => {
+    const el = entrySentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) loadMoreEntries(); },
+      { rootMargin: '100px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadMoreEntries]);
+
   const dateGroups = useMemo(() => {
     const map = {};
-    if (currentGroup) {
-      for (const entry of currentGroup.entries) {
-        const date = new Date(entry.created_at).toLocaleDateString('en-US', {
-          year: 'numeric', month: '2-digit', day: '2-digit',
-        });
-        if (!map[date]) map[date] = [];
-        map[date].push(entry);
-      }
+    for (const entry of visibleEntries) {
+      const date = new Date(entry.created_at).toLocaleDateString('en-US', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+      });
+      if (!map[date]) map[date] = [];
+      map[date].push(entry);
     }
     return Object.entries(map);
-  }, [currentGroup]);
+  }, [visibleEntries]);
 
   const formatTime = (iso) =>
     new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -102,6 +134,7 @@ export default function UserDevlogsPage() {
       setComposeKey((k) => k + 1);
       const newGroups = getDevlogsGroupedByProject();
       setGroups(newGroups);
+      setVisibleCount(DEVLOG_PAGE_SIZE);
       const newIdx = newGroups.findIndex((g) => g.project_name === savedProject);
       if (newIdx >= 0) setFocusedIndex(newIdx);
       setSaving(false);
@@ -211,7 +244,7 @@ export default function UserDevlogsPage() {
             <span className="dl-tree-root-name">~/{selectedProject}</span>
           </div>
           {dateGroups.map(([date, entries], di) => {
-            const isLastDate = di === dateGroups.length - 1;
+            const isLastDate = di === dateGroups.length - 1 && !hasMoreEntries;
             const isCollapsed = collapsedDates[date];
             return (
               <div key={date} className="dl-tree-branch">
@@ -246,6 +279,14 @@ export default function UserDevlogsPage() {
               </div>
             );
           })}
+          {hasMoreEntries && (
+            <div className="up-sentinel" ref={entrySentinelRef}>
+              {loadingMore && <div className="up-loader"><span className="up-loader-dot" /><span className="up-loader-dot" /><span className="up-loader-dot" /></div>}
+            </div>
+          )}
+          {!hasMoreEntries && allEntries.length > DEVLOG_PAGE_SIZE && (
+            <div className="up-end dim">// all {allEntries.length} entries loaded</div>
+          )}
         </>
       ) : (
         <div className="dl-empty">

@@ -38,6 +38,29 @@ func (r *DevlogRepository) GetAllDevlogs(ctx context.Context, page, limit int) (
 	return devlogs, total, nil
 }
 
+func (r *DevlogRepository) GetDevlogsByProjectID(ctx context.Context, projectID int64, page, limit int) ([]model.Devlog, int64, error) {
+	rows, err := r.queries.GetDevlogsByProjectID(ctx, db.GetDevlogsByProjectIDParams{
+		ProjectID: projectID,
+		Limit:     int32(limit),
+		Offset:    int32((page - 1) * limit),
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	total, err := r.queries.GetDevlogsCountByProjectID(ctx, projectID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	devlogs := make([]model.Devlog, len(rows))
+	for i, row := range rows {
+		devlogs[i] = toModelDevlog(row)
+	}
+
+	return devlogs, total, nil
+}
+
 func (r *DevlogRepository) GetDevlogByID(ctx context.Context, id int64) (model.Devlog, error) {
 	row, err := r.queries.GetDevlogByID(ctx, id)
 	if err != nil {

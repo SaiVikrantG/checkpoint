@@ -12,6 +12,16 @@ LIMIT $1 OFFSET $2;
 -- name: GetDevlogsCount :one
 SELECT COUNT(*) FROM devlogs;
 
+-- name: GetDevlogsByProjectID :many
+SELECT id, project_id, title, content, is_public, created_by, updated_by, created_at, updated_at
+FROM devlogs
+WHERE project_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: GetDevlogsCountByProjectID :one
+SELECT COUNT(*) FROM devlogs WHERE project_id = $1;
+
 -- name: CreateDevlog :one
 INSERT INTO devlogs (project_id, title, content, is_public, created_by, created_at)
 VALUES ($1, $2, $3, $4, $5, $6)

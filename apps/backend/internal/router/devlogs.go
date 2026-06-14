@@ -7,6 +7,7 @@ import (
 
 func registerDevlogRoutes(g *echo.Group, h *handlers.Handlers) {
 	g.GET("/devlogs", h.Devlogs.GetAllDevlogs())
+	g.GET("/devlogs/project/:projectId", h.Devlogs.GetDevlogsByProjectID())
 	g.GET("/devlogs/:id", h.Devlogs.GetDevlogByID())
 	g.POST("/devlogs", h.Devlogs.CreateDevlog())
 	g.PATCH("/devlogs/:id", h.Devlogs.UpdateDevlog())
