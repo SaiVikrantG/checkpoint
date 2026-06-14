@@ -1,11 +1,26 @@
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getArticleById } from '../data/articles';
 
 export default function UserArticleViewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const article = useMemo(() => getArticleById(Number(id)), [id]);
+  const [article, setArticle] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getArticleById(Number(id)).then((data) => {
+      setArticle(data);
+      setLoading(false);
+    }).catch((err) => {
+      console.error('Failed to load article:', err);
+      setLoading(false);
+    });
+  }, [id]);
+
+  if (loading) {
+    return <div className="av-empty"><span className="dim">loading...</span></div>;
+  }
 
   if (!article) {
     return (

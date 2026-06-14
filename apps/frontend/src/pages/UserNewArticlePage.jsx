@@ -8,25 +8,47 @@ import { useNavigationGuard } from '../context/NavigationGuardContext';
 export default function UserNewArticlePage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const article = useMemo(() => (id ? getArticleById(Number(id)) : null), [id]);
+  const [article, setArticle] = useState(null);
+  const [articleLoading, setArticleLoading] = useState(!!id);
   const isEdit = !!article;
 
-  const [title, setTitle] = useState(article?.title ?? '');
-  const [slug, setSlug] = useState(article?.slug ?? '');
-  const [isPublic, setIsPublic] = useState(article?.is_public ?? true);
-  const [wordCount, setWordCount] = useState(() => {
-    if (!article?.content) return 0;
-    const text = article.content.replace(/<[^>]*>/g, ' ').trim();
-    return text.split(/\s+/).filter(Boolean).length;
-  });
-  const [status, setStatus] = useState(isEdit ? 'saved' : 'draft');
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
+  const [isPublic, setIsPublic] = useState(true);
+  const [wordCount, setWordCount] = useState(0);
+  const [status, setStatus] = useState('draft');
 
   const savedState = useRef({
-    title: article?.title ?? '',
-    slug: article?.slug ?? '',
-    isPublic: article?.is_public ?? true,
+    title: '',
+    slug: '',
+    isPublic: true,
     contentText: '',
   });
+
+  useEffect(() => {
+    if (!id) return;
+    getArticleById(Number(id)).then((data) => {
+      setArticle(data);
+      setTitle(data.title);
+      setSlug(data.slug ?? '');
+      setIsPublic(data.is_public);
+      setStatus('saved');
+      savedState.current = {
+        title: data.title,
+        slug: data.slug ?? '',
+        isPublic: data.is_public,
+        contentText: '',
+      };
+      if (data.content) {
+        const text = data.content.replace(/<[^>]*>/g, ' ').trim();
+        setWordCount(text.split(/\s+/).filter(Boolean).length);
+      }
+      setArticleLoading(false);
+    }).catch((err) => {
+      console.error('Failed to load article:', err);
+      setArticleLoading(false);
+    });
+  }, [id]);
   const currentContentText = useRef('');
   const hasContent = useRef(false);
 
@@ -116,7 +138,7 @@ export default function UserNewArticlePage() {
     setModal('save');
   };
 
-  const confirmSave = () => {
+  const confirmSave = async () => {
     const data = {
       title,
       slug,
@@ -124,32 +146,42 @@ export default function UserNewArticlePage() {
       content: latestHtml.current,
     };
 
-    if (isEdit) {
-      updateArticle(article.id, data);
-    } else {
-      createArticle({ ...data, tags: [], project_id: null, project_name: null });
-    }
-
     setStatus('saving...');
-    savedState.current = {
-      title,
-      slug,
-      isPublic,
-      contentText: currentContentText.current,
-    };
-    setTimeout(() => {
+    setModal(null);
+
+    try {
+      if (isEdit) {
+        const updated = await updateArticle(article.id, data);
+        setArticle(updated);
+      } else {
+        const created = await createArticle({ ...data, tags: [], project_id: null });
+        setArticle(created);
+      }
+
+      savedState.current = {
+        title,
+        slug,
+        isPublic,
+        contentText: currentContentText.current,
+      };
       setStatus('saved');
       setTitleDirty(false);
       setContentDirty(false);
       setVisibilityDirty(false);
-    }, 800);
-    setModal(null);
+    } catch (err) {
+      console.error('Failed to save article:', err);
+      setStatus('error');
+    }
   };
 
   const confirmDelete = () => {
     setModal(null);
     navigate('/user/articles');
   };
+
+  if (articleLoading) {
+    return <div className="av-empty"><span className="dim">loading...</span></div>;
+  }
 
   const projectLabel = article?.project_name ? `~/${article.project_name}` : 'none (standalone)';
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useUser } from '@clerk/clerk-react';
 import { getDevlogsGroupedByProject, createDevlog } from '../data/devlogs';
 import { getProjects } from '../data/projects';
 import Editor from '../components/Editor';
@@ -7,23 +8,38 @@ import Editor from '../components/Editor';
 const DEVLOG_PAGE_SIZE = 10;
 
 export default function UserDevlogsPage() {
+  const { user } = useUser();
   const [searchParams] = useSearchParams();
-  const projects = getProjects();
-
   const preselected = searchParams.get('project');
-  const [groups, setGroups] = useState(getDevlogsGroupedByProject);
+
+  const [projects, setProjectsList] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [projectFilter, setProjectFilter] = useState('');
-  const [focusedIndex, setFocusedIndex] = useState(() => {
-    if (preselected) {
-      const g = getDevlogsGroupedByProject();
-      const idx = g.findIndex((gr) => gr.project_name === preselected);
-      return idx >= 0 ? idx : 0;
-    }
-    return 0;
-  });
-  const [selectedProject, setSelectedProject] = useState(
-    preselected || (getDevlogsGroupedByProject()[0]?.project_name ?? null)
-  );
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  useEffect(() => {
+    const opts = { createdBy: user?.id };
+    Promise.all([
+      getProjects(1, 100, opts),
+      getDevlogsGroupedByProject(opts),
+    ]).then(([projRes, groupsData]) => {
+      setProjectsList(projRes.data);
+      setGroups(groupsData);
+      if (preselected) {
+        const idx = groupsData.findIndex((gr) => gr.project_name === preselected);
+        setFocusedIndex(idx >= 0 ? idx : 0);
+        setSelectedProject(preselected);
+      } else if (groupsData.length > 0) {
+        setSelectedProject(groupsData[0].project_name);
+      }
+      setInitialLoading(false);
+    }).catch((err) => {
+      console.error('Failed to load devlogs:', err);
+      setInitialLoading(false);
+    });
+  }, [preselected]);
   const [composing, setComposing] = useState(false);
   const [collapsedDates, setCollapsedDates] = useState({});
   const [expandedEntry, setExpandedEntry] = useState(null);
@@ -116,30 +132,31 @@ export default function UserDevlogsPage() {
     composeHtml.current = data.html;
   }, []);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (!composeTitle.trim() || !selectedProject) return;
     const proj = projects.find((p) => p.name === selectedProject);
-    createDevlog({
-      title: composeTitle.trim(),
-      content: composeHtml.current,
-      project_id: proj?.id ?? null,
-      project_name: selectedProject,
-      is_public: true,
-    });
     setSaving(true);
-    const savedProject = selectedProject;
-    setTimeout(() => {
+    try {
+      await createDevlog({
+        title: composeTitle.trim(),
+        content: composeHtml.current,
+        project_id: proj?.id ?? null,
+        is_public: true,
+      });
+      const savedProject = selectedProject;
       setComposeTitle('');
       composeHtml.current = '';
       setComposeKey((k) => k + 1);
-      const newGroups = getDevlogsGroupedByProject();
+      const newGroups = await getDevlogsGroupedByProject({ createdBy: user?.id });
       setGroups(newGroups);
       setVisibleCount(DEVLOG_PAGE_SIZE);
       const newIdx = newGroups.findIndex((g) => g.project_name === savedProject);
       if (newIdx >= 0) setFocusedIndex(newIdx);
-      setSaving(false);
       titleRef.current?.focus();
-    }, 300);
+    } catch (err) {
+      console.error('Failed to save devlog:', err);
+    }
+    setSaving(false);
   }, [composeTitle, selectedProject, projects]);
 
   const handleGlobalKeyDown = useCallback((e) => {
@@ -295,6 +312,10 @@ export default function UserDevlogsPage() {
       )}
     </div>
   );
+
+  if (initialLoading) {
+    return <div className="av-empty"><span className="dim">loading...</span></div>;
+  }
 
   return (
     <>
