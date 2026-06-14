@@ -79,10 +79,13 @@ func (h *ProjectHandler) GetProjectByID() echo.HandlerFunc {
 }
 
 type CreateProjectRequest struct {
-	Name        string  `json:"name" validate:"required,min=1,max=255"`
-	Description *string `json:"description" validate:"omitempty,max=1000"`
-	IsPublic    bool    `json:"isPublic"`
-	UserID      string  `json:"userId" validate:"required"`
+	Name        string   `json:"name" validate:"required,min=1,max=255"`
+	Description *string  `json:"description" validate:"omitempty,max=1000"`
+	URL         *string  `json:"url" validate:"omitempty"`
+	Status      string   `json:"status" validate:"omitempty,oneof=live wip archived"`
+	Stack       []string `json:"stack"`
+	IsPublic    bool     `json:"isPublic"`
+	UserID      string   `json:"userId" validate:"required"`
 }
 
 func (r CreateProjectRequest) Validate() error {
@@ -110,9 +113,16 @@ func (r CreateProjectRequest) Validate() error {
 }
 
 func (h *ProjectHandler) handleCreateProjectLogic(c echo.Context, req CreateProjectRequest) (model.Project, error) {
+	status := req.Status
+	if status == "" {
+		status = "wip"
+	}
 	project := &model.Project{
 		Name:        req.Name,
 		Description: req.Description,
+		URL:         req.URL,
+		Status:      status,
+		Stack:       req.Stack,
 		IsPublic:    req.IsPublic,
 		CreatedBy:   req.UserID,
 		Base: model.Base{
@@ -161,10 +171,13 @@ func (h *ProjectHandler) DeleteProject() echo.HandlerFunc {
 }
 
 type UpdateProjectRequest struct {
-	ID          int64   `param:"id"`
-	Name        *string `json:"name" validate:"omitempty,min=1,max=255"`
-	Description *string `json:"description" validate:"omitempty,max=1000"`
-	IsPublic    *bool   `json:"isPublic"`
+	ID          int64    `param:"id"`
+	Name        *string  `json:"name" validate:"omitempty,min=1,max=255"`
+	Description *string  `json:"description" validate:"omitempty,max=1000"`
+	URL         *string  `json:"url" validate:"omitempty"`
+	Status      *string  `json:"status" validate:"omitempty,oneof=live wip archived"`
+	Stack       []string `json:"stack"`
+	IsPublic    *bool    `json:"isPublic"`
 }
 
 func (r UpdateProjectRequest) Validate() error {
@@ -190,6 +203,9 @@ func (h *ProjectHandler) handleUpdateProjectLogic(c echo.Context, req UpdateProj
 	project := &model.Project{
 		Name:        derefStr(req.Name),
 		Description: req.Description,
+		URL:         req.URL,
+		Status:      derefStr(req.Status),
+		Stack:       req.Stack,
 		IsPublic:    derefBool(req.IsPublic),
 	}
 

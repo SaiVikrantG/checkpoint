@@ -81,6 +81,15 @@ func (s *ProjectService) UpdateProject(ctx context.Context, id int64, project *m
 	if project.Description == nil {
 		project.Description = existingProject.Description
 	}
+	if project.URL == nil {
+		project.URL = existingProject.URL
+	}
+	if project.Status == "" {
+		project.Status = existingProject.Status
+	}
+	if project.Stack == nil {
+		project.Stack = existingProject.Stack
+	}
 
 	return s.repository.UpdateProject(ctx, id, project)
 }

@@ -32,7 +32,7 @@ func (r *ArticleRepository) GetAllArticles(ctx context.Context, page, limit int)
 
 	articles := make([]model.Article, len(rows))
 	for i, row := range rows {
-		articles[i] = toModelArticle(row)
+		articles[i] = toModelArticleFromListRow(row)
 	}
 
 	return articles, total, nil
@@ -43,7 +43,7 @@ func (r *ArticleRepository) GetArticleByID(ctx context.Context, id int64) (model
 	if err != nil {
 		return model.Article{}, err
 	}
-	return toModelArticle(row), nil
+	return toModelArticleFromRow(row), nil
 }
 
 func (r *ArticleRepository) CreateArticle(ctx context.Context, article *model.Article) (*model.Article, error) {
@@ -57,6 +57,8 @@ func (r *ArticleRepository) CreateArticle(ctx context.Context, article *model.Ar
 		Title:     article.Title,
 		Content:   article.Content,
 		Slug:      pgtype.Text{String: derefStr(article.Slug), Valid: article.Slug != nil},
+		Tags:      article.Tags,
+		Status:    article.Status,
 		IsPublic:  pgtype.Bool{Bool: article.IsPublic, Valid: true},
 		CreatedBy: article.CreatedBy,
 		CreatedAt: pgtype.Timestamp{Time: article.CreatedAt, Valid: true},
@@ -64,7 +66,7 @@ func (r *ArticleRepository) CreateArticle(ctx context.Context, article *model.Ar
 	if err != nil {
 		return nil, err
 	}
-	result := toModelArticle(row)
+	result := toModelArticleFromDB(row)
 	return &result, nil
 }
 
@@ -79,13 +81,15 @@ func (r *ArticleRepository) UpdateArticle(ctx context.Context, id int64, article
 		Title:     article.Title,
 		Content:   article.Content,
 		Slug:      pgtype.Text{String: derefStr(article.Slug), Valid: article.Slug != nil},
+		Tags:      article.Tags,
+		Status:    article.Status,
 		IsPublic:  pgtype.Bool{Bool: article.IsPublic, Valid: true},
 		ProjectID: projectID,
 	})
 	if err != nil {
 		return nil, err
 	}
-	result := toModelArticle(row)
+	result := toModelArticleFromDB(row)
 	return &result, nil
 }
 
@@ -93,7 +97,11 @@ func (r *ArticleRepository) DeleteArticle(ctx context.Context, id int64) error {
 	return r.queries.DeleteArticle(ctx, id)
 }
 
-func toModelArticle(a db.Article) model.Article {
+func (r *ArticleRepository) IncrementViews(ctx context.Context, id int64) error {
+	return r.queries.IncrementArticleViews(ctx, id)
+}
+
+func toModelArticleFromRow(a db.GetArticleByIDRow) model.Article {
 	var projectID *int64
 	if a.ProjectID.Valid {
 		projectID = &a.ProjectID.Int64
@@ -109,6 +117,59 @@ func toModelArticle(a db.Article) model.Article {
 		Title:     a.Title,
 		Content:   a.Content,
 		Slug:      textToPtr(a.Slug),
+		Tags:      a.Tags,
+		Views:     a.Views,
+		Status:    a.Status,
+		IsPublic:  a.IsPublic.Bool,
+		CreatedBy: a.CreatedBy,
+		UpdatedBy: textToPtr(a.UpdatedBy),
+	}
+}
+
+func toModelArticleFromListRow(a db.GetAllArticlesRow) model.Article {
+	var projectID *int64
+	if a.ProjectID.Valid {
+		projectID = &a.ProjectID.Int64
+	}
+
+	return model.Article{
+		Base: model.Base{
+			BaseWithId:        model.BaseWithId{ID: a.ID},
+			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: timeFromPg(a.CreatedAt)},
+			BaseWithUpdatedAt: model.BaseWithUpdatedAt{UpdatedAt: timeFromPg(a.UpdatedAt)},
+		},
+		ProjectID: projectID,
+		Title:     a.Title,
+		Content:   a.Content,
+		Slug:      textToPtr(a.Slug),
+		Tags:      a.Tags,
+		Views:     a.Views,
+		Status:    a.Status,
+		IsPublic:  a.IsPublic.Bool,
+		CreatedBy: a.CreatedBy,
+		UpdatedBy: textToPtr(a.UpdatedBy),
+	}
+}
+
+func toModelArticleFromDB(a db.Article) model.Article {
+	var projectID *int64
+	if a.ProjectID.Valid {
+		projectID = &a.ProjectID.Int64
+	}
+
+	return model.Article{
+		Base: model.Base{
+			BaseWithId:        model.BaseWithId{ID: a.ID},
+			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: timeFromPg(a.CreatedAt)},
+			BaseWithUpdatedAt: model.BaseWithUpdatedAt{UpdatedAt: timeFromPg(a.UpdatedAt)},
+		},
+		ProjectID: projectID,
+		Title:     a.Title,
+		Content:   a.Content,
+		Slug:      textToPtr(a.Slug),
+		Tags:      a.Tags,
+		Views:     a.Views,
+		Status:    a.Status,
 		IsPublic:  a.IsPublic.Bool,
 		CreatedBy: a.CreatedBy,
 		UpdatedBy: textToPtr(a.UpdatedBy),

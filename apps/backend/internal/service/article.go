@@ -78,6 +78,12 @@ func (s *ArticleService) UpdateArticle(ctx context.Context, id int64, article *m
 	if article.Slug == nil {
 		article.Slug = existing.Slug
 	}
+	if article.Tags == nil {
+		article.Tags = existing.Tags
+	}
+	if article.Status == "" {
+		article.Status = existing.Status
+	}
 
 	result, err := s.repository.UpdateArticle(ctx, id, article)
 	if err != nil {

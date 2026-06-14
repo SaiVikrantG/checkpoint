@@ -80,12 +80,14 @@ func (h *ArticleHandler) GetArticleByID() echo.HandlerFunc {
 // CreateArticle
 
 type CreateArticleRequest struct {
-	ProjectID *int64  `json:"projectId"`
-	Title     string  `json:"title" validate:"required,min=1,max=255"`
-	Content   string  `json:"content" validate:"required"`
-	Slug      *string `json:"slug" validate:"omitempty,max=255"`
-	IsPublic  bool    `json:"isPublic"`
-	UserID    string  `json:"userId" validate:"required"`
+	ProjectID *int64   `json:"projectId"`
+	Title     string   `json:"title" validate:"required,min=1,max=255"`
+	Content   string   `json:"content" validate:"required"`
+	Slug      *string  `json:"slug" validate:"omitempty,max=255"`
+	Tags      []string `json:"tags"`
+	Status    string   `json:"status" validate:"omitempty,oneof=draft published archived"`
+	IsPublic  bool     `json:"isPublic"`
+	UserID    string   `json:"userId" validate:"required"`
 }
 
 func (r CreateArticleRequest) Validate() error {
@@ -108,11 +110,17 @@ func (r CreateArticleRequest) Validate() error {
 }
 
 func (h *ArticleHandler) handleCreateArticleLogic(c echo.Context, req CreateArticleRequest) (model.Article, error) {
+	status := req.Status
+	if status == "" {
+		status = "draft"
+	}
 	article := &model.Article{
 		ProjectID: req.ProjectID,
 		Title:     req.Title,
 		Content:   req.Content,
 		Slug:      req.Slug,
+		Tags:      req.Tags,
+		Status:    status,
 		IsPublic:  req.IsPublic,
 		CreatedBy: req.UserID,
 		Base: model.Base{
@@ -134,12 +142,14 @@ func (h *ArticleHandler) CreateArticle() echo.HandlerFunc {
 // UpdateArticle
 
 type UpdateArticleRequest struct {
-	ID        int64   `param:"id"`
-	ProjectID *int64  `json:"projectId"`
-	Title     *string `json:"title" validate:"omitempty,min=1,max=255"`
-	Content   *string `json:"content" validate:"omitempty"`
-	Slug      *string `json:"slug" validate:"omitempty,max=255"`
-	IsPublic  *bool   `json:"isPublic"`
+	ID        int64    `param:"id"`
+	ProjectID *int64   `json:"projectId"`
+	Title     *string  `json:"title" validate:"omitempty,min=1,max=255"`
+	Content   *string  `json:"content" validate:"omitempty"`
+	Slug      *string  `json:"slug" validate:"omitempty,max=255"`
+	Tags      []string `json:"tags"`
+	Status    *string  `json:"status" validate:"omitempty,oneof=draft published archived"`
+	IsPublic  *bool    `json:"isPublic"`
 }
 
 func (r UpdateArticleRequest) Validate() error {
@@ -157,6 +167,8 @@ func (h *ArticleHandler) handleUpdateArticleLogic(c echo.Context, req UpdateArti
 		Title:     derefStr(req.Title),
 		Content:   derefStr(req.Content),
 		Slug:      req.Slug,
+		Tags:      req.Tags,
+		Status:    derefStr(req.Status),
 		IsPublic:  derefBool(req.IsPublic),
 	}
 
