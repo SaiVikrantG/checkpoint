@@ -45,8 +45,9 @@ func (h *ProjectHandler) handleGetProjectLogic(c echo.Context, req GetProjectByI
 }
 
 type GetAllProjectsRequest struct {
-	Page  int `query:"page"`
-	Limit int `query:"limit"`
+	Page      int    `query:"page"`
+	Limit     int    `query:"limit"`
+	CreatedBy string `query:"createdBy"`
 }
 
 func (r GetAllProjectsRequest) Validate() error {
@@ -67,7 +68,7 @@ func (h *ProjectHandler) handleGetAllProjectsLogic(c echo.Context, req GetAllPro
 	if limit <= 0 {
 		limit = 20
 	}
-	return h.projectServices.GetAllProjects(c.Request().Context(), page, limit)
+	return h.projectServices.GetAllProjects(c.Request().Context(), page, limit, req.CreatedBy)
 }
 
 func (h *ProjectHandler) GetAllProjects() echo.HandlerFunc {
@@ -85,7 +86,6 @@ type CreateProjectRequest struct {
 	Status      string   `json:"status" validate:"omitempty,oneof=live wip archived"`
 	Stack       []string `json:"stack"`
 	IsPublic    bool     `json:"isPublic"`
-	UserID      string   `json:"userId" validate:"required"`
 }
 
 func (r CreateProjectRequest) Validate() error {
@@ -104,15 +104,11 @@ func (r CreateProjectRequest) Validate() error {
 			{Field: "description", Error: "description must not exceed 1000 characters"},
 		}, nil)
 	}
-	if r.UserID == "" {
-		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
-			{Field: "userId", Error: "userId is required"},
-		}, nil)
-	}
 	return nil
 }
 
 func (h *ProjectHandler) handleCreateProjectLogic(c echo.Context, req CreateProjectRequest) (model.Project, error) {
+	userID, _ := c.Get("user_id").(string)
 	status := req.Status
 	if status == "" {
 		status = "wip"
@@ -124,7 +120,7 @@ func (h *ProjectHandler) handleCreateProjectLogic(c echo.Context, req CreateProj
 		Status:      status,
 		Stack:       req.Stack,
 		IsPublic:    req.IsPublic,
-		CreatedBy:   req.UserID,
+		CreatedBy:   userID,
 		Base: model.Base{
 			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: time.Now()},
 		},
@@ -156,7 +152,9 @@ func (r DeleteProjectRequest) Validate() error {
 }
 
 func (h *ProjectHandler) handleDeleteProjectLogic(c echo.Context, req DeleteProjectRequest) (map[string]string, error) {
-	err := h.projectServices.DeleteProject(c.Request().Context(), req.ID)
+	userID, _ := c.Get("user_id").(string)
+	userRole, _ := c.Get("user_role").(string)
+	err := h.projectServices.DeleteProject(c.Request().Context(), req.ID, userID, userRole)
 	if err != nil {
 		return nil, err
 	}
@@ -200,6 +198,8 @@ func (r UpdateProjectRequest) Validate() error {
 }
 
 func (h *ProjectHandler) handleUpdateProjectLogic(c echo.Context, req UpdateProjectRequest) (model.Project, error) {
+	userID, _ := c.Get("user_id").(string)
+	userRole, _ := c.Get("user_role").(string)
 	project := &model.Project{
 		Name:        derefStr(req.Name),
 		Description: req.Description,
@@ -209,7 +209,7 @@ func (h *ProjectHandler) handleUpdateProjectLogic(c echo.Context, req UpdateProj
 		IsPublic:    derefBool(req.IsPublic),
 	}
 
-	updatedProject, err := h.projectServices.UpdateProject(c.Request().Context(), req.ID, project)
+	updatedProject, err := h.projectServices.UpdateProject(c.Request().Context(), req.ID, project, userID, userRole)
 	if err != nil {
 		return model.Project{}, err
 	}

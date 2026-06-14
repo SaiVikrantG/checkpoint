@@ -5,6 +5,12 @@ import (
 	"github.com/SaiVikrantG/checkpoint/internal/server"
 )
 
+const roleSuperAdmin = "org:super_admin"
+
+func canModify(resourceOwner, userID, userRole string) bool {
+	return userRole == roleSuperAdmin || resourceOwner == userID
+}
+
 type Services struct {
 	Auth     *AuthService
 	Projects *ProjectService

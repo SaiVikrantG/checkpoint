@@ -23,8 +23,8 @@ func NewDevlogService(server *server.Server, devlogRepo *repositories.DevlogRepo
 	}
 }
 
-func (s *DevlogService) GetAllDevlogs(ctx context.Context, page, limit int) (model.PaginatedResponse[model.Devlog], error) {
-	devlogs, total, err := s.repository.GetAllDevlogs(ctx, page, limit)
+func (s *DevlogService) GetAllDevlogs(ctx context.Context, page, limit int, createdBy string) (model.PaginatedResponse[model.Devlog], error) {
+	devlogs, total, err := s.repository.GetAllDevlogs(ctx, page, limit, createdBy)
 	if err != nil {
 		return model.PaginatedResponse[model.Devlog]{}, err
 	}
@@ -72,13 +72,16 @@ func (s *DevlogService) CreateDevlog(ctx context.Context, devlog *model.Devlog) 
 	return s.repository.CreateDevlog(ctx, devlog)
 }
 
-func (s *DevlogService) UpdateDevlog(ctx context.Context, id int64, devlog *model.Devlog) (*model.Devlog, error) {
+func (s *DevlogService) UpdateDevlog(ctx context.Context, id int64, devlog *model.Devlog, userID, userRole string) (*model.Devlog, error) {
 	existing, err := s.repository.GetDevlogByID(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, errors.NewNotFoundError("devlog not found", true)
 		}
 		return nil, err
+	}
+	if !canModify(existing.CreatedBy, userID, userRole) {
+		return nil, errors.NewForbiddenError("you do not have permission to update this devlog", true)
 	}
 
 	if devlog.Title == "" {
@@ -91,13 +94,16 @@ func (s *DevlogService) UpdateDevlog(ctx context.Context, id int64, devlog *mode
 	return s.repository.UpdateDevlog(ctx, id, devlog)
 }
 
-func (s *DevlogService) DeleteDevlog(ctx context.Context, id int64) error {
-	_, err := s.repository.GetDevlogByID(ctx, id)
+func (s *DevlogService) DeleteDevlog(ctx context.Context, id int64, userID, userRole string) error {
+	existing, err := s.repository.GetDevlogByID(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return errors.NewNotFoundError("devlog not found", true)
 		}
 		return err
+	}
+	if !canModify(existing.CreatedBy, userID, userRole) {
+		return errors.NewForbiddenError("you do not have permission to delete this devlog", true)
 	}
 	return s.repository.DeleteDevlog(ctx, id)
 }

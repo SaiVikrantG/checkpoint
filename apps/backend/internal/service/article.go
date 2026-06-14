@@ -24,8 +24,8 @@ func NewArticleService(server *server.Server, articleRepo *repositories.ArticleR
 	}
 }
 
-func (s *ArticleService) GetAllArticles(ctx context.Context, page, limit int) (model.PaginatedResponse[model.Article], error) {
-	articles, total, err := s.repository.GetAllArticles(ctx, page, limit)
+func (s *ArticleService) GetAllArticles(ctx context.Context, page, limit int, createdBy string) (model.PaginatedResponse[model.Article], error) {
+	articles, total, err := s.repository.GetAllArticles(ctx, page, limit, createdBy)
 	if err != nil {
 		return model.PaginatedResponse[model.Article]{}, err
 	}
@@ -60,13 +60,16 @@ func (s *ArticleService) CreateArticle(ctx context.Context, article *model.Artic
 	return result, nil
 }
 
-func (s *ArticleService) UpdateArticle(ctx context.Context, id int64, article *model.Article) (*model.Article, error) {
+func (s *ArticleService) UpdateArticle(ctx context.Context, id int64, article *model.Article, userID, userRole string) (*model.Article, error) {
 	existing, err := s.repository.GetArticleByID(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, errors.NewNotFoundError("article not found", true)
 		}
 		return nil, err
+	}
+	if !canModify(existing.CreatedBy, userID, userRole) {
+		return nil, errors.NewForbiddenError("you do not have permission to update this article", true)
 	}
 
 	if article.Title == "" {
@@ -92,13 +95,16 @@ func (s *ArticleService) UpdateArticle(ctx context.Context, id int64, article *m
 	return result, nil
 }
 
-func (s *ArticleService) DeleteArticle(ctx context.Context, id int64) error {
-	_, err := s.repository.GetArticleByID(ctx, id)
+func (s *ArticleService) DeleteArticle(ctx context.Context, id int64, userID, userRole string) error {
+	existing, err := s.repository.GetArticleByID(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return errors.NewNotFoundError("article not found", true)
 		}
 		return err
+	}
+	if !canModify(existing.CreatedBy, userID, userRole) {
+		return errors.NewForbiddenError("you do not have permission to delete this article", true)
 	}
 	return s.repository.DeleteArticle(ctx, id)
 }

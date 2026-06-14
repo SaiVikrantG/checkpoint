@@ -16,16 +16,22 @@ func NewArticleRepository(q *db.Queries) *ArticleRepository {
 	return &ArticleRepository{queries: q}
 }
 
-func (r *ArticleRepository) GetAllArticles(ctx context.Context, page, limit int) ([]model.Article, int64, error) {
+func (r *ArticleRepository) GetAllArticles(ctx context.Context, page, limit int, createdBy string) ([]model.Article, int64, error) {
+	createdByParam := pgtype.Text{}
+	if createdBy != "" {
+		createdByParam = pgtype.Text{String: createdBy, Valid: true}
+	}
+
 	rows, err := r.queries.GetAllArticles(ctx, db.GetAllArticlesParams{
-		Limit:  int32(limit),
-		Offset: int32((page - 1) * limit),
+		Limit:     int32(limit),
+		Offset:    int32((page - 1) * limit),
+		CreatedBy: createdByParam,
 	})
 	if err != nil {
 		return nil, 0, err
 	}
 
-	total, err := r.queries.GetArticlesCount(ctx)
+	total, err := r.queries.GetArticlesCount(ctx, createdByParam)
 	if err != nil {
 		return nil, 0, err
 	}

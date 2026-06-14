@@ -16,16 +16,22 @@ func NewDevlogRepository(q *db.Queries) *DevlogRepository {
 	return &DevlogRepository{queries: q}
 }
 
-func (r *DevlogRepository) GetAllDevlogs(ctx context.Context, page, limit int) ([]model.Devlog, int64, error) {
+func (r *DevlogRepository) GetAllDevlogs(ctx context.Context, page, limit int, createdBy string) ([]model.Devlog, int64, error) {
+	createdByParam := pgtype.Text{}
+	if createdBy != "" {
+		createdByParam = pgtype.Text{String: createdBy, Valid: true}
+	}
+
 	rows, err := r.queries.GetAllDevlogs(ctx, db.GetAllDevlogsParams{
-		Limit:  int32(limit),
-		Offset: int32((page - 1) * limit),
+		Limit:     int32(limit),
+		Offset:    int32((page - 1) * limit),
+		CreatedBy: createdByParam,
 	})
 	if err != nil {
 		return nil, 0, err
 	}
 
-	total, err := r.queries.GetDevlogsCount(ctx)
+	total, err := r.queries.GetDevlogsCount(ctx, createdByParam)
 	if err != nil {
 		return nil, 0, err
 	}

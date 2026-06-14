@@ -25,16 +25,22 @@ func (r *ProjectRepository) GetProjectByID(ctx context.Context, id int64) (model
 	return toModelProjectFromRow(row), nil
 }
 
-func (r *ProjectRepository) GetAllProjects(ctx context.Context, page, limit int) ([]model.Project, int64, error) {
+func (r *ProjectRepository) GetAllProjects(ctx context.Context, page, limit int, createdBy string) ([]model.Project, int64, error) {
+	createdByParam := pgtype.Text{}
+	if createdBy != "" {
+		createdByParam = pgtype.Text{String: createdBy, Valid: true}
+	}
+
 	rows, err := r.queries.GetAllProjects(ctx, db.GetAllProjectsParams{
-		Limit:  int32(limit),
-		Offset: int32((page - 1) * limit),
+		Limit:     int32(limit),
+		Offset:    int32((page - 1) * limit),
+		CreatedBy: createdByParam,
 	})
 	if err != nil {
 		return nil, 0, err
 	}
 
-	total, err := r.queries.GetProjectsCount(ctx)
+	total, err := r.queries.GetProjectsCount(ctx, createdByParam)
 	if err != nil {
 		return nil, 0, err
 	}

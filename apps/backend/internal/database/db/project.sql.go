@@ -69,13 +69,15 @@ func (q *Queries) DeleteProject(ctx context.Context, id int64) error {
 const getAllProjects = `-- name: GetAllProjects :many
 SELECT id, name, description, url, status, stack, is_public, created_by, updated_by, created_at, updated_at
 FROM projects
+WHERE ($3::text IS NULL OR created_by = $3)
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
 `
 
 type GetAllProjectsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit     int32       `json:"limit"`
+	Offset    int32       `json:"offset"`
+	CreatedBy pgtype.Text `json:"created_by"`
 }
 
 type GetAllProjectsRow struct {
@@ -93,7 +95,7 @@ type GetAllProjectsRow struct {
 }
 
 func (q *Queries) GetAllProjects(ctx context.Context, arg GetAllProjectsParams) ([]GetAllProjectsRow, error) {
-	rows, err := q.db.Query(ctx, getAllProjects, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getAllProjects, arg.Limit, arg.Offset, arg.CreatedBy)
 	if err != nil {
 		return nil, err
 	}
@@ -165,10 +167,11 @@ func (q *Queries) GetProjectByID(ctx context.Context, id int64) (GetProjectByIDR
 
 const getProjectsCount = `-- name: GetProjectsCount :one
 SELECT COUNT(*) FROM projects
+WHERE ($1::text IS NULL OR created_by = $1)
 `
 
-func (q *Queries) GetProjectsCount(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, getProjectsCount)
+func (q *Queries) GetProjectsCount(ctx context.Context, createdBy pgtype.Text) (int64, error) {
+	row := q.db.QueryRow(ctx, getProjectsCount, createdBy)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

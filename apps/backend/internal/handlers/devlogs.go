@@ -25,8 +25,9 @@ func NewDevlogHandler(server *server.Server, services *service.DevlogService) *D
 // GetAllDevlogs
 
 type GetAllDevlogsRequest struct {
-	Page  int `query:"page"`
-	Limit int `query:"limit"`
+	Page      int    `query:"page"`
+	Limit     int    `query:"limit"`
+	CreatedBy string `query:"createdBy"`
 }
 
 func (r GetAllDevlogsRequest) Validate() error {
@@ -47,7 +48,7 @@ func (h *DevlogHandler) handleGetAllDevlogsLogic(c echo.Context, req GetAllDevlo
 	if limit <= 0 {
 		limit = 20
 	}
-	return h.devlogServices.GetAllDevlogs(c.Request().Context(), page, limit)
+	return h.devlogServices.GetAllDevlogs(c.Request().Context(), page, limit, req.CreatedBy)
 }
 
 func (h *DevlogHandler) GetAllDevlogs() echo.HandlerFunc {
@@ -122,7 +123,6 @@ type CreateDevlogRequest struct {
 	Title     string `json:"title" validate:"required,min=1,max=255"`
 	Content   string `json:"content" validate:"required"`
 	IsPublic  bool   `json:"isPublic"`
-	UserID    string `json:"userId" validate:"required"`
 }
 
 func (r CreateDevlogRequest) Validate() error {
@@ -141,21 +141,17 @@ func (r CreateDevlogRequest) Validate() error {
 			{Field: "content", Error: "content is required"},
 		}, nil)
 	}
-	if r.UserID == "" {
-		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
-			{Field: "userId", Error: "userId is required"},
-		}, nil)
-	}
 	return nil
 }
 
 func (h *DevlogHandler) handleCreateDevlogLogic(c echo.Context, req CreateDevlogRequest) (model.Devlog, error) {
+	userID, _ := c.Get("user_id").(string)
 	devlog := &model.Devlog{
 		ProjectID: req.ProjectID,
 		Title:     req.Title,
 		Content:   req.Content,
 		IsPublic:  req.IsPublic,
-		CreatedBy: req.UserID,
+		CreatedBy: userID,
 		Base: model.Base{
 			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: time.Now()},
 		},
@@ -191,13 +187,15 @@ func (r UpdateDevlogRequest) Validate() error {
 }
 
 func (h *DevlogHandler) handleUpdateDevlogLogic(c echo.Context, req UpdateDevlogRequest) (model.Devlog, error) {
+	userID, _ := c.Get("user_id").(string)
+	userRole, _ := c.Get("user_role").(string)
 	devlog := &model.Devlog{
 		Title:    derefStr(req.Title),
 		Content:  derefStr(req.Content),
 		IsPublic: derefBool(req.IsPublic),
 	}
 
-	updated, err := h.devlogServices.UpdateDevlog(c.Request().Context(), req.ID, devlog)
+	updated, err := h.devlogServices.UpdateDevlog(c.Request().Context(), req.ID, devlog, userID, userRole)
 	if err != nil {
 		return model.Devlog{}, err
 	}
@@ -224,7 +222,9 @@ func (r DeleteDevlogRequest) Validate() error {
 }
 
 func (h *DevlogHandler) handleDeleteDevlogLogic(c echo.Context, req DeleteDevlogRequest) (map[string]string, error) {
-	if err := h.devlogServices.DeleteDevlog(c.Request().Context(), req.ID); err != nil {
+	userID, _ := c.Get("user_id").(string)
+	userRole, _ := c.Get("user_role").(string)
+	if err := h.devlogServices.DeleteDevlog(c.Request().Context(), req.ID, userID, userRole); err != nil {
 		return nil, err
 	}
 	return map[string]string{"message": "devlog deleted successfully"}, nil

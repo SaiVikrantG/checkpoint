@@ -73,13 +73,15 @@ func (q *Queries) DeleteArticle(ctx context.Context, id int64) error {
 const getAllArticles = `-- name: GetAllArticles :many
 SELECT id, project_id, title, content, slug, tags, views, status, is_public, created_by, updated_by, created_at, updated_at
 FROM articles
+WHERE ($3::text IS NULL OR created_by = $3)
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
 `
 
 type GetAllArticlesParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit     int32       `json:"limit"`
+	Offset    int32       `json:"offset"`
+	CreatedBy pgtype.Text `json:"created_by"`
 }
 
 type GetAllArticlesRow struct {
@@ -99,7 +101,7 @@ type GetAllArticlesRow struct {
 }
 
 func (q *Queries) GetAllArticles(ctx context.Context, arg GetAllArticlesParams) ([]GetAllArticlesRow, error) {
-	rows, err := q.db.Query(ctx, getAllArticles, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getAllArticles, arg.Limit, arg.Offset, arg.CreatedBy)
 	if err != nil {
 		return nil, err
 	}
@@ -177,10 +179,11 @@ func (q *Queries) GetArticleByID(ctx context.Context, id int64) (GetArticleByIDR
 
 const getArticlesCount = `-- name: GetArticlesCount :one
 SELECT COUNT(*) FROM articles
+WHERE ($1::text IS NULL OR created_by = $1)
 `
 
-func (q *Queries) GetArticlesCount(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, getArticlesCount)
+func (q *Queries) GetArticlesCount(ctx context.Context, createdBy pgtype.Text) (int64, error) {
+	row := q.db.QueryRow(ctx, getArticlesCount, createdBy)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

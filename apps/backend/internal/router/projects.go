@@ -2,13 +2,15 @@ package router
 
 import (
 	"github.com/SaiVikrantG/checkpoint/internal/handlers"
+	"github.com/SaiVikrantG/checkpoint/internal/middlewares"
 	"github.com/labstack/echo/v4"
 )
 
-func registerProjectRoutes(g *echo.Group, h *handlers.Handlers) {
+func registerProjectRoutes(g *echo.Group, h *handlers.Handlers, auth *middlewares.AuthMiddleWare) {
 	g.GET("/projects", h.Projects.GetAllProjects())
 	g.GET("/projects/:id", h.Projects.GetProjectByID())
-	g.POST("/projects", h.Projects.CreateProject())
-	g.PATCH("/projects/:id", h.Projects.UpdateProject())
-	g.DELETE("/projects/:id", h.Projects.DeleteProject())
+
+	g.POST("/projects", h.Projects.CreateProject(), auth.RequireAuth)
+	g.PATCH("/projects/:id", h.Projects.UpdateProject(), auth.RequireAuth)
+	g.DELETE("/projects/:id", h.Projects.DeleteProject(), auth.RequireAuth)
 }

@@ -11,11 +11,13 @@ RETURNING *;
 -- name: GetAllProjects :many
 SELECT id, name, description, url, status, stack, is_public, created_by, updated_by, created_at, updated_at
 FROM projects
+WHERE (sqlc.narg('created_by')::text IS NULL OR created_by = sqlc.narg('created_by'))
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2;
 
 -- name: GetProjectsCount :one
-SELECT COUNT(*) FROM projects;
+SELECT COUNT(*) FROM projects
+WHERE (sqlc.narg('created_by')::text IS NULL OR created_by = sqlc.narg('created_by'));
 
 -- name: DeleteProject :exec
 DELETE FROM projects

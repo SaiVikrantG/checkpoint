@@ -6,11 +6,13 @@ WHERE id = $1;
 -- name: GetAllDevlogs :many
 SELECT id, project_id, title, content, is_public, created_by, updated_by, created_at, updated_at
 FROM devlogs
+WHERE (sqlc.narg('created_by')::text IS NULL OR created_by = sqlc.narg('created_by'))
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2;
 
 -- name: GetDevlogsCount :one
-SELECT COUNT(*) FROM devlogs;
+SELECT COUNT(*) FROM devlogs
+WHERE (sqlc.narg('created_by')::text IS NULL OR created_by = sqlc.narg('created_by'));
 
 -- name: GetDevlogsByProjectID :many
 SELECT id, project_id, title, content, is_public, created_by, updated_by, created_at, updated_at

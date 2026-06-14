@@ -63,17 +63,19 @@ func (q *Queries) DeleteDevlog(ctx context.Context, id int64) error {
 const getAllDevlogs = `-- name: GetAllDevlogs :many
 SELECT id, project_id, title, content, is_public, created_by, updated_by, created_at, updated_at
 FROM devlogs
+WHERE ($3::text IS NULL OR created_by = $3)
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
 `
 
 type GetAllDevlogsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit     int32       `json:"limit"`
+	Offset    int32       `json:"offset"`
+	CreatedBy pgtype.Text `json:"created_by"`
 }
 
 func (q *Queries) GetAllDevlogs(ctx context.Context, arg GetAllDevlogsParams) ([]Devlog, error) {
-	rows, err := q.db.Query(ctx, getAllDevlogs, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getAllDevlogs, arg.Limit, arg.Offset, arg.CreatedBy)
 	if err != nil {
 		return nil, err
 	}
@@ -171,10 +173,11 @@ func (q *Queries) GetDevlogsByProjectID(ctx context.Context, arg GetDevlogsByPro
 
 const getDevlogsCount = `-- name: GetDevlogsCount :one
 SELECT COUNT(*) FROM devlogs
+WHERE ($1::text IS NULL OR created_by = $1)
 `
 
-func (q *Queries) GetDevlogsCount(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, getDevlogsCount)
+func (q *Queries) GetDevlogsCount(ctx context.Context, createdBy pgtype.Text) (int64, error) {
+	row := q.db.QueryRow(ctx, getDevlogsCount, createdBy)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
