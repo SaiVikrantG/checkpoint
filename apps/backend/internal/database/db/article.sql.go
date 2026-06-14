@@ -12,9 +12,9 @@ import (
 )
 
 const createArticle = `-- name: CreateArticle :one
-INSERT INTO articles (project_id, title, content, slug, is_public, created_by, created_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, project_id, title, content, slug, is_public, created_by, updated_by, created_at, updated_at
+INSERT INTO articles (project_id, title, content, slug, tags, status, is_public, created_by, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, project_id, title, content, slug, is_public, created_by, updated_by, created_at, updated_at, tags, views, status
 `
 
 type CreateArticleParams struct {
@@ -22,6 +22,8 @@ type CreateArticleParams struct {
 	Title     string           `json:"title"`
 	Content   string           `json:"content"`
 	Slug      pgtype.Text      `json:"slug"`
+	Tags      []string         `json:"tags"`
+	Status    string           `json:"status"`
 	IsPublic  pgtype.Bool      `json:"is_public"`
 	CreatedBy string           `json:"created_by"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
@@ -33,6 +35,8 @@ func (q *Queries) CreateArticle(ctx context.Context, arg CreateArticleParams) (A
 		arg.Title,
 		arg.Content,
 		arg.Slug,
+		arg.Tags,
+		arg.Status,
 		arg.IsPublic,
 		arg.CreatedBy,
 		arg.CreatedAt,
@@ -49,6 +53,9 @@ func (q *Queries) CreateArticle(ctx context.Context, arg CreateArticleParams) (A
 		&i.UpdatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Tags,
+		&i.Views,
+		&i.Status,
 	)
 	return i, err
 }
@@ -64,7 +71,7 @@ func (q *Queries) DeleteArticle(ctx context.Context, id int64) error {
 }
 
 const getAllArticles = `-- name: GetAllArticles :many
-SELECT id, project_id, title, content, slug, is_public, created_by, updated_by, created_at, updated_at
+SELECT id, project_id, title, content, slug, tags, views, status, is_public, created_by, updated_by, created_at, updated_at
 FROM articles
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
@@ -75,21 +82,40 @@ type GetAllArticlesParams struct {
 	Offset int32 `json:"offset"`
 }
 
-func (q *Queries) GetAllArticles(ctx context.Context, arg GetAllArticlesParams) ([]Article, error) {
+type GetAllArticlesRow struct {
+	ID        int64            `json:"id"`
+	ProjectID pgtype.Int8      `json:"project_id"`
+	Title     string           `json:"title"`
+	Content   string           `json:"content"`
+	Slug      pgtype.Text      `json:"slug"`
+	Tags      []string         `json:"tags"`
+	Views     int64            `json:"views"`
+	Status    string           `json:"status"`
+	IsPublic  pgtype.Bool      `json:"is_public"`
+	CreatedBy string           `json:"created_by"`
+	UpdatedBy pgtype.Text      `json:"updated_by"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+}
+
+func (q *Queries) GetAllArticles(ctx context.Context, arg GetAllArticlesParams) ([]GetAllArticlesRow, error) {
 	rows, err := q.db.Query(ctx, getAllArticles, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Article
+	var items []GetAllArticlesRow
 	for rows.Next() {
-		var i Article
+		var i GetAllArticlesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.ProjectID,
 			&i.Title,
 			&i.Content,
 			&i.Slug,
+			&i.Tags,
+			&i.Views,
+			&i.Status,
 			&i.IsPublic,
 			&i.CreatedBy,
 			&i.UpdatedBy,
@@ -107,20 +133,39 @@ func (q *Queries) GetAllArticles(ctx context.Context, arg GetAllArticlesParams) 
 }
 
 const getArticleByID = `-- name: GetArticleByID :one
-SELECT id, project_id, title, content, slug, is_public, created_by, updated_by, created_at, updated_at
+SELECT id, project_id, title, content, slug, tags, views, status, is_public, created_by, updated_by, created_at, updated_at
 FROM articles
 WHERE id = $1
 `
 
-func (q *Queries) GetArticleByID(ctx context.Context, id int64) (Article, error) {
+type GetArticleByIDRow struct {
+	ID        int64            `json:"id"`
+	ProjectID pgtype.Int8      `json:"project_id"`
+	Title     string           `json:"title"`
+	Content   string           `json:"content"`
+	Slug      pgtype.Text      `json:"slug"`
+	Tags      []string         `json:"tags"`
+	Views     int64            `json:"views"`
+	Status    string           `json:"status"`
+	IsPublic  pgtype.Bool      `json:"is_public"`
+	CreatedBy string           `json:"created_by"`
+	UpdatedBy pgtype.Text      `json:"updated_by"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+}
+
+func (q *Queries) GetArticleByID(ctx context.Context, id int64) (GetArticleByIDRow, error) {
 	row := q.db.QueryRow(ctx, getArticleByID, id)
-	var i Article
+	var i GetArticleByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.ProjectID,
 		&i.Title,
 		&i.Content,
 		&i.Slug,
+		&i.Tags,
+		&i.Views,
+		&i.Status,
 		&i.IsPublic,
 		&i.CreatedBy,
 		&i.UpdatedBy,
@@ -141,16 +186,29 @@ func (q *Queries) GetArticlesCount(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const incrementArticleViews = `-- name: IncrementArticleViews :exec
+UPDATE articles
+SET views = views + 1
+WHERE id = $1
+`
+
+func (q *Queries) IncrementArticleViews(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, incrementArticleViews, id)
+	return err
+}
+
 const updateArticle = `-- name: UpdateArticle :one
 UPDATE articles
 SET title = COALESCE($2, title),
     content = COALESCE($3, content),
     slug = COALESCE($4, slug),
-    is_public = COALESCE($5, is_public),
-    project_id = COALESCE($6, project_id),
+    tags = COALESCE($5, tags),
+    status = COALESCE($6, status),
+    is_public = COALESCE($7, is_public),
+    project_id = COALESCE($8, project_id),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
-RETURNING id, project_id, title, content, slug, is_public, created_by, updated_by, created_at, updated_at
+RETURNING id, project_id, title, content, slug, is_public, created_by, updated_by, created_at, updated_at, tags, views, status
 `
 
 type UpdateArticleParams struct {
@@ -158,6 +216,8 @@ type UpdateArticleParams struct {
 	Title     string      `json:"title"`
 	Content   string      `json:"content"`
 	Slug      pgtype.Text `json:"slug"`
+	Tags      []string    `json:"tags"`
+	Status    string      `json:"status"`
 	IsPublic  pgtype.Bool `json:"is_public"`
 	ProjectID pgtype.Int8 `json:"project_id"`
 }
@@ -168,6 +228,8 @@ func (q *Queries) UpdateArticle(ctx context.Context, arg UpdateArticleParams) (A
 		arg.Title,
 		arg.Content,
 		arg.Slug,
+		arg.Tags,
+		arg.Status,
 		arg.IsPublic,
 		arg.ProjectID,
 	)
@@ -183,6 +245,9 @@ func (q *Queries) UpdateArticle(ctx context.Context, arg UpdateArticleParams) (A
 		&i.UpdatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Tags,
+		&i.Views,
+		&i.Status,
 	)
 	return i, err
 }

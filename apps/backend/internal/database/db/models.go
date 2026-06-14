@@ -19,6 +19,9 @@ type Article struct {
 	UpdatedBy pgtype.Text      `json:"updated_by"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+	Tags      []string         `json:"tags"`
+	Views     int64            `json:"views"`
+	Status    string           `json:"status"`
 }
 
 type Devlog struct {
@@ -42,6 +45,9 @@ type Project struct {
 	UpdatedBy   pgtype.Text      `json:"updated_by"`
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+	Url         pgtype.Text      `json:"url"`
+	Status      string           `json:"status"`
+	Stack       []string         `json:"stack"`
 }
 
 type Reaction struct {
