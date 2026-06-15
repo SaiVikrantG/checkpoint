@@ -71,10 +71,11 @@ func (q *Queries) DeleteArticle(ctx context.Context, id int64) error {
 }
 
 const getAllArticles = `-- name: GetAllArticles :many
-SELECT id, project_id, title, content, slug, tags, views, status, is_public, created_by, updated_by, created_at, updated_at
-FROM articles
-WHERE ($3::text IS NULL OR created_by = $3)
-ORDER BY created_at DESC
+SELECT a.id, a.project_id, p.name AS project_name, a.title, a.content, a.slug, a.tags, a.views, a.status, a.is_public, a.created_by, a.updated_by, a.created_at, a.updated_at
+FROM articles a
+LEFT JOIN projects p ON p.id = a.project_id
+WHERE ($3::text IS NULL OR a.created_by = $3)
+ORDER BY a.created_at DESC
 LIMIT $1 OFFSET $2
 `
 
@@ -85,19 +86,20 @@ type GetAllArticlesParams struct {
 }
 
 type GetAllArticlesRow struct {
-	ID        int64            `json:"id"`
-	ProjectID pgtype.Int8      `json:"project_id"`
-	Title     string           `json:"title"`
-	Content   string           `json:"content"`
-	Slug      pgtype.Text      `json:"slug"`
-	Tags      []string         `json:"tags"`
-	Views     int64            `json:"views"`
-	Status    string           `json:"status"`
-	IsPublic  pgtype.Bool      `json:"is_public"`
-	CreatedBy string           `json:"created_by"`
-	UpdatedBy pgtype.Text      `json:"updated_by"`
-	CreatedAt pgtype.Timestamp `json:"created_at"`
-	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+	ID          int64            `json:"id"`
+	ProjectID   pgtype.Int8      `json:"project_id"`
+	ProjectName pgtype.Text      `json:"project_name"`
+	Title       string           `json:"title"`
+	Content     string           `json:"content"`
+	Slug        pgtype.Text      `json:"slug"`
+	Tags        []string         `json:"tags"`
+	Views       int64            `json:"views"`
+	Status      string           `json:"status"`
+	IsPublic    pgtype.Bool      `json:"is_public"`
+	CreatedBy   string           `json:"created_by"`
+	UpdatedBy   pgtype.Text      `json:"updated_by"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
 }
 
 func (q *Queries) GetAllArticles(ctx context.Context, arg GetAllArticlesParams) ([]GetAllArticlesRow, error) {
@@ -112,6 +114,7 @@ func (q *Queries) GetAllArticles(ctx context.Context, arg GetAllArticlesParams) 
 		if err := rows.Scan(
 			&i.ID,
 			&i.ProjectID,
+			&i.ProjectName,
 			&i.Title,
 			&i.Content,
 			&i.Slug,
@@ -208,7 +211,7 @@ SET title = COALESCE($2, title),
     tags = COALESCE($5, tags),
     status = COALESCE($6, status),
     is_public = COALESCE($7, is_public),
-    project_id = COALESCE($8, project_id),
+    project_id = $8,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING id, project_id, title, content, slug, is_public, created_by, updated_by, created_at, updated_at, tags, views, status

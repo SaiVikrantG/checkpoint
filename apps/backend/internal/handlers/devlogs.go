@@ -153,7 +153,7 @@ func (h *DevlogHandler) handleCreateDevlogLogic(c echo.Context, req CreateDevlog
 		IsPublic:  req.IsPublic,
 		CreatedBy: userID,
 		Base: model.Base{
-			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: time.Now()},
+			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: time.Now().UTC()},
 		},
 	}
 

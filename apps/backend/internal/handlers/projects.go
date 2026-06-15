@@ -122,7 +122,7 @@ func (h *ProjectHandler) handleCreateProjectLogic(c echo.Context, req CreateProj
 		IsPublic:    req.IsPublic,
 		CreatedBy:   userID,
 		Base: model.Base{
-			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: time.Now()},
+			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: time.Now().UTC()},
 		},
 	}
 

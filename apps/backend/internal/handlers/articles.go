@@ -120,7 +120,7 @@ func (h *ArticleHandler) handleCreateArticleLogic(c echo.Context, req CreateArti
 		IsPublic:  req.IsPublic,
 		CreatedBy: userID,
 		Base: model.Base{
-			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: time.Now()},
+			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: time.Now().UTC()},
 		},
 	}
 

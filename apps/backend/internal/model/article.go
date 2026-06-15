@@ -2,8 +2,9 @@ package model
 
 type Article struct {
 	Base
-	ProjectID *int64   `json:"projectId" db:"project_id"`
-	Title     string   `json:"title" db:"title"`
+	ProjectID   *int64   `json:"projectId" db:"project_id"`
+	ProjectName *string  `json:"projectName" db:"project_name"`
+	Title       string   `json:"title" db:"title"`
 	Content   string   `json:"content" db:"content"`
 	Slug      *string  `json:"slug" db:"slug"`
 	Tags      []string `json:"tags" db:"tags"`
