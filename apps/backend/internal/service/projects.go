@@ -23,8 +23,8 @@ func NewProjectService(server *server.Server, projectRepo *repositories.ProjectR
 	}
 }
 
-func (s *ProjectService) GetAllProjects(ctx context.Context, page, limit int) (model.PaginatedResponse[model.Project], error) {
-	projects, total, err := s.repository.GetAllProjects(ctx, page, limit)
+func (s *ProjectService) GetAllProjects(ctx context.Context, page, limit int, createdBy string) (model.PaginatedResponse[model.Project], error) {
+	projects, total, err := s.repository.GetAllProjects(ctx, page, limit, createdBy)
 	if err != nil {
 		return model.PaginatedResponse[model.Project]{}, err
 	}
@@ -55,18 +55,21 @@ func (s *ProjectService) CreateProject(ctx context.Context, project *model.Proje
 	return s.repository.CreateProject(ctx, project)
 }
 
-func (s *ProjectService) DeleteProject(ctx context.Context, id int64) error {
-	_, err := s.repository.GetProjectByID(ctx, id)
+func (s *ProjectService) DeleteProject(ctx context.Context, id int64, userID, userRole string) error {
+	existing, err := s.repository.GetProjectByID(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return errors.NewNotFoundError("project not found", true)
 		}
 		return err
 	}
+	if !canModify(existing.CreatedBy, userID, userRole) {
+		return errors.NewForbiddenError("you do not have permission to delete this project", true)
+	}
 	return s.repository.DeleteProject(ctx, id)
 }
 
-func (s *ProjectService) UpdateProject(ctx context.Context, id int64, project *model.Project) (*model.Project, error) {
+func (s *ProjectService) UpdateProject(ctx context.Context, id int64, project *model.Project, userID, userRole string) (*model.Project, error) {
 	existingProject, err := s.repository.GetProjectByID(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -74,12 +77,24 @@ func (s *ProjectService) UpdateProject(ctx context.Context, id int64, project *m
 		}
 		return nil, err
 	}
+	if !canModify(existingProject.CreatedBy, userID, userRole) {
+		return nil, errors.NewForbiddenError("you do not have permission to update this project", true)
+	}
 
 	if project.Name == "" {
 		project.Name = existingProject.Name
 	}
 	if project.Description == nil {
 		project.Description = existingProject.Description
+	}
+	if project.URL == nil {
+		project.URL = existingProject.URL
+	}
+	if project.Status == "" {
+		project.Status = existingProject.Status
+	}
+	if project.Stack == nil {
+		project.Stack = existingProject.Stack
 	}
 
 	return s.repository.UpdateProject(ctx, id, project)

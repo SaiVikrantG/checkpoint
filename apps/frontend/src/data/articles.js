@@ -1,309 +1,77 @@
-const articles = [
-  {
-    id: 1,
-    title: 'designing a notch header in css',
-    slug: '/articles/designing-a-notch-header-in-css',
-    content: '<h2>the notch pattern</h2><p>a floating header pinned to the top of the viewport, shaped like a notch — minimal, unobtrusive, and functional. here\'s how to build one with pure css.</p><p>the trick is combining <code>position: fixed</code> with a pill-shaped container that hugs only the navigation links. no full-width bar, no heavy shadows.</p><h3>markup</h3><pre><code>&lt;nav class="notch"&gt;\n  &lt;a href="/"&gt;home&lt;/a&gt;\n  &lt;a href="/articles"&gt;articles&lt;/a&gt;\n&lt;/nav&gt;</code></pre><p>the key css properties: <code>border-radius: 999px</code> for the pill shape, a semi-transparent background with <code>backdrop-filter: blur()</code>, and pointer-events management so the wrapper doesn\'t block clicks on content below.</p>',
-    project_id: 1,
-    project_name: 'checkpoint',
-    is_public: true,
-    tags: ['css', 'ui', 'frontend'],
-    created_by: 'user-123',
-    updated_by: 'user-123',
-    created_at: '2026-05-28T10:30:00Z',
-    updated_at: '2026-05-28T14:22:00Z',
-    views: 3214,
-  },
-  {
-    id: 2,
-    title: 'the case for plain markdown',
-    slug: '/articles/the-case-for-plain-markdown',
-    content: '<h2>why markdown still wins</h2><p>every few months a new rich-text format appears. mdx, markdoc, notion blocks, portable text. they all solve real problems — but they also add coupling, tooling, and migration debt.</p><p>plain markdown has one killer feature: <strong>it\'s just text</strong>. you can read it in any editor, diff it in git, and render it with dozens of libraries. no lock-in, no build step, no schema migrations.</p><h3>when to reach for more</h3><p>if you need interactive components embedded in prose, markdown alone won\'t cut it. but for documentation, blogs, and notes — keep it simple.</p>',
-    project_id: null,
-    project_name: null,
-    is_public: true,
-    tags: ['markdown', 'opinion'],
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-19T08:15:00Z',
-    updated_at: '2026-05-19T08:15:00Z',
-    views: 1884,
-  },
-  {
-    id: 3,
-    title: 'raymarching, but slowly',
-    slug: '/articles/raymarching-but-slowly',
-    content: '<h2>what is raymarching?</h2><p>raymarching is a rendering technique where you step along a ray in small increments, checking at each point whether you\'ve hit a surface. unlike raytracing, you don\'t solve for intersections analytically — you march forward until you\'re close enough.</p><h3>signed distance functions</h3><p>the magic ingredient is the <strong>signed distance function</strong> (SDF). given any point in space, the SDF tells you how far you are from the nearest surface. positive means outside, negative means inside, zero means on the surface.</p><p>a sphere centered at the origin with radius <code>r</code>:</p><pre><code>fn sdf_sphere(p: Vec3, r: f32) -&gt; f32 {\n    p.length() - r\n}</code></pre><p>you can combine SDFs with min (union), max (intersection), and negation (subtraction) to build complex scenes from simple primitives.</p>',
-    project_id: 2,
-    project_name: 'rust-rays',
-    is_public: true,
-    tags: ['rust', 'graphics', 'raymarching'],
-    created_by: 'user-123',
-    updated_by: 'user-123',
-    created_at: '2026-05-02T16:45:00Z',
-    updated_at: '2026-05-04T09:10:00Z',
-    views: 3180,
-  },
-  {
-    id: 4,
-    title: 'a tiny job queue in 200 lines',
-    slug: '/articles/a-tiny-job-queue-in-200-lines',
-    content: '<h2>why build your own?</h2><p>sometimes you need background processing but redis + bull is overkill. a postgres-backed job queue in 200 lines gives you: persistence, retries, concurrency control, and zero new infrastructure.</p><h3>the table</h3><pre><code>CREATE TABLE jobs (\n  id BIGSERIAL PRIMARY KEY,\n  queue TEXT NOT NULL,\n  payload JSONB NOT NULL,\n  status TEXT DEFAULT \'pending\',\n  attempts INT DEFAULT 0,\n  max_attempts INT DEFAULT 3,\n  run_at TIMESTAMP DEFAULT NOW(),\n  created_at TIMESTAMP DEFAULT NOW()\n);</code></pre><p>the worker polls with <code>SELECT ... FOR UPDATE SKIP LOCKED</code> — this gives you safe concurrent processing without advisory locks.</p>',
-    project_id: null,
-    project_name: null,
-    is_public: true,
-    tags: ['postgres', 'backend', 'architecture'],
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-04-21T12:00:00Z',
-    updated_at: '2026-04-21T12:00:00Z',
-    views: 982,
-  },
-  {
-    id: 5,
-    title: 'why i rewrote my dotfiles (again)',
-    slug: '/articles/why-i-rewrote-my-dotfiles-again',
-    content: '<h2>the cycle</h2><p>every developer has the same arc with dotfiles: start simple, add complexity, lose track, burn it down, start over. this is my third rewrite and hopefully the last.</p><h3>what changed</h3><p>the previous setup used a bare git repo with symlinks managed by a shell script. it worked until it didn\'t — one bad <code>stow</code> invocation wiped my ssh config.</p><p>the new approach: a single <code>install.sh</code> that\'s idempotent. run it once or run it ten times, same result. no symlink manager, no package manager abstraction. just conditional copies and appends.</p>',
-    project_id: 3,
-    project_name: 'dotfiles',
-    is_public: true,
-    tags: ['devtools', 'shell'],
-    created_by: 'user-123',
-    updated_by: 'user-123',
-    created_at: '2026-04-04T19:30:00Z',
-    updated_at: '2026-04-06T11:00:00Z',
-    views: 612,
-  },
-  {
-    id: 6,
-    title: 'writing about writing',
-    slug: '/articles/writing-about-writing',
-    content: '<p>notes on finding a voice for technical writing. still drafting this one — exploring the balance between precision and personality.</p><p>most technical blogs read like documentation with a date stamp. the good ones read like a conversation with someone who\'s thought deeply about the problem.</p>',
-    project_id: null,
-    project_name: null,
-    is_public: false,
-    tags: ['meta'],
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-06-04T22:10:00Z',
-    updated_at: '2026-06-04T22:10:00Z',
-    views: 0,
-  },
-  {
-    id: 7,
-    title: 'notes on bvh traversal',
-    slug: '/articles/notes-on-bvh-traversal',
-    content: '<h2>bounding volume hierarchies</h2><p>a BVH is a tree of axis-aligned bounding boxes. each leaf holds a primitive (triangle, sphere), and each internal node holds a box that encloses all its children.</p><p>traversal: start at the root. if the ray misses the box, skip the subtree. if it hits, recurse into both children. the key optimization is testing the <em>closer</em> child first — if you find a hit there, you can often skip the far child entirely.</p>',
-    project_id: 2,
-    project_name: 'rust-rays',
-    is_public: false,
-    tags: ['rust', 'graphics'],
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-06-02T15:40:00Z',
-    updated_at: '2026-06-02T15:40:00Z',
-    views: 0,
-  },
-  {
-    id: 8,
-    title: 'voxel meshing without the pain',
-    slug: '/articles/voxel-meshing-without-the-pain',
-    content: '<h2>the problem</h2><p>you have a 3D grid of voxels. you want to turn it into a mesh you can render. the naive approach — one cube per voxel — gives you 12 triangles per block and melts your GPU.</p><h3>greedy meshing</h3><p>the idea: merge adjacent faces that share the same material into larger quads. sweep each slice of the volume, find maximal rectangles of identical faces, emit one quad per rectangle.</p><p>result: a 16×16×16 chunk with ~50% fill goes from ~24k triangles down to ~2k. that\'s a 12x reduction for a relatively simple algorithm.</p>',
-    project_id: 4,
-    project_name: 'voxel-engine',
-    is_public: true,
-    tags: ['graphics', 'gamedev', 'optimization'],
-    created_by: 'user-123',
-    updated_by: 'user-123',
-    created_at: '2026-03-12T14:20:00Z',
-    updated_at: '2026-03-14T08:45:00Z',
-    views: 742,
-  },
-  {
-    id: 9,
-    title: 'shipping checkpoint v0',
-    slug: '/articles/shipping-checkpoint-v0',
-    content: '<h2>what is checkpoint?</h2><p>checkpoint is a personal documentation and blogging platform. it\'s the thing you\'re reading this on. v0 is the first version that\'s actually usable end to end.</p><h3>stack</h3><p>go backend (echo framework), react frontend, postgres for storage, clerk for auth. the theme is inspired by monkeytype — dark background, monospace everything, accent color that you can customize.</p><h3>what shipped</h3><ul><li>article editor with tiptap</li><li>project boards</li><li>devlog entries</li><li>theme customization</li><li>role-based access (admin / author)</li></ul><p>what\'s next: offline mode, search, and a knowledge graph view of all content.</p>',
-    project_id: 1,
-    project_name: 'checkpoint',
-    is_public: true,
-    tags: ['checkpoint', 'release'],
-    created_by: 'user-123',
-    updated_by: 'user-123',
-    created_at: '2026-02-28T20:00:00Z',
-    updated_at: '2026-03-01T10:30:00Z',
-    views: 1402,
-  },
-  {
-    id: 10,
-    title: 'understanding ecs in game engines',
-    slug: '/articles/understanding-ecs-in-game-engines',
-    content: '<p>entity-component-system is a pattern that separates data from behavior.</p>',
-    project_id: 4,
-    project_name: 'voxel-engine',
-    is_public: true,
-    tags: ['gamedev', 'architecture'],
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-02-15T11:00:00Z',
-    updated_at: '2026-02-15T11:00:00Z',
-    views: 520,
-  },
-  {
-    id: 11,
-    title: 'postgres advisory locks explained',
-    slug: '/articles/postgres-advisory-locks-explained',
-    content: '<p>advisory locks are application-level locks that postgres tracks for you.</p>',
-    project_id: null,
-    project_name: null,
-    is_public: true,
-    tags: ['postgres', 'backend'],
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-02-10T09:30:00Z',
-    updated_at: '2026-02-10T09:30:00Z',
-    views: 891,
-  },
-  {
-    id: 12,
-    title: 'css container queries in practice',
-    slug: '/articles/css-container-queries-in-practice',
-    content: '<p>container queries let components respond to their own size, not the viewport.</p>',
-    project_id: 1,
-    project_name: 'checkpoint',
-    is_public: true,
-    tags: ['css', 'frontend'],
-    created_by: 'user-123',
-    updated_by: 'user-123',
-    created_at: '2026-01-28T14:00:00Z',
-    updated_at: '2026-01-30T10:00:00Z',
-    views: 1105,
-  },
-  {
-    id: 13,
-    title: 'go context patterns i keep reusing',
-    slug: '/articles/go-context-patterns-i-keep-reusing',
-    content: '<p>a small catalog of context.Context patterns for services, middleware, and graceful shutdown.</p>',
-    project_id: null,
-    project_name: null,
-    is_public: true,
-    tags: ['go', 'backend'],
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-01-20T18:00:00Z',
-    updated_at: '2026-01-20T18:00:00Z',
-    views: 2340,
-  },
-  {
-    id: 14,
-    title: 'draft: sdf font rendering',
-    slug: '/articles/draft-sdf-font-rendering',
-    content: '<p>signed distance field fonts give you resolution-independent text in gpu pipelines.</p>',
-    project_id: 2,
-    project_name: 'rust-rays',
-    is_public: false,
-    tags: ['graphics', 'rust'],
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-06-10T21:00:00Z',
-    updated_at: '2026-06-10T21:00:00Z',
-    views: 0,
-  },
-  {
-    id: 15,
-    title: 'zerolog vs slog: which logger for go?',
-    slug: '/articles/zerolog-vs-slog',
-    content: '<p>comparing structured logging libraries in go after slog landed in the stdlib.</p>',
-    project_id: null,
-    project_name: null,
-    is_public: true,
-    tags: ['go', 'observability'],
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-01-05T12:00:00Z',
-    updated_at: '2026-01-05T12:00:00Z',
-    views: 1780,
-  },
-  {
-    id: 16,
-    title: 'building a cli with cobra and bubbletea',
-    slug: '/articles/building-a-cli-with-cobra-and-bubbletea',
-    content: '<p>combining cobra for arg parsing with bubbletea for interactive tui components.</p>',
-    project_id: 3,
-    project_name: 'dotfiles',
-    is_public: true,
-    tags: ['go', 'cli', 'tui'],
-    created_by: 'user-123',
-    updated_by: 'user-123',
-    created_at: '2025-12-18T16:30:00Z',
-    updated_at: '2025-12-20T09:00:00Z',
-    views: 645,
-  },
-  {
-    id: 17,
-    title: 'notes on wgpu compute shaders',
-    slug: '/articles/notes-on-wgpu-compute-shaders',
-    content: '<p>rough notes from getting a particle sim running on wgpu compute.</p>',
-    project_id: 2,
-    project_name: 'rust-rays',
-    is_public: false,
-    tags: ['rust', 'graphics', 'gpu'],
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-06-08T14:00:00Z',
-    updated_at: '2026-06-08T14:00:00Z',
-    views: 0,
-  },
-  {
-    id: 18,
-    title: 'auth patterns for spas with clerk',
-    slug: '/articles/auth-patterns-for-spas-with-clerk',
-    content: '<p>how checkpoint handles auth: clerk sdk, jwt middleware, role-based guards.</p>',
-    project_id: 1,
-    project_name: 'checkpoint',
-    is_public: true,
-    tags: ['auth', 'frontend', 'checkpoint'],
-    created_by: 'user-123',
-    updated_by: 'user-123',
-    created_at: '2025-12-01T10:00:00Z',
-    updated_at: '2025-12-05T15:00:00Z',
-    views: 930,
-  },
-];
+import { apiFetch } from './api';
 
-export function getArticles() {
-  return articles;
-}
-
-export function getArticleById(id) {
-  return articles.find((a) => a.id === id) || null;
-}
-
-export function updateArticle(id, updates) {
-  const idx = articles.findIndex((a) => a.id === id);
-  if (idx === -1) return null;
-  articles[idx] = { ...articles[idx], ...updates, updated_at: new Date().toISOString() };
-  return articles[idx];
-}
-
-export function createArticle(data) {
-  const now = new Date().toISOString();
-  const article = {
-    id: Math.max(...articles.map((a) => a.id)) + 1,
-    views: 0,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: now,
-    updated_at: now,
+export async function getArticles(page = 1, limit = 20, { createdBy } = {}) {
+  let url = `/articles?page=${page}&limit=${limit}`;
+  if (createdBy) url += `&createdBy=${encodeURIComponent(createdBy)}`;
+  const data = await apiFetch(url);
+  return {
     ...data,
+    data: data.data.map(mapArticle),
   };
-  articles.push(article);
-  return article;
 }
 
-export function deleteArticles(ids) {
-  const idSet = new Set(ids);
-  const kept = articles.filter((a) => !idSet.has(a.id));
-  articles.length = 0;
-  articles.push(...kept);
+export async function getArticleById(id) {
+  const data = await apiFetch(`/articles/${id}`);
+  return mapArticle(data);
+}
+
+export async function createArticle(article) {
+  const payload = {
+    title: article.title,
+    content: article.content || '',
+    slug: article.slug || null,
+    tags: article.tags || [],
+    status: article.status || 'draft',
+    isPublic: article.is_public ?? false,
+    projectId: article.project_id || null,
+  };
+  const data = await apiFetch('/articles', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return mapArticle(data);
+}
+
+export async function updateArticle(id, updates) {
+  const payload = {};
+  if (updates.title !== undefined) payload.title = updates.title;
+  if (updates.content !== undefined) payload.content = updates.content;
+  if (updates.slug !== undefined) payload.slug = updates.slug;
+  if (updates.tags !== undefined) payload.tags = updates.tags;
+  if (updates.status !== undefined) payload.status = updates.status;
+  if (updates.is_public !== undefined) payload.isPublic = updates.is_public;
+  if (updates.project_id !== undefined) payload.projectId = updates.project_id;
+
+  const data = await apiFetch(`/articles/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+  return mapArticle(data);
+}
+
+export async function deleteArticle(id) {
+  return apiFetch(`/articles/${id}`, { method: 'DELETE' });
+}
+
+export async function deleteArticles(ids) {
+  await Promise.all(ids.map((id) => deleteArticle(id)));
+}
+
+function mapArticle(a) {
+  return {
+    id: a.id,
+    title: a.title,
+    content: a.content,
+    slug: a.slug,
+    tags: a.tags || [],
+    views: a.views ?? 0,
+    status: a.status || 'draft',
+    project_id: a.projectId,
+    project_name: a.projectName || null,
+    is_public: a.isPublic,
+    created_by: a.createdBy,
+    updated_by: a.updatedBy,
+    created_at: a.createdAt,
+    updated_at: a.updatedAt,
+  };
 }

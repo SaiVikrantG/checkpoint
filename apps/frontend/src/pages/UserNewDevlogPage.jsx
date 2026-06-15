@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useUser } from '@clerk/clerk-react';
 import Editor from '../components/Editor';
 import { getProjects } from '../data/projects';
 import { getDevlogById, getDevlogsByProject, createDevlog, updateDevlog } from '../data/devlogs';
@@ -9,27 +10,59 @@ import { useNavigationGuard } from '../context/NavigationGuardContext';
 export default function UserNewDevlogPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const devlog = useMemo(() => (id ? getDevlogById(Number(id)) : null), [id]);
+  const { user } = useUser();
+  const [devlog, setDevlog] = useState(null);
+  const [projects, setProjectsList] = useState([]);
+  const [pageLoading, setPageLoading] = useState(true);
   const isEdit = !!devlog;
 
-  const projects = useMemo(() => getProjects(), []);
-  const [selectedProject, setSelectedProject] = useState(
-    devlog?.project_name || (projects.length > 0 ? projects[0].name : '')
-  );
-  const [title, setTitle] = useState(devlog?.title ?? '');
-  const [isPublic, setIsPublic] = useState(devlog?.is_public ?? true);
-  const [status, setStatus] = useState(isEdit ? 'saved' : 'draft');
+  const [selectedProject, setSelectedProject] = useState('');
+  const [title, setTitle] = useState('');
+  const [isPublic, setIsPublic] = useState(true);
+  const [status, setStatus] = useState('draft');
   const [modal, setModal] = useState(null);
   const [hint, setHint] = useState('');
 
-  const latestHtml = useRef(devlog?.content ?? '');
+  const latestHtml = useRef('');
   const currentText = useRef('');
   const savedState = useRef({
-    title: devlog?.title ?? '',
-    project: devlog?.project_name || (projects.length > 0 ? projects[0].name : ''),
-    isPublic: devlog?.is_public ?? true,
+    title: '',
+    project: '',
+    isPublic: true,
     contentText: '',
   });
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const projRes = await getProjects(1, 100, { createdBy: user?.id });
+        setProjectsList(projRes.data);
+
+        let loaded = null;
+        if (id) {
+          loaded = await getDevlogById(Number(id));
+          setDevlog(loaded);
+        }
+
+        const projName = loaded?.project_name || (projRes.data.length > 0 ? projRes.data[0].name : '');
+        setSelectedProject(projName);
+        setTitle(loaded?.title ?? '');
+        setIsPublic(loaded?.is_public ?? true);
+        setStatus(loaded ? 'saved' : 'draft');
+        latestHtml.current = loaded?.content ?? '';
+        savedState.current = {
+          title: loaded?.title ?? '',
+          project: projName,
+          isPublic: loaded?.is_public ?? true,
+          contentText: '',
+        };
+      } catch (err) {
+        console.error('Failed to load devlog data:', err);
+      }
+      setPageLoading(false);
+    };
+    loadData();
+  }, [id]);
 
   const [titleDirty, setTitleDirty] = useState(false);
   const [contentDirty, setContentDirty] = useState(false);
@@ -102,35 +135,40 @@ export default function UserNewDevlogPage() {
 
   const selectedProjectObj = projects.find((p) => p.name === selectedProject);
 
-  const confirmSave = () => {
+  const confirmSave = async () => {
     const data = {
       title,
       content: latestHtml.current,
       is_public: isPublic,
       project_id: selectedProjectObj?.id ?? null,
-      project_name: selectedProject,
     };
-
-    if (isEdit) {
-      updateDevlog(devlog.id, data);
-    } else {
-      createDevlog(data);
-    }
 
     setStatus('saving...');
-    savedState.current = {
-      title,
-      project: selectedProject,
-      isPublic,
-      contentText: currentText.current,
-    };
-    setTimeout(() => {
+    setModal(null);
+
+    try {
+      if (isEdit) {
+        const updated = await updateDevlog(devlog.id, data);
+        setDevlog(updated);
+      } else {
+        const created = await createDevlog(data);
+        setDevlog(created);
+      }
+
+      savedState.current = {
+        title,
+        project: selectedProject,
+        isPublic,
+        contentText: currentText.current,
+      };
       setStatus('saved');
       setTitleDirty(false);
       setContentDirty(false);
       setProjectDirty(false);
-    }, 800);
-    setModal(null);
+    } catch (err) {
+      console.error('Failed to save devlog:', err);
+      setStatus('error');
+    }
   };
 
   const confirmDelete = () => {
@@ -138,14 +176,22 @@ export default function UserNewDevlogPage() {
     navigate('/user/devlogs');
   };
 
-  const recentEntries = useMemo(() => {
+  const [recentEntries, setRecentEntries] = useState([]);
+
+  useEffect(() => {
     const proj = projects.find((p) => p.name === selectedProject);
-    if (!proj) return [];
-    return getDevlogsByProject(proj.id).slice(0, 5);
+    if (!proj) { setRecentEntries([]); return; }
+    getDevlogsByProject(proj.id, 1, 5).then((res) => {
+      setRecentEntries(res.data);
+    }).catch(() => setRecentEntries([]));
   }, [selectedProject, projects]);
 
   const now = new Date();
   const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} · ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+  if (pageLoading) {
+    return <div className="av-empty"><span className="dim">loading...</span></div>;
+  }
 
   return (
     <div className="dl-modal-wrap">

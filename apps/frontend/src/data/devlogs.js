@@ -1,496 +1,87 @@
-const devlogs = [
-  {
-    id: 1,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'wired theme picker into css vars',
-    content: '<p>hooked up the color picker to <code>document.documentElement.style.setProperty</code> for <code>--bg</code>, <code>--fg</code>, <code>--main</code>. localStorage persistence works. need to add server-side save later.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: 'user-123',
-    created_at: '2026-06-04T15:22:00Z',
-    updated_at: '2026-06-04T15:22:00Z',
-  },
-  {
-    id: 2,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'fuzzy finder modal opens on cmd+/',
-    content: '<p>added a telescope-style finder modal. filters articles, projects, devlogs. keyboard nav with arrow keys and enter. escape closes.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-06-04T11:08:00Z',
-    updated_at: '2026-06-04T11:08:00Z',
-  },
-  {
-    id: 3,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'rewrote header as floating notch',
-    content: '<p>replaced the full-width nav bar with a pill-shaped floating notch. position fixed, backdrop blur, pointer-events passthrough on the wrapper.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-06-04T09:14:00Z',
-    updated_at: '2026-06-04T09:14:00Z',
-  },
-  {
-    id: 4,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'shipped articles category filter',
-    content: '<p>filter chips for all/public/private on the articles page. uses simple array filter, no backend call yet.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-06-03T22:40:00Z',
-    updated_at: '2026-06-03T22:40:00Z',
-  },
-  {
-    id: 5,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'clerk auth integration done',
-    content: 'sign in/up pages themed with css vars. role-based redirect works — admin goes to /admin, author goes to /user. RequireAuth and RequireRole guards in place.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-06-02T18:30:00Z',
-    updated_at: '2026-06-02T18:30:00Z',
-  },
-  {
-    id: 6,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'tiptap editor embedded in article page',
-    content: 'replaced the fake editor with real tiptap. toolbar stays fixed, content area scrolls. word count and reading time update live.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-06-01T14:00:00Z',
-    updated_at: '2026-06-01T14:00:00Z',
-  },
-  {
-    id: 7,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'user dashboard layout done',
-    content: 'sidebar nav, topbar with breadcrumbs, body area with outlet. greeting changes based on time of day. streak dots use color-mix for theme adaptation.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-30T10:00:00Z',
-    updated_at: '2026-05-30T10:00:00Z',
-  },
-  {
-    id: 8,
-    project_id: 2,
-    project_name: 'rust-rays',
-    title: 'got soft shadows working, finally',
-    content: 'random sampling on area lights with stratified jittering. 64 samples per pixel removes most noise. render time went from 2s to 18s for the cornell box.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-06-01T23:14:00Z',
-    updated_at: '2026-06-01T23:14:00Z',
-  },
-  {
-    id: 9,
-    project_id: 2,
-    project_name: 'rust-rays',
-    title: 'bvh traversal is the bottleneck after all',
-    content: 'profiled with perf. 72% of time in bvh_intersect. the issue is cache misses on deep trees. need to switch to a flattened array layout.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-06-01T18:30:00Z',
-    updated_at: '2026-06-01T18:30:00Z',
-  },
-  {
-    id: 10,
-    project_id: 2,
-    project_name: 'rust-rays',
-    title: 'switched to f32x4 simd for ray packets',
-    content: 'tracing 4 rays at once with std::simd. ~2.8x speedup on the sphere scene. had to restructure the hit record to be SoA instead of AoS.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-30T12:00:00Z',
-    updated_at: '2026-05-30T12:00:00Z',
-  },
-  {
-    id: 11,
-    project_id: 2,
-    project_name: 'rust-rays',
-    title: 'basic scene with spheres and planes',
-    content: 'phong shading, one point light, reflection up to 4 bounces. renders a 800x600 image in ~200ms. good enough to start adding features.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-25T20:00:00Z',
-    updated_at: '2026-05-25T20:00:00Z',
-  },
-  {
-    id: 12,
-    project_id: 4,
-    project_name: 'dotfiles',
-    title: 'ghostty config + theme toggle macro',
-    content: 'added ghostty terminal config. wrote a shell function that swaps the terminal theme and sends the new palette via OSC sequences. no restart needed.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-28T08:42:00Z',
-    updated_at: '2026-05-28T08:42:00Z',
-  },
-  {
-    id: 13,
-    project_id: 4,
-    project_name: 'dotfiles',
-    title: 'nix flake update + neovim plugin pin',
-    content: 'updated all flake inputs. pinned telescope.nvim to a specific commit because HEAD broke fuzzy matching on long paths.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-21T14:17:00Z',
-    updated_at: '2026-05-21T14:17:00Z',
-  },
-  {
-    id: 14,
-    project_id: 4,
-    project_name: 'dotfiles',
-    title: 'idempotent install script',
-    content: 'rewrote install.sh to be fully idempotent. no more symlink manager — just conditional copies and appends. safe to run multiple times.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-10T11:30:00Z',
-    updated_at: '2026-05-10T11:30:00Z',
-  },
-  {
-    id: 15,
-    project_id: 3,
-    project_name: 'voxel-engine',
-    title: 'paused — coming back next month',
-    content: 'putting this on hold to focus on checkpoint. greedy meshing works but chunk loading needs a proper job queue before it\'s usable.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-19T14:11:00Z',
-    updated_at: '2026-05-19T14:11:00Z',
-  },
-  {
-    id: 16,
-    project_id: 3,
-    project_name: 'voxel-engine',
-    title: 'greedy meshing reduces triangles 12x',
-    content: 'implemented the greedy meshing algorithm. a 16x16x16 chunk at ~50% fill goes from ~24k triangles to ~2k. huge GPU savings.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-15T16:00:00Z',
-    updated_at: '2026-05-15T16:00:00Z',
-  },
-  {
-    id: 17,
-    project_id: 5,
-    project_name: 'todo-tree',
-    title: 'tree view rendering with bubbletea',
-    content: 'nested todo items render as an indented tree. collapse/expand with enter key. bubbletea makes the TUI state management surprisingly clean.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-03-08T19:00:00Z',
-    updated_at: '2026-03-08T19:00:00Z',
-  },
-  {
-    id: 18,
-    project_id: 5,
-    project_name: 'todo-tree',
-    title: 'json persistence for todo state',
-    content: 'todos save to ~/.local/share/todo-tree/state.json. loads on startup, writes on every change. no database needed for a CLI tool.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-03-05T14:30:00Z',
-    updated_at: '2026-03-05T14:30:00Z',
-  },
-  {
-    id: 19,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'infinite scroll on projects page',
-    content: '<p>added intersection observer for paginated loading on the user projects page. sentinel div at the bottom triggers next page fetch. 400ms simulated delay for smooth UX.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-29T16:30:00Z',
-    updated_at: '2026-05-29T16:30:00Z',
-  },
-  {
-    id: 20,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'project create/edit modal',
-    content: '<p>modal with name, description, url, stack (comma-separated), status select, and public toggle. reuses the same modal for both create and edit flows.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-28T20:15:00Z',
-    updated_at: '2026-05-28T20:15:00Z',
-  },
-  {
-    id: 21,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'batch select + delete on projects',
-    content: '<p>checkbox per card, bulk delete button appears when selection is non-empty. confirm modal before actual delete. clears selection after.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-27T14:00:00Z',
-    updated_at: '2026-05-27T14:00:00Z',
-  },
-  {
-    id: 22,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'status filter chips on projects',
-    content: '<p>filter bar with all/live/wip/archived chips. active chip gets accent border. resets visible count on filter change.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-26T11:45:00Z',
-    updated_at: '2026-05-26T11:45:00Z',
-  },
-  {
-    id: 23,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'devlog compose with tiptap editor',
-    content: '<p>split-panel layout: tree on left, editor on right. title input + tiptap for rich content. cmd+enter to save, esc to cancel.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-25T19:30:00Z',
-    updated_at: '2026-05-25T19:30:00Z',
-  },
-  {
-    id: 24,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'devlog tree view with collapsible dates',
-    content: '<p>entries grouped by date, each date node is collapsible. tree connectors render correctly for last/non-last branches. click entry to expand content.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-24T13:20:00Z',
-    updated_at: '2026-05-24T13:20:00Z',
-  },
-  {
-    id: 25,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'sidebar project list with keyboard nav',
-    content: '<p>arrow keys move focus, enter selects and opens compose. / focuses the search input. esc clears search. scroll-into-view on focus change.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-23T10:00:00Z',
-    updated_at: '2026-05-23T10:00:00Z',
-  },
-  {
-    id: 26,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'unsaved changes guard on devlog editor',
-    content: '<p>navigation guard prevents leaving with dirty state. beforeunload handler for browser close. confirm modal with stay/leave options.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-22T17:45:00Z',
-    updated_at: '2026-05-22T17:45:00Z',
-  },
-  {
-    id: 27,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'article editor with autosave indicator',
-    content: '<p>status badge shows draft/saved/new changes. dirty tracking on title, content, and metadata fields independently. save confirms via modal.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-21T22:10:00Z',
-    updated_at: '2026-05-21T22:10:00Z',
-  },
-  {
-    id: 28,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'article list with category tabs',
-    content: '<p>all/public/private tabs filter the article list. each card shows title, word count, reading time, and public toggle.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-20T15:30:00Z',
-    updated_at: '2026-05-20T15:30:00Z',
-  },
-  {
-    id: 29,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'user stats page with streak dots',
-    content: '<p>contribution-style dot grid. color intensity based on entry count per day. streak counter shows current and longest streaks.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-19T09:00:00Z',
-    updated_at: '2026-05-19T09:00:00Z',
-  },
-  {
-    id: 30,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'routing and layout setup',
-    content: '<p>react-router with nested layouts. public routes use Layout, auth routes use UserLayout. RequireAuth wrapper redirects to login.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-18T12:00:00Z',
-    updated_at: '2026-05-18T12:00:00Z',
-  },
-  {
-    id: 31,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'global css variables and dark theme',
-    content: '<p>set up --bg, --fg, --main as root css vars. all components reference these. dark theme is default, theme picker overrides via style.setProperty.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-17T08:30:00Z',
-    updated_at: '2026-05-17T08:30:00Z',
-  },
-  {
-    id: 32,
-    project_id: 1,
-    project_name: 'checkpoint',
-    title: 'monorepo setup with turbo and bun',
-    content: '<p>initialized turborepo with bun as package manager. apps/frontend and apps/backend as workspaces. turbo.json configured for build and dev tasks.</p>',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-16T14:00:00Z',
-    updated_at: '2026-05-16T14:00:00Z',
-  },
-  {
-    id: 33,
-    project_id: 2,
-    project_name: 'rust-rays',
-    title: 'refraction through glass spheres',
-    content: 'implemented snells law for dielectric materials. total internal reflection handled. glass sphere with IOR 1.5 looks correct against the checkerboard floor.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-22T21:00:00Z',
-    updated_at: '2026-05-22T21:00:00Z',
-  },
-  {
-    id: 34,
-    project_id: 2,
-    project_name: 'rust-rays',
-    title: 'multithreaded tile rendering',
-    content: 'split the image into 16x16 tiles, render each on a rayon thread pool. linear speedup up to 8 cores. progress bar with indicatif crate.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-18T16:45:00Z',
-    updated_at: '2026-05-18T16:45:00Z',
-  },
-  {
-    id: 35,
-    project_id: 2,
-    project_name: 'rust-rays',
-    title: 'scene file parser for yaml',
-    content: 'scenes defined in yaml: camera position, objects with materials, light sources. serde_yaml does the heavy lifting. can now render different scenes without recompiling.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-14T10:30:00Z',
-    updated_at: '2026-05-14T10:30:00Z',
-  },
-  {
-    id: 36,
-    project_id: 2,
-    project_name: 'rust-rays',
-    title: 'texture mapping on spheres',
-    content: 'UV mapping for spheres using spherical coordinates. loaded a checkerboard procedural texture and an earth image texture. bilinear filtering for smooth sampling.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-10T19:00:00Z',
-    updated_at: '2026-05-10T19:00:00Z',
-  },
-  {
-    id: 37,
-    project_id: 2,
-    project_name: 'rust-rays',
-    title: 'monte carlo path tracing prototype',
-    content: 'replaced the recursive raytracer with a proper path tracer. hemisphere sampling with cosine-weighted distribution. much more realistic global illumination but noisy at low sample counts.',
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: '2026-05-06T23:15:00Z',
-    updated_at: '2026-05-06T23:15:00Z',
-  },
-];
+import { apiFetch } from './api';
 
-export function getDevlogs() {
-  return devlogs;
+export async function getDevlogs(page = 1, limit = 20, { createdBy } = {}) {
+  let url = `/devlogs?page=${page}&limit=${limit}`;
+  if (createdBy) url += `&createdBy=${encodeURIComponent(createdBy)}`;
+  const data = await apiFetch(url);
+  return {
+    ...data,
+    data: data.data.map(mapDevlog),
+  };
 }
 
-export function getDevlogById(id) {
-  return devlogs.find((d) => d.id === id) || null;
+export async function getDevlogById(id) {
+  const data = await apiFetch(`/devlogs/${id}`);
+  return mapDevlog(data);
 }
 
-export function getDevlogsByProject(projectId) {
-  return devlogs.filter((d) => d.project_id === projectId);
+export async function getDevlogsByProject(projectId, page = 1, limit = 50) {
+  const data = await apiFetch(`/devlogs/project/${projectId}?page=${page}&limit=${limit}`);
+  return {
+    ...data,
+    data: data.data.map(mapDevlog),
+  };
 }
 
-export function getDevlogsGroupedByProject() {
+export async function getDevlogsGroupedByProject({ createdBy } = {}) {
+  let url = '/devlogs?page=1&limit=100';
+  if (createdBy) url += `&createdBy=${encodeURIComponent(createdBy)}`;
+  const data = await apiFetch(url);
+  const devlogs = data.data.map(mapDevlog);
+
   const groups = {};
   for (const d of devlogs) {
-    if (!groups[d.project_name]) {
-      groups[d.project_name] = { project_id: d.project_id, project_name: d.project_name, entries: [] };
+    const key = d.project_id;
+    if (!groups[key]) {
+      groups[key] = { project_id: d.project_id, project_name: d.project_name, entries: [] };
     }
-    groups[d.project_name].entries.push(d);
+    groups[key].entries.push(d);
   }
   return Object.values(groups);
 }
 
-export function updateDevlog(id, updates) {
-  const idx = devlogs.findIndex((d) => d.id === id);
-  if (idx === -1) return null;
-  devlogs[idx] = { ...devlogs[idx], ...updates, updated_at: new Date().toISOString() };
-  return devlogs[idx];
-}
-
-export function createDevlog(data) {
-  const now = new Date().toISOString();
-  const entry = {
-    id: Math.max(...devlogs.map((d) => d.id)) + 1,
-    is_public: true,
-    created_by: 'user-123',
-    updated_by: null,
-    created_at: now,
-    updated_at: now,
-    ...data,
+export async function createDevlog(devlog) {
+  const payload = {
+    title: devlog.title,
+    content: devlog.content || '',
+    isPublic: devlog.is_public ?? true,
+    projectId: devlog.project_id,
   };
-  devlogs.unshift(entry);
-  return entry;
+  const data = await apiFetch('/devlogs', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return mapDevlog(data);
 }
 
-export function deleteDevlog(id) {
-  const idx = devlogs.findIndex((d) => d.id === id);
-  if (idx !== -1) devlogs.splice(idx, 1);
+export async function updateDevlog(id, updates) {
+  const payload = {};
+  if (updates.title !== undefined) payload.title = updates.title;
+  if (updates.content !== undefined) payload.content = updates.content;
+  if (updates.is_public !== undefined) payload.isPublic = updates.is_public;
+
+  const data = await apiFetch(`/devlogs/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+  return mapDevlog(data);
+}
+
+export async function deleteDevlog(id) {
+  return apiFetch(`/devlogs/${id}`, { method: 'DELETE' });
+}
+
+function mapDevlog(d) {
+  return {
+    id: d.id,
+    project_id: d.projectId,
+    project_name: d.projectName || null,
+    title: d.title,
+    content: d.content,
+    is_public: d.isPublic,
+    created_by: d.createdBy,
+    updated_by: d.updatedBy,
+    created_at: d.createdAt,
+    updated_at: d.updatedAt,
+  };
 }

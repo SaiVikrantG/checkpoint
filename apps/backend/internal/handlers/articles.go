@@ -25,8 +25,9 @@ func NewArticleHandler(server *server.Server, services *service.ArticleService) 
 // GetAllArticles
 
 type GetAllArticlesRequest struct {
-	Page  int `query:"page"`
-	Limit int `query:"limit"`
+	Page      int    `query:"page"`
+	Limit     int    `query:"limit"`
+	CreatedBy string `query:"createdBy"`
 }
 
 func (r GetAllArticlesRequest) Validate() error {
@@ -47,7 +48,7 @@ func (h *ArticleHandler) handleGetAllArticlesLogic(c echo.Context, req GetAllArt
 	if limit <= 0 {
 		limit = 20
 	}
-	return h.articleServices.GetAllArticles(c.Request().Context(), page, limit)
+	return h.articleServices.GetAllArticles(c.Request().Context(), page, limit, req.CreatedBy)
 }
 
 func (h *ArticleHandler) GetAllArticles() echo.HandlerFunc {
@@ -80,12 +81,13 @@ func (h *ArticleHandler) GetArticleByID() echo.HandlerFunc {
 // CreateArticle
 
 type CreateArticleRequest struct {
-	ProjectID *int64  `json:"projectId"`
-	Title     string  `json:"title" validate:"required,min=1,max=255"`
-	Content   string  `json:"content" validate:"required"`
-	Slug      *string `json:"slug" validate:"omitempty,max=255"`
-	IsPublic  bool    `json:"isPublic"`
-	UserID    string  `json:"userId" validate:"required"`
+	ProjectID *int64   `json:"projectId"`
+	Title     string   `json:"title" validate:"required,min=1,max=255"`
+	Content   string   `json:"content" validate:"required"`
+	Slug      *string  `json:"slug" validate:"omitempty,max=255"`
+	Tags      []string `json:"tags"`
+	Status    string   `json:"status" validate:"omitempty,oneof=draft published archived"`
+	IsPublic  bool     `json:"isPublic"`
 }
 
 func (r CreateArticleRequest) Validate() error {
@@ -99,24 +101,26 @@ func (r CreateArticleRequest) Validate() error {
 			{Field: "content", Error: "content is required"},
 		}, nil)
 	}
-	if r.UserID == "" {
-		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
-			{Field: "userId", Error: "userId is required"},
-		}, nil)
-	}
 	return nil
 }
 
 func (h *ArticleHandler) handleCreateArticleLogic(c echo.Context, req CreateArticleRequest) (model.Article, error) {
+	userID, _ := c.Get("user_id").(string)
+	status := req.Status
+	if status == "" {
+		status = "draft"
+	}
 	article := &model.Article{
 		ProjectID: req.ProjectID,
 		Title:     req.Title,
 		Content:   req.Content,
 		Slug:      req.Slug,
+		Tags:      req.Tags,
+		Status:    status,
 		IsPublic:  req.IsPublic,
-		CreatedBy: req.UserID,
+		CreatedBy: userID,
 		Base: model.Base{
-			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: time.Now()},
+			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: time.Now().UTC()},
 		},
 	}
 
@@ -134,12 +138,14 @@ func (h *ArticleHandler) CreateArticle() echo.HandlerFunc {
 // UpdateArticle
 
 type UpdateArticleRequest struct {
-	ID        int64   `param:"id"`
-	ProjectID *int64  `json:"projectId"`
-	Title     *string `json:"title" validate:"omitempty,min=1,max=255"`
-	Content   *string `json:"content" validate:"omitempty"`
-	Slug      *string `json:"slug" validate:"omitempty,max=255"`
-	IsPublic  *bool   `json:"isPublic"`
+	ID        int64    `param:"id"`
+	ProjectID *int64   `json:"projectId"`
+	Title     *string  `json:"title" validate:"omitempty,min=1,max=255"`
+	Content   *string  `json:"content" validate:"omitempty"`
+	Slug      *string  `json:"slug" validate:"omitempty,max=255"`
+	Tags      []string `json:"tags"`
+	Status    *string  `json:"status" validate:"omitempty,oneof=draft published archived"`
+	IsPublic  *bool    `json:"isPublic"`
 }
 
 func (r UpdateArticleRequest) Validate() error {
@@ -152,15 +158,19 @@ func (r UpdateArticleRequest) Validate() error {
 }
 
 func (h *ArticleHandler) handleUpdateArticleLogic(c echo.Context, req UpdateArticleRequest) (model.Article, error) {
+	userID, _ := c.Get("user_id").(string)
+	userRole, _ := c.Get("user_role").(string)
 	article := &model.Article{
 		ProjectID: req.ProjectID,
 		Title:     derefStr(req.Title),
 		Content:   derefStr(req.Content),
 		Slug:      req.Slug,
+		Tags:      req.Tags,
+		Status:    derefStr(req.Status),
 		IsPublic:  derefBool(req.IsPublic),
 	}
 
-	updated, err := h.articleServices.UpdateArticle(c.Request().Context(), req.ID, article)
+	updated, err := h.articleServices.UpdateArticle(c.Request().Context(), req.ID, article, userID, userRole)
 	if err != nil {
 		return model.Article{}, err
 	}
@@ -187,7 +197,9 @@ func (r DeleteArticleRequest) Validate() error {
 }
 
 func (h *ArticleHandler) handleDeleteArticleLogic(c echo.Context, req DeleteArticleRequest) (map[string]string, error) {
-	if err := h.articleServices.DeleteArticle(c.Request().Context(), req.ID); err != nil {
+	userID, _ := c.Get("user_id").(string)
+	userRole, _ := c.Get("user_role").(string)
+	if err := h.articleServices.DeleteArticle(c.Request().Context(), req.ID, userID, userRole); err != nil {
 		return nil, err
 	}
 	return map[string]string{"message": "article deleted successfully"}, nil

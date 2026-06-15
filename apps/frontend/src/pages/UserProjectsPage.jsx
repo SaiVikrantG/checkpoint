@@ -1,21 +1,34 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { getProjects } from '../data/projects';
+import { useUser } from '@clerk/clerk-react';
+import { getProjects, createProject, updateProject, deleteProject } from '../data/projects';
 
 const PAGE_SIZE = 6;
 const filters = ['all', 'live', 'wip', 'archived'];
 const statusOptions = ['live', 'wip', 'archived'];
 
 export default function UserProjectsPage() {
+  const { user } = useUser();
   const [activeFilter, setActiveFilter] = useState('all');
-  const [projects, setProjects] = useState(getProjects);
+  const [projects, setProjects] = useState([]);
   const [selected, setSelected] = useState(new Set());
   const [modal, setModal] = useState(null);
   const [newProject, setNewProject] = useState({ name: '', description: '', url: '', status: 'wip', stack: '', is_public: true });
   const [editProject, setEditProject] = useState(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const sentinelRef = useRef(null);
+
+  useEffect(() => {
+    getProjects(1, 100, { createdBy: user?.id }).then((res) => {
+      setProjects(res.data);
+      setInitialLoading(false);
+    }).catch((err) => {
+      console.error('Failed to load projects:', err);
+      setInitialLoading(false);
+    });
+  }, []);
 
   const filtered = activeFilter === 'all'
     ? projects
@@ -57,10 +70,15 @@ export default function UserProjectsPage() {
     });
   };
 
-  const handleDelete = () => {
-    setProjects((prev) => prev.filter((p) => !selected.has(p.id)));
-    setSelected(new Set());
-    setModal(null);
+  const handleDelete = async () => {
+    try {
+      await Promise.all([...selected].map((id) => deleteProject(id)));
+      setProjects((prev) => prev.filter((p) => !selected.has(p.id)));
+      setSelected(new Set());
+      setModal(null);
+    } catch (err) {
+      console.error('Failed to delete projects:', err);
+    }
   };
 
   const openEdit = (p) => {
@@ -68,44 +86,40 @@ export default function UserProjectsPage() {
     setModal('edit');
   };
 
-  const handleSaveEdit = () => {
-    setProjects((prev) => prev.map((p) =>
-      p.id === editProject.id
-        ? {
-            ...p,
-            name: editProject.name,
-            description: editProject.description,
-            url: editProject.url || null,
-            status: editProject.status,
-            stack: editProject.stack.split(',').map((s) => s.trim()).filter(Boolean),
-            is_public: editProject.is_public,
-            updated_at: new Date().toISOString(),
-          }
-        : p
-    ));
-    setEditProject(null);
-    setModal(null);
+  const handleSaveEdit = async () => {
+    try {
+      const updated = await updateProject(editProject.id, {
+        name: editProject.name,
+        description: editProject.description,
+        url: editProject.url || null,
+        status: editProject.status,
+        stack: editProject.stack,
+        is_public: editProject.is_public,
+      });
+      setProjects((prev) => prev.map((p) => p.id === updated.id ? updated : p));
+      setEditProject(null);
+      setModal(null);
+    } catch (err) {
+      console.error('Failed to update project:', err);
+    }
   };
 
-  const handleCreate = () => {
-    const project = {
-      id: Date.now(),
-      name: newProject.name,
-      description: newProject.description,
-      url: newProject.url || null,
-      status: newProject.status,
-      stack: newProject.stack.split(',').map((s) => s.trim()).filter(Boolean),
-      is_public: newProject.is_public,
-      articles_count: 0,
-      devlogs_count: 0,
-      created_by: 'user-123',
-      updated_by: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    setProjects((prev) => [...prev, project]);
-    setNewProject({ name: '', description: '', url: '', status: 'wip', stack: '', is_public: true });
-    setModal(null);
+  const handleCreate = async () => {
+    try {
+      const created = await createProject({
+        name: newProject.name,
+        description: newProject.description,
+        url: newProject.url || null,
+        status: newProject.status,
+        stack: newProject.stack,
+        is_public: newProject.is_public,
+      });
+      setProjects((prev) => [...prev, created]);
+      setNewProject({ name: '', description: '', url: '', status: 'wip', stack: '', is_public: true });
+      setModal(null);
+    } catch (err) {
+      console.error('Failed to create project:', err);
+    }
   };
 
   return (
@@ -169,7 +183,14 @@ export default function UserProjectsPage() {
                 )}
                 <span
                   className={'toggle toggle-sm' + (p.is_public ? ' toggle-on' : '')}
-                  onClick={() => setProjects((prev) => prev.map((proj) => proj.id === p.id ? { ...proj, is_public: !proj.is_public } : proj))}
+                  onClick={async () => {
+                    try {
+                      const updated = await updateProject(p.id, { is_public: !p.is_public });
+                      setProjects((prev) => prev.map((proj) => proj.id === updated.id ? updated : proj));
+                    } catch (err) {
+                      console.error('Failed to toggle visibility:', err);
+                    }
+                  }}
                 >
                   <span className="toggle-knob" />
                 </span>
@@ -180,10 +201,6 @@ export default function UserProjectsPage() {
               <div className="up-blurb">{p.description}</div>
               <div className="up-stack">
                 {p.stack.map((s) => <span key={s} className="proj-chip">{s}</span>)}
-              </div>
-              <div className="up-foot">
-                <span><span className="dim">articles </span><span className="accent">{p.articles_count}</span></span>
-                <span><span className="dim">devlogs </span><span className="accent">{p.devlogs_count}</span></span>
               </div>
             </div>
           </div>

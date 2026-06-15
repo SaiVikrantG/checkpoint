@@ -1144,6 +1144,12 @@
   border-color: var(--main);
   background: var(--main-dim);
 }
+.toolbar-lang-select {
+  background: var(--bg-3); border: 1px solid var(--border); border-radius: 4px;
+  color: var(--fg); font-family: inherit; font-size: 11px; padding: 2px 6px;
+  cursor: pointer;
+}
+.toolbar-lang-select:focus { outline: none; border-color: var(--accent); }
 .toolbar-sep {
   width: 1px;
   height: 20px;

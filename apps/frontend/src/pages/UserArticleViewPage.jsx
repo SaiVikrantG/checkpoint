@@ -1,11 +1,57 @@
-import { useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import mermaid from 'mermaid';
 import { getArticleById } from '../data/articles';
+
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#3a3c40',
+    primaryTextColor: '#d1d0c5',
+    primaryBorderColor: '#e2b714',
+    lineColor: '#646669',
+    secondaryColor: '#2c2e31',
+    tertiaryColor: '#25272a',
+    fontFamily: 'Roboto Mono, monospace',
+  },
+});
 
 export default function UserArticleViewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const article = useMemo(() => getArticleById(Number(id)), [id]);
+  const articleRef = useRef(null);
+  const [article, setArticle] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getArticleById(Number(id)).then((data) => {
+      setArticle(data);
+      setLoading(false);
+    }).catch((err) => {
+      console.error('Failed to load article:', err);
+      setLoading(false);
+    });
+  }, [id]);
+
+  useEffect(() => {
+    if (!article || !articleRef.current) return;
+    const codeBlocks = articleRef.current.querySelectorAll('pre code.language-mermaid');
+    codeBlocks.forEach((code, i) => {
+      const pre = code.parentElement;
+      const div = document.createElement('div');
+      div.className = 'mermaid';
+      div.id = `mermaid-user-${i}`;
+      div.textContent = code.textContent;
+      pre.replaceWith(div);
+    });
+    const nodes = articleRef.current.querySelectorAll('.mermaid');
+    if (nodes.length > 0) mermaid.run({ nodes });
+  }, [article]);
+
+  if (loading) {
+    return <div className="av-empty"><span className="dim">loading...</span></div>;
+  }
 
   if (!article) {
     return (
@@ -35,7 +81,7 @@ export default function UserArticleViewPage() {
       </div>
 
       <div className="av-layout">
-        <article className="av-body">
+        <article className="av-body" ref={articleRef}>
           <h1 className="av-title">{article.title}</h1>
           <div className="av-meta">
             <span className="dim">{new Date(article.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>

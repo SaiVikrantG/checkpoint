@@ -60,9 +60,9 @@ func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services
 	// register versioned routes
 	v1 := router.Group("/api/v1")
 
-	registerProjectRoutes(v1, h)
-	registerArticleRoutes(v1, h)
-	registerDevlogRoutes(v1, h)
+	registerProjectRoutes(v1, h, middlewares.Auth)
+	registerArticleRoutes(v1, h, middlewares.Auth)
+	registerDevlogRoutes(v1, h, middlewares.Auth)
 	registerWebhookRoutes(v1, h)
 
 	return router

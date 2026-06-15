@@ -1,29 +1,58 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getDevlogsGroupedByProject, createDevlog } from '../data/devlogs';
+import { useUser } from '@clerk/clerk-react';
+import { getDevlogsByProject, createDevlog } from '../data/devlogs';
 import { getProjects } from '../data/projects';
 import Editor from '../components/Editor';
 
 const DEVLOG_PAGE_SIZE = 10;
 
 export default function UserDevlogsPage() {
+  const { user } = useUser();
   const [searchParams] = useSearchParams();
-  const projects = getProjects();
-
   const preselected = searchParams.get('project');
-  const [groups, setGroups] = useState(getDevlogsGroupedByProject);
+
+  const [projects, setProjectsList] = useState([]);
+  const [entries, setEntries] = useState([]);
   const [projectFilter, setProjectFilter] = useState('');
-  const [focusedIndex, setFocusedIndex] = useState(() => {
-    if (preselected) {
-      const g = getDevlogsGroupedByProject();
-      const idx = g.findIndex((gr) => gr.project_name === preselected);
-      return idx >= 0 ? idx : 0;
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [entriesLoading, setEntriesLoading] = useState(false);
+  const devlogCache = useRef(new Map());
+
+  useEffect(() => {
+    getProjects(1, 100, { createdBy: user?.id }).then((projRes) => {
+      setProjectsList(projRes.data);
+      if (preselected) {
+        const idx = projRes.data.findIndex((p) => p.name === preselected);
+        setFocusedIndex(idx >= 0 ? idx : 0);
+        setSelectedProject(preselected);
+      } else if (projRes.data.length > 0) {
+        setSelectedProject(projRes.data[0].name);
+      }
+      setInitialLoading(false);
+    }).catch((err) => {
+      console.error('Failed to load projects:', err);
+      setInitialLoading(false);
+    });
+  }, [preselected]);
+
+  const selectedProjectObj = projects.find((p) => p.name === selectedProject);
+
+  useEffect(() => {
+    if (!selectedProjectObj) return;
+    const projectId = selectedProjectObj.id;
+    if (devlogCache.current.has(projectId)) {
+      setEntries(devlogCache.current.get(projectId));
+      return;
     }
-    return 0;
-  });
-  const [selectedProject, setSelectedProject] = useState(
-    preselected || (getDevlogsGroupedByProject()[0]?.project_name ?? null)
-  );
+    setEntriesLoading(true);
+    getDevlogsByProject(projectId, 1, 100).then((res) => {
+      devlogCache.current.set(projectId, res.data);
+      setEntries(res.data);
+    }).catch(() => setEntries([])).finally(() => setEntriesLoading(false));
+  }, [selectedProjectObj?.id]);
   const [composing, setComposing] = useState(false);
   const [collapsedDates, setCollapsedDates] = useState({});
   const [expandedEntry, setExpandedEntry] = useState(null);
@@ -37,26 +66,19 @@ export default function UserDevlogsPage() {
   const sidebarRef = useRef(null);
   const [saving, setSaving] = useState(false);
 
-  const filteredGroups = useMemo(() =>
-    groups.filter((g) => g.project_name.toLowerCase().includes(projectFilter.toLowerCase())),
-    [groups, projectFilter]
+  const filteredProjects = useMemo(() =>
+    projects.filter((p) => p.name.toLowerCase().includes(projectFilter.toLowerCase())),
+    [projects, projectFilter]
   );
 
-  useEffect(() => {
-    const name = filteredGroups[focusedIndex]?.project_name;
-    if (name && !composing) setSelectedProject(name);
-  }, [focusedIndex, filteredGroups, composing]);
-
-  const currentGroup = groups.find((g) => g.project_name === selectedProject);
-  const totalCount = groups.reduce((s, g) => s + g.entries.length, 0);
+  const totalCount = entries.length;
 
   const [visibleCount, setVisibleCount] = useState(DEVLOG_PAGE_SIZE);
   const [loadingMore, setLoadingMore] = useState(false);
   const entrySentinelRef = useRef(null);
 
-  const allEntries = currentGroup?.entries ?? [];
-  const visibleEntries = allEntries.slice(0, visibleCount);
-  const hasMoreEntries = visibleCount < allEntries.length;
+  const visibleEntries = entries.slice(0, visibleCount);
+  const hasMoreEntries = visibleCount < entries.length;
 
   useEffect(() => {
     setVisibleCount(DEVLOG_PAGE_SIZE);
@@ -66,10 +88,10 @@ export default function UserDevlogsPage() {
     if (!hasMoreEntries || loadingMore) return;
     setLoadingMore(true);
     setTimeout(() => {
-      setVisibleCount((v) => Math.min(v + DEVLOG_PAGE_SIZE, allEntries.length));
+      setVisibleCount((v) => Math.min(v + DEVLOG_PAGE_SIZE, entries.length));
       setLoadingMore(false);
     }, 400);
-  }, [hasMoreEntries, loadingMore, allEntries.length]);
+  }, [hasMoreEntries, loadingMore, entries.length]);
 
   useEffect(() => {
     const el = entrySentinelRef.current;
@@ -85,7 +107,7 @@ export default function UserDevlogsPage() {
   const dateGroups = useMemo(() => {
     const map = {};
     for (const entry of visibleEntries) {
-      const date = new Date(entry.created_at).toLocaleDateString('en-US', {
+      const date = new Date(entry.created_at).toLocaleDateString('en-IN', {
         year: 'numeric', month: '2-digit', day: '2-digit',
       });
       if (!map[date]) map[date] = [];
@@ -95,7 +117,7 @@ export default function UserDevlogsPage() {
   }, [visibleEntries]);
 
   const formatTime = (iso) =>
-    new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
   const enterCompose = useCallback(() => {
     if (!selectedProject) return;
@@ -116,30 +138,30 @@ export default function UserDevlogsPage() {
     composeHtml.current = data.html;
   }, []);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (!composeTitle.trim() || !selectedProject) return;
     const proj = projects.find((p) => p.name === selectedProject);
-    createDevlog({
-      title: composeTitle.trim(),
-      content: composeHtml.current,
-      project_id: proj?.id ?? null,
-      project_name: selectedProject,
-      is_public: true,
-    });
     setSaving(true);
-    const savedProject = selectedProject;
-    setTimeout(() => {
+    try {
+      await createDevlog({
+        title: composeTitle.trim(),
+        content: composeHtml.current,
+        project_id: proj?.id ?? null,
+        is_public: true,
+      });
       setComposeTitle('');
       composeHtml.current = '';
       setComposeKey((k) => k + 1);
-      const newGroups = getDevlogsGroupedByProject();
-      setGroups(newGroups);
+      devlogCache.current.delete(proj?.id);
+      const res = await getDevlogsByProject(proj.id, 1, 100);
+      devlogCache.current.set(proj.id, res.data);
+      setEntries(res.data);
       setVisibleCount(DEVLOG_PAGE_SIZE);
-      const newIdx = newGroups.findIndex((g) => g.project_name === savedProject);
-      if (newIdx >= 0) setFocusedIndex(newIdx);
-      setSaving(false);
       titleRef.current?.focus();
-    }, 300);
+    } catch (err) {
+      console.error('Failed to save devlog:', err);
+    }
+    setSaving(false);
   }, [composeTitle, selectedProject, projects]);
 
   const handleGlobalKeyDown = useCallback((e) => {
@@ -153,12 +175,20 @@ export default function UserDevlogsPage() {
       }
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setFocusedIndex((i) => Math.min(i + 1, filteredGroups.length - 1));
+        setFocusedIndex((i) => {
+          const next = Math.min(i + 1, filteredProjects.length - 1);
+          setSelectedProject(filteredProjects[next]?.name);
+          return next;
+        });
         return;
       }
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setFocusedIndex((i) => Math.max(i - 1, 0));
+        setFocusedIndex((i) => {
+          const next = Math.max(i - 1, 0);
+          setSelectedProject(filteredProjects[next]?.name);
+          return next;
+        });
         return;
       }
       if (e.key === 'Enter') {
@@ -194,12 +224,20 @@ export default function UserDevlogsPage() {
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setFocusedIndex((i) => Math.min(i + 1, filteredGroups.length - 1));
+      setFocusedIndex((i) => {
+        const next = Math.min(i + 1, filteredProjects.length - 1);
+        setSelectedProject(filteredProjects[next]?.name);
+        return next;
+      });
       setCollapsedDates({});
       setExpandedEntry(null);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setFocusedIndex((i) => Math.max(i - 1, 0));
+      setFocusedIndex((i) => {
+        const next = Math.max(i - 1, 0);
+        setSelectedProject(filteredProjects[next]?.name);
+        return next;
+      });
       setCollapsedDates({});
       setExpandedEntry(null);
     } else if (e.key === 'Enter' && !composing) {
@@ -209,7 +247,7 @@ export default function UserDevlogsPage() {
       e.preventDefault();
       exitCompose();
     }
-  }, [filteredGroups.length, composing, enterCompose, exitCompose, handleSave]);
+  }, [filteredProjects.length, composing, enterCompose, exitCompose, handleSave]);
 
   useEffect(() => {
     document.addEventListener('keydown', handleGlobalKeyDown);
@@ -217,10 +255,10 @@ export default function UserDevlogsPage() {
   }, [handleGlobalKeyDown]);
 
   useEffect(() => {
-    if (focusedIndex >= filteredGroups.length && filteredGroups.length > 0) {
-      setFocusedIndex(filteredGroups.length - 1);
+    if (focusedIndex >= filteredProjects.length && filteredProjects.length > 0) {
+      setFocusedIndex(filteredProjects.length - 1);
     }
-  }, [filteredGroups.length, focusedIndex]);
+  }, [filteredProjects.length, focusedIndex]);
 
   useEffect(() => {
     const item = sidebarRef.current?.querySelector('.dl-sidebar-item.active');
@@ -284,8 +322,8 @@ export default function UserDevlogsPage() {
               {loadingMore && <div className="up-loader"><span className="up-loader-dot" /><span className="up-loader-dot" /><span className="up-loader-dot" /></div>}
             </div>
           )}
-          {!hasMoreEntries && allEntries.length > DEVLOG_PAGE_SIZE && (
-            <div className="up-end dim">// all {allEntries.length} entries loaded</div>
+          {!hasMoreEntries && entries.length > DEVLOG_PAGE_SIZE && (
+            <div className="up-end dim">// all {entries.length} entries loaded</div>
           )}
         </>
       ) : (
@@ -295,6 +333,10 @@ export default function UserDevlogsPage() {
       )}
     </div>
   );
+
+  if (initialLoading) {
+    return <div className="av-empty"><span className="dim">loading...</span></div>;
+  }
 
   return (
     <>
@@ -327,18 +369,19 @@ export default function UserDevlogsPage() {
                   onBlur={() => setSearchFocused(false)}
                 />
               </div>
-              {filteredGroups.map((g, i) => (
+              {filteredProjects.map((p, i) => (
                 <div
-                  key={g.project_name}
+                  key={p.id}
                   className={'dl-sidebar-item' + (i === focusedIndex ? ' active' : '')}
                   onClick={() => {
                     setFocusedIndex(i);
+                    setSelectedProject(p.name);
                     setCollapsedDates({});
                     setExpandedEntry(null);
                   }}
                 >
-                  <span className="dl-sidebar-name">~/{g.project_name}</span>
-                  <span className="dl-sidebar-count">{g.entries.length}</span>
+                  <span className="dl-sidebar-name">~/{p.name}</span>
+                  <span className="dl-sidebar-count">{p.devlogs_count}</span>
                 </div>
               ))}
             </aside>
@@ -346,7 +389,7 @@ export default function UserDevlogsPage() {
             <section className="dl-content dl-content-animate">
               <div className="dl-content-head">
                 <span className="dl-content-title">~/{selectedProject}</span>
-                <span className="dl-content-count">{currentGroup?.entries.length ?? 0} entries</span>
+                <span className="dl-content-count">{entries.length} entries</span>
               </div>
               {renderTree()}
             </section>
@@ -359,7 +402,7 @@ export default function UserDevlogsPage() {
             <section className="dl-content dl-content-animate">
               <div className="dl-content-head">
                 <span className="dl-content-title">~/{selectedProject}</span>
-                <span className="dl-content-count">{currentGroup?.entries.length ?? 0} entries</span>
+                <span className="dl-content-count">{entries.length} entries</span>
                 <button className="btn-sm btn-ghost dl-compose-enter" onClick={enterCompose}>↵ compose</button>
               </div>
               {renderTree()}

@@ -45,8 +45,9 @@ func (h *ProjectHandler) handleGetProjectLogic(c echo.Context, req GetProjectByI
 }
 
 type GetAllProjectsRequest struct {
-	Page  int `query:"page"`
-	Limit int `query:"limit"`
+	Page      int    `query:"page"`
+	Limit     int    `query:"limit"`
+	CreatedBy string `query:"createdBy"`
 }
 
 func (r GetAllProjectsRequest) Validate() error {
@@ -67,7 +68,7 @@ func (h *ProjectHandler) handleGetAllProjectsLogic(c echo.Context, req GetAllPro
 	if limit <= 0 {
 		limit = 20
 	}
-	return h.projectServices.GetAllProjects(c.Request().Context(), page, limit)
+	return h.projectServices.GetAllProjects(c.Request().Context(), page, limit, req.CreatedBy)
 }
 
 func (h *ProjectHandler) GetAllProjects() echo.HandlerFunc {
@@ -79,10 +80,12 @@ func (h *ProjectHandler) GetProjectByID() echo.HandlerFunc {
 }
 
 type CreateProjectRequest struct {
-	Name        string  `json:"name" validate:"required,min=1,max=255"`
-	Description *string `json:"description" validate:"omitempty,max=1000"`
-	IsPublic    bool    `json:"isPublic"`
-	UserID      string  `json:"userId" validate:"required"`
+	Name        string   `json:"name" validate:"required,min=1,max=255"`
+	Description *string  `json:"description" validate:"omitempty,max=1000"`
+	URL         *string  `json:"url" validate:"omitempty"`
+	Status      string   `json:"status" validate:"omitempty,oneof=live wip archived"`
+	Stack       []string `json:"stack"`
+	IsPublic    bool     `json:"isPublic"`
 }
 
 func (r CreateProjectRequest) Validate() error {
@@ -101,22 +104,25 @@ func (r CreateProjectRequest) Validate() error {
 			{Field: "description", Error: "description must not exceed 1000 characters"},
 		}, nil)
 	}
-	if r.UserID == "" {
-		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
-			{Field: "userId", Error: "userId is required"},
-		}, nil)
-	}
 	return nil
 }
 
 func (h *ProjectHandler) handleCreateProjectLogic(c echo.Context, req CreateProjectRequest) (model.Project, error) {
+	userID, _ := c.Get("user_id").(string)
+	status := req.Status
+	if status == "" {
+		status = "wip"
+	}
 	project := &model.Project{
 		Name:        req.Name,
 		Description: req.Description,
+		URL:         req.URL,
+		Status:      status,
+		Stack:       req.Stack,
 		IsPublic:    req.IsPublic,
-		CreatedBy:   req.UserID,
+		CreatedBy:   userID,
 		Base: model.Base{
-			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: time.Now()},
+			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: time.Now().UTC()},
 		},
 	}
 
@@ -146,7 +152,9 @@ func (r DeleteProjectRequest) Validate() error {
 }
 
 func (h *ProjectHandler) handleDeleteProjectLogic(c echo.Context, req DeleteProjectRequest) (map[string]string, error) {
-	err := h.projectServices.DeleteProject(c.Request().Context(), req.ID)
+	userID, _ := c.Get("user_id").(string)
+	userRole, _ := c.Get("user_role").(string)
+	err := h.projectServices.DeleteProject(c.Request().Context(), req.ID, userID, userRole)
 	if err != nil {
 		return nil, err
 	}
@@ -161,10 +169,13 @@ func (h *ProjectHandler) DeleteProject() echo.HandlerFunc {
 }
 
 type UpdateProjectRequest struct {
-	ID          int64   `param:"id"`
-	Name        *string `json:"name" validate:"omitempty,min=1,max=255"`
-	Description *string `json:"description" validate:"omitempty,max=1000"`
-	IsPublic    *bool   `json:"isPublic"`
+	ID          int64    `param:"id"`
+	Name        *string  `json:"name" validate:"omitempty,min=1,max=255"`
+	Description *string  `json:"description" validate:"omitempty,max=1000"`
+	URL         *string  `json:"url" validate:"omitempty"`
+	Status      *string  `json:"status" validate:"omitempty,oneof=live wip archived"`
+	Stack       []string `json:"stack"`
+	IsPublic    *bool    `json:"isPublic"`
 }
 
 func (r UpdateProjectRequest) Validate() error {
@@ -187,13 +198,18 @@ func (r UpdateProjectRequest) Validate() error {
 }
 
 func (h *ProjectHandler) handleUpdateProjectLogic(c echo.Context, req UpdateProjectRequest) (model.Project, error) {
+	userID, _ := c.Get("user_id").(string)
+	userRole, _ := c.Get("user_role").(string)
 	project := &model.Project{
 		Name:        derefStr(req.Name),
 		Description: req.Description,
+		URL:         req.URL,
+		Status:      derefStr(req.Status),
+		Stack:       req.Stack,
 		IsPublic:    derefBool(req.IsPublic),
 	}
 
-	updatedProject, err := h.projectServices.UpdateProject(c.Request().Context(), req.ID, project)
+	updatedProject, err := h.projectServices.UpdateProject(c.Request().Context(), req.ID, project, userID, userRole)
 	if err != nil {
 		return model.Project{}, err
 	}

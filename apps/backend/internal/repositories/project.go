@@ -22,26 +22,32 @@ func (r *ProjectRepository) GetProjectByID(ctx context.Context, id int64) (model
 	if err != nil {
 		return model.Project{}, err
 	}
-	return toModelProject(row), nil
+	return toModelProjectFromRow(row), nil
 }
 
-func (r *ProjectRepository) GetAllProjects(ctx context.Context, page, limit int) ([]model.Project, int64, error) {
+func (r *ProjectRepository) GetAllProjects(ctx context.Context, page, limit int, createdBy string) ([]model.Project, int64, error) {
+	createdByParam := pgtype.Text{}
+	if createdBy != "" {
+		createdByParam = pgtype.Text{String: createdBy, Valid: true}
+	}
+
 	rows, err := r.queries.GetAllProjects(ctx, db.GetAllProjectsParams{
-		Limit:  int32(limit),
-		Offset: int32((page - 1) * limit),
+		Limit:     int32(limit),
+		Offset:    int32((page - 1) * limit),
+		CreatedBy: createdByParam,
 	})
 	if err != nil {
 		return nil, 0, err
 	}
 
-	total, err := r.queries.GetProjectsCount(ctx)
+	total, err := r.queries.GetProjectsCount(ctx, createdByParam)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	projects := make([]model.Project, len(rows))
 	for i, row := range rows {
-		projects[i] = toModelProject(row)
+		projects[i] = toModelProjectFromListRow(row)
 	}
 
 	return projects, total, nil
@@ -51,6 +57,9 @@ func (r *ProjectRepository) CreateProject(ctx context.Context, project *model.Pr
 	row, err := r.queries.CreateProject(ctx, db.CreateProjectParams{
 		Name:        project.Name,
 		Description: pgtype.Text{String: derefStr(project.Description), Valid: project.Description != nil},
+		Url:         pgtype.Text{String: derefStr(project.URL), Valid: project.URL != nil},
+		Status:      project.Status,
+		Stack:       project.Stack,
 		IsPublic:    pgtype.Bool{Bool: project.IsPublic, Valid: true},
 		CreatedBy:   project.CreatedBy,
 		CreatedAt:   pgtype.Timestamp{Time: project.CreatedAt, Valid: true},
@@ -58,7 +67,7 @@ func (r *ProjectRepository) CreateProject(ctx context.Context, project *model.Pr
 	if err != nil {
 		return nil, err
 	}
-	result := toModelProject(row)
+	result := toModelProjectFromDB(row)
 	return &result, nil
 }
 
@@ -71,16 +80,19 @@ func (r *ProjectRepository) UpdateProject(ctx context.Context, id int64, project
 		ID:          id,
 		Name:        project.Name,
 		Description: pgtype.Text{String: derefStr(project.Description), Valid: project.Description != nil},
+		Url:         pgtype.Text{String: derefStr(project.URL), Valid: project.URL != nil},
+		Status:      project.Status,
+		Stack:       project.Stack,
 		IsPublic:    pgtype.Bool{Bool: project.IsPublic, Valid: true},
 	})
 	if err != nil {
 		return nil, err
 	}
-	result := toModelProject(row)
+	result := toModelProjectFromDB(row)
 	return &result, nil
 }
 
-func toModelProject(p db.Project) model.Project {
+func toModelProjectFromRow(p db.GetProjectByIDRow) model.Project {
 	return model.Project{
 		Base: model.Base{
 			BaseWithId:        model.BaseWithId{ID: p.ID},
@@ -89,6 +101,45 @@ func toModelProject(p db.Project) model.Project {
 		},
 		Name:        p.Name,
 		Description: textToPtr(p.Description),
+		URL:         textToPtr(p.Url),
+		Status:      p.Status,
+		Stack:       p.Stack,
+		IsPublic:    p.IsPublic.Bool,
+		CreatedBy:   p.CreatedBy,
+		UpdatedBy:   textToPtr(p.UpdatedBy),
+	}
+}
+
+func toModelProjectFromListRow(p db.GetAllProjectsRow) model.Project {
+	return model.Project{
+		Base: model.Base{
+			BaseWithId:        model.BaseWithId{ID: p.ID},
+			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: timeFromPg(p.CreatedAt)},
+			BaseWithUpdatedAt: model.BaseWithUpdatedAt{UpdatedAt: timeFromPg(p.UpdatedAt)},
+		},
+		Name:        p.Name,
+		Description: textToPtr(p.Description),
+		URL:         textToPtr(p.Url),
+		Status:      p.Status,
+		Stack:       p.Stack,
+		IsPublic:    p.IsPublic.Bool,
+		CreatedBy:   p.CreatedBy,
+		UpdatedBy:   textToPtr(p.UpdatedBy),
+	}
+}
+
+func toModelProjectFromDB(p db.Project) model.Project {
+	return model.Project{
+		Base: model.Base{
+			BaseWithId:        model.BaseWithId{ID: p.ID},
+			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: timeFromPg(p.CreatedAt)},
+			BaseWithUpdatedAt: model.BaseWithUpdatedAt{UpdatedAt: timeFromPg(p.UpdatedAt)},
+		},
+		Name:        p.Name,
+		Description: textToPtr(p.Description),
+		URL:         textToPtr(p.Url),
+		Status:      p.Status,
+		Stack:       p.Stack,
 		IsPublic:    p.IsPublic.Bool,
 		CreatedBy:   p.CreatedBy,
 		UpdatedBy:   textToPtr(p.UpdatedBy),

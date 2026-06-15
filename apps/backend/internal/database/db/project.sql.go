@@ -12,14 +12,17 @@ import (
 )
 
 const createProject = `-- name: CreateProject :one
-INSERT INTO projects (name, description, is_public, created_by, created_at)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, name, description, is_public, created_by, updated_by, created_at, updated_at
+INSERT INTO projects (name, description, url, status, stack, is_public, created_by, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING id, name, description, is_public, created_by, updated_by, created_at, updated_at, url, status, stack
 `
 
 type CreateProjectParams struct {
 	Name        string           `json:"name"`
 	Description pgtype.Text      `json:"description"`
+	Url         pgtype.Text      `json:"url"`
+	Status      string           `json:"status"`
+	Stack       []string         `json:"stack"`
 	IsPublic    pgtype.Bool      `json:"is_public"`
 	CreatedBy   string           `json:"created_by"`
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
@@ -29,6 +32,9 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 	row := q.db.QueryRow(ctx, createProject,
 		arg.Name,
 		arg.Description,
+		arg.Url,
+		arg.Status,
+		arg.Stack,
 		arg.IsPublic,
 		arg.CreatedBy,
 		arg.CreatedAt,
@@ -43,6 +49,9 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 		&i.UpdatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Url,
+		&i.Status,
+		&i.Stack,
 	)
 	return i, err
 }
@@ -58,30 +67,49 @@ func (q *Queries) DeleteProject(ctx context.Context, id int64) error {
 }
 
 const getAllProjects = `-- name: GetAllProjects :many
-SELECT id, name, description, is_public, created_by, updated_by, created_at, updated_at
+SELECT id, name, description, url, status, stack, is_public, created_by, updated_by, created_at, updated_at
 FROM projects
+WHERE ($3::text IS NULL OR created_by = $3)
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
 `
 
 type GetAllProjectsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit     int32       `json:"limit"`
+	Offset    int32       `json:"offset"`
+	CreatedBy pgtype.Text `json:"created_by"`
 }
 
-func (q *Queries) GetAllProjects(ctx context.Context, arg GetAllProjectsParams) ([]Project, error) {
-	rows, err := q.db.Query(ctx, getAllProjects, arg.Limit, arg.Offset)
+type GetAllProjectsRow struct {
+	ID          int64            `json:"id"`
+	Name        string           `json:"name"`
+	Description pgtype.Text      `json:"description"`
+	Url         pgtype.Text      `json:"url"`
+	Status      string           `json:"status"`
+	Stack       []string         `json:"stack"`
+	IsPublic    pgtype.Bool      `json:"is_public"`
+	CreatedBy   string           `json:"created_by"`
+	UpdatedBy   pgtype.Text      `json:"updated_by"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+}
+
+func (q *Queries) GetAllProjects(ctx context.Context, arg GetAllProjectsParams) ([]GetAllProjectsRow, error) {
+	rows, err := q.db.Query(ctx, getAllProjects, arg.Limit, arg.Offset, arg.CreatedBy)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Project
+	var items []GetAllProjectsRow
 	for rows.Next() {
-		var i Project
+		var i GetAllProjectsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
 			&i.Description,
+			&i.Url,
+			&i.Status,
+			&i.Stack,
 			&i.IsPublic,
 			&i.CreatedBy,
 			&i.UpdatedBy,
@@ -99,18 +127,35 @@ func (q *Queries) GetAllProjects(ctx context.Context, arg GetAllProjectsParams) 
 }
 
 const getProjectByID = `-- name: GetProjectByID :one
-SELECT id, name, description, is_public, created_by, updated_by, created_at, updated_at
+SELECT id, name, description, url, status, stack, is_public, created_by, updated_by, created_at, updated_at
 FROM projects
 WHERE id = $1
 `
 
-func (q *Queries) GetProjectByID(ctx context.Context, id int64) (Project, error) {
+type GetProjectByIDRow struct {
+	ID          int64            `json:"id"`
+	Name        string           `json:"name"`
+	Description pgtype.Text      `json:"description"`
+	Url         pgtype.Text      `json:"url"`
+	Status      string           `json:"status"`
+	Stack       []string         `json:"stack"`
+	IsPublic    pgtype.Bool      `json:"is_public"`
+	CreatedBy   string           `json:"created_by"`
+	UpdatedBy   pgtype.Text      `json:"updated_by"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+}
+
+func (q *Queries) GetProjectByID(ctx context.Context, id int64) (GetProjectByIDRow, error) {
 	row := q.db.QueryRow(ctx, getProjectByID, id)
-	var i Project
+	var i GetProjectByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Description,
+		&i.Url,
+		&i.Status,
+		&i.Stack,
 		&i.IsPublic,
 		&i.CreatedBy,
 		&i.UpdatedBy,
@@ -122,10 +167,11 @@ func (q *Queries) GetProjectByID(ctx context.Context, id int64) (Project, error)
 
 const getProjectsCount = `-- name: GetProjectsCount :one
 SELECT COUNT(*) FROM projects
+WHERE ($1::text IS NULL OR created_by = $1)
 `
 
-func (q *Queries) GetProjectsCount(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, getProjectsCount)
+func (q *Queries) GetProjectsCount(ctx context.Context, createdBy pgtype.Text) (int64, error) {
+	row := q.db.QueryRow(ctx, getProjectsCount, createdBy)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -135,16 +181,22 @@ const updateProject = `-- name: UpdateProject :one
 UPDATE projects
 SET name = COALESCE($2, name),
     description = COALESCE($3, description),
-    is_public = COALESCE($4, is_public),
+    url = COALESCE($4, url),
+    status = COALESCE($5, status),
+    stack = COALESCE($6, stack),
+    is_public = COALESCE($7, is_public),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
-RETURNING id, name, description, is_public, created_by, updated_by, created_at, updated_at
+RETURNING id, name, description, is_public, created_by, updated_by, created_at, updated_at, url, status, stack
 `
 
 type UpdateProjectParams struct {
 	ID          int64       `json:"id"`
 	Name        string      `json:"name"`
 	Description pgtype.Text `json:"description"`
+	Url         pgtype.Text `json:"url"`
+	Status      string      `json:"status"`
+	Stack       []string    `json:"stack"`
 	IsPublic    pgtype.Bool `json:"is_public"`
 }
 
@@ -153,6 +205,9 @@ func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (P
 		arg.ID,
 		arg.Name,
 		arg.Description,
+		arg.Url,
+		arg.Status,
+		arg.Stack,
 		arg.IsPublic,
 	)
 	var i Project
@@ -165,6 +220,9 @@ func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (P
 		&i.UpdatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Url,
+		&i.Status,
+		&i.Stack,
 	)
 	return i, err
 }

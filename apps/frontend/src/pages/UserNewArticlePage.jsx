@@ -1,43 +1,87 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useUser } from '@clerk/clerk-react';
 import Editor from '../components/Editor';
 import { getArticleById, updateArticle, createArticle } from '../data/articles';
+import { getProjects } from '../data/projects';
 import { useNavigationGuard } from '../context/NavigationGuardContext';
 
 export default function UserNewArticlePage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const article = useMemo(() => (id ? getArticleById(Number(id)) : null), [id]);
+  const { user } = useUser();
+  const [article, setArticle] = useState(null);
+  const [projects, setProjects] = useState([]);
+  const [articleLoading, setArticleLoading] = useState(true);
   const isEdit = !!article;
 
-  const [title, setTitle] = useState(article?.title ?? '');
-  const [slug, setSlug] = useState(article?.slug ?? '');
-  const [isPublic, setIsPublic] = useState(article?.is_public ?? true);
-  const [wordCount, setWordCount] = useState(() => {
-    if (!article?.content) return 0;
-    const text = article.content.replace(/<[^>]*>/g, ' ').trim();
-    return text.split(/\s+/).filter(Boolean).length;
-  });
-  const [status, setStatus] = useState(isEdit ? 'saved' : 'draft');
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState('');
+  const [isPublic, setIsPublic] = useState(true);
+  const [wordCount, setWordCount] = useState(0);
+  const [status, setStatus] = useState('draft');
 
   const savedState = useRef({
-    title: article?.title ?? '',
-    slug: article?.slug ?? '',
-    isPublic: article?.is_public ?? true,
+    title: '',
+    slug: '',
+    isPublic: true,
     contentText: '',
+    projectId: null,
+    tags: [],
   });
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const projRes = await getProjects(1, 100, { createdBy: user?.id });
+        setProjects(projRes.data);
+
+        if (id) {
+          const data = await getArticleById(Number(id));
+          setArticle(data);
+          setTitle(data.title);
+          setSlug(data.slug ?? '');
+          setSelectedProjectId(data.project_id ?? null);
+          setTags(data.tags ?? []);
+          setIsPublic(data.is_public);
+          setStatus('saved');
+          savedState.current = {
+            title: data.title,
+            slug: data.slug ?? '',
+            isPublic: data.is_public,
+            contentText: '',
+            projectId: data.project_id ?? null,
+            tags: data.tags ?? [],
+          };
+          if (data.content) {
+            const text = data.content.replace(/<[^>]*>/g, ' ').trim();
+            setWordCount(text.split(/\s+/).filter(Boolean).length);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load article data:', err);
+      }
+      setArticleLoading(false);
+    };
+    load();
+  }, [id]);
   const currentContentText = useRef('');
   const hasContent = useRef(false);
 
   const [titleDirty, setTitleDirty] = useState(false);
   const [contentDirty, setContentDirty] = useState(false);
   const [visibilityDirty, setVisibilityDirty] = useState(false);
+  const [projectDirty, setProjectDirty] = useState(false);
+  const [tagsDirty, setTagsDirty] = useState(false);
 
   const [modal, setModal] = useState(null);
   const [hint, setHint] = useState('');
 
-  const isDirty = titleDirty || contentDirty || visibilityDirty;
+  const isDirty = titleDirty || contentDirty || visibilityDirty || projectDirty || tagsDirty;
   const { setGuard, clearGuard } = useNavigationGuard();
   const isDirtyRef = useRef(false);
   isDirtyRef.current = isDirty;
@@ -116,34 +160,46 @@ export default function UserNewArticlePage() {
     setModal('save');
   };
 
-  const confirmSave = () => {
+  const confirmSave = async () => {
     const data = {
       title,
       slug,
       is_public: isPublic,
       content: latestHtml.current,
+      tags,
+      project_id: selectedProjectId,
     };
-
-    if (isEdit) {
-      updateArticle(article.id, data);
-    } else {
-      createArticle({ ...data, tags: [], project_id: null, project_name: null });
-    }
 
     setStatus('saving...');
-    savedState.current = {
-      title,
-      slug,
-      isPublic,
-      contentText: currentContentText.current,
-    };
-    setTimeout(() => {
+    setModal(null);
+
+    try {
+      if (isEdit) {
+        const updated = await updateArticle(article.id, data);
+        setArticle(updated);
+      } else {
+        const created = await createArticle(data);
+        setArticle(created);
+      }
+
+      savedState.current = {
+        title,
+        slug,
+        isPublic,
+        contentText: currentContentText.current,
+        projectId: selectedProjectId,
+        tags: [...tags],
+      };
       setStatus('saved');
       setTitleDirty(false);
       setContentDirty(false);
       setVisibilityDirty(false);
-    }, 800);
-    setModal(null);
+      setProjectDirty(false);
+      setTagsDirty(false);
+    } catch (err) {
+      console.error('Failed to save article:', err);
+      setStatus('error');
+    }
   };
 
   const confirmDelete = () => {
@@ -151,7 +207,48 @@ export default function UserNewArticlePage() {
     navigate('/user/articles');
   };
 
-  const projectLabel = article?.project_name ? `~/${article.project_name}` : 'none (standalone)';
+  if (articleLoading) {
+    return <div className="av-empty"><span className="dim">loading...</span></div>;
+  }
+
+  const handleProjectChange = (e) => {
+    const val = e.target.value;
+    const pid = val === '' ? null : Number(val);
+    setSelectedProjectId(pid);
+    const changed = pid !== savedState.current.projectId;
+    setProjectDirty(changed);
+    if (changed) setStatus('new changes');
+  };
+
+  const handleTagKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const val = tagInput.trim().toLowerCase();
+      if (val && !tags.includes(val)) {
+        const next = [...tags, val];
+        setTags(next);
+        const changed = JSON.stringify(next) !== JSON.stringify(savedState.current.tags);
+        setTagsDirty(changed);
+        if (changed) setStatus('new changes');
+      }
+      setTagInput('');
+    }
+    if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
+      const next = tags.slice(0, -1);
+      setTags(next);
+      const changed = JSON.stringify(next) !== JSON.stringify(savedState.current.tags);
+      setTagsDirty(changed);
+      if (changed) setStatus('new changes');
+    }
+  };
+
+  const removeTag = (tag) => {
+    const next = tags.filter((t) => t !== tag);
+    setTags(next);
+    const changed = JSON.stringify(next) !== JSON.stringify(savedState.current.tags);
+    setTagsDirty(changed);
+    if (changed) setStatus('new changes');
+  };
 
   return (
     <>
@@ -235,19 +332,31 @@ export default function UserNewArticlePage() {
             </div>
             <div className="comp-field">
               <span className="comp-field-label">project</span>
-              <div className="comp-select">
-                <span className={article?.project_name ? '' : 'dim'}>{projectLabel}</span>
-                <span className="dim">▾</span>
-              </div>
+              <select
+                className="comp-select-input"
+                value={selectedProjectId ?? ''}
+                onChange={handleProjectChange}
+              >
+                <option value="">none (standalone)</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>~/{p.name}</option>
+                ))}
+              </select>
               <span className="dim" style={{ fontSize: 11 }}>optional · articles can be standalone</span>
             </div>
             <div className="comp-field">
               <span className="comp-field-label">tags</span>
               <div className="comp-tags">
-                {(article?.tags ?? []).map((t) => (
-                  <span key={t} className="art-tag">{t}</span>
+                {tags.map((t) => (
+                  <span key={t} className="art-tag" onClick={() => removeTag(t)}>{t} ×</span>
                 ))}
-                <span className="art-tag-add">+ add</span>
+                <input
+                  className="comp-tag-input"
+                  placeholder="add tag..."
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={handleTagKeyDown}
+                />
               </div>
             </div>
           </div>

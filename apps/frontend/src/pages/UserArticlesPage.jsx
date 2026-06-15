@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from '@clerk/clerk-react';
 import { getArticles, deleteArticles, updateArticle } from '../data/articles';
 
 const filters = ['all', 'public', 'private'];
@@ -8,11 +9,23 @@ const PAGE_SIZE = 10;
 
 export default function UserArticlesPage() {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [activeFilter, setActiveFilter] = useState('all');
-  const [articles, setArticles] = useState(getArticles);
+  const [articles, setArticles] = useState([]);
   const [selected, setSelected] = useState(new Set());
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  useEffect(() => {
+    getArticles(1, 100, { createdBy: user?.id }).then((res) => {
+      setArticles(res.data);
+      setInitialLoading(false);
+    }).catch((err) => {
+      console.error('Failed to load articles:', err);
+      setInitialLoading(false);
+    });
+  }, []);
 
   const filtered = useMemo(() => {
     let result = articles;
@@ -44,18 +57,26 @@ export default function UserArticlesPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [visibilityTarget, setVisibilityTarget] = useState(null);
 
-  const handleDelete = () => {
-    deleteArticles([...selected]);
-    setArticles(getArticles());
-    setSelected(new Set());
-    setShowDeleteModal(false);
+  const handleDelete = async () => {
+    try {
+      await deleteArticles([...selected]);
+      setArticles((prev) => prev.filter((a) => !selected.has(a.id)));
+      setSelected(new Set());
+      setShowDeleteModal(false);
+    } catch (err) {
+      console.error('Failed to delete articles:', err);
+    }
   };
 
-  const handleVisibilityConfirm = () => {
+  const handleVisibilityConfirm = async () => {
     if (!visibilityTarget) return;
-    updateArticle(visibilityTarget.id, { is_public: !visibilityTarget.is_public });
-    setArticles([...getArticles()]);
-    setVisibilityTarget(null);
+    try {
+      const updated = await updateArticle(visibilityTarget.id, { is_public: !visibilityTarget.is_public });
+      setArticles((prev) => prev.map((a) => a.id === updated.id ? updated : a));
+      setVisibilityTarget(null);
+    } catch (err) {
+      console.error('Failed to update article visibility:', err);
+    }
   };
 
   return (
