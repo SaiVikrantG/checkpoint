@@ -183,7 +183,14 @@ export default function UserProjectsPage() {
                 )}
                 <span
                   className={'toggle toggle-sm' + (p.is_public ? ' toggle-on' : '')}
-                  onClick={() => setProjects((prev) => prev.map((proj) => proj.id === p.id ? { ...proj, is_public: !proj.is_public } : proj))}
+                  onClick={async () => {
+                    try {
+                      const updated = await updateProject(p.id, { is_public: !p.is_public });
+                      setProjects((prev) => prev.map((proj) => proj.id === updated.id ? updated : proj));
+                    } catch (err) {
+                      console.error('Failed to toggle visibility:', err);
+                    }
+                  }}
                 >
                   <span className="toggle-knob" />
                 </span>
@@ -194,10 +201,6 @@ export default function UserProjectsPage() {
               <div className="up-blurb">{p.description}</div>
               <div className="up-stack">
                 {p.stack.map((s) => <span key={s} className="proj-chip">{s}</span>)}
-              </div>
-              <div className="up-foot">
-                <span><span className="dim">articles </span><span className="accent">{p.articles_count}</span></span>
-                <span><span className="dim">devlogs </span><span className="accent">{p.devlogs_count}</span></span>
               </div>
             </div>
           </div>

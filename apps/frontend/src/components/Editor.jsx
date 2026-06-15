@@ -59,6 +59,8 @@ export default function Editor({ content = '', onUpdate, collaborative = false }
   );
 }
 
+const LANGUAGES = ['plaintext', 'javascript', 'typescript', 'go', 'python', 'html', 'css', 'sql', 'bash', 'json', 'mermaid'];
+
 function EditorToolbar({ editor }) {
   const btn = (label, action, isActive) => (
     <button
@@ -70,6 +72,9 @@ function EditorToolbar({ editor }) {
       {label}
     </button>
   );
+
+  const inCodeBlock = editor.isActive('codeBlock');
+  const currentLang = inCodeBlock ? (editor.getAttributes('codeBlock').language || 'plaintext') : null;
 
   return (
     <div className="editor-toolbar">
@@ -94,9 +99,21 @@ function EditorToolbar({ editor }) {
       <span className="toolbar-sep" />
       <div className="toolbar-group">
         {btn('—', () => editor.chain().focus().setHorizontalRule().run(), false)}
-        {btn('< >', () => editor.chain().focus().toggleCodeBlock().run(), editor.isActive('codeBlock'))}
+        {btn('< >', () => editor.chain().focus().toggleCodeBlock().run(), inCodeBlock)}
         {btn('"', () => editor.chain().focus().toggleBlockquote().run(), editor.isActive('blockquote'))}
       </div>
+      {inCodeBlock && (
+        <>
+          <span className="toolbar-sep" />
+          <select
+            className="toolbar-lang-select"
+            value={currentLang}
+            onChange={(e) => editor.chain().focus().updateAttributes('codeBlock', { language: e.target.value }).run()}
+          >
+            {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
+          </select>
+        </>
+      )}
     </div>
   );
 }
