@@ -20,13 +20,20 @@ export default function ClickMePage() {
         </div>
 
         <div className="wip-log">
-          <div><span className="dim">2026-05-30</span> scaffolded the page</div>
-          <div><span className="dim">2026-05-31</span> decided what it does (?)</div>
-          <div><span className="dim">2026-06-01</span> deleted half of it</div>
-          <div><span className="dim">2026-06-02</span> still thinking</div>
           <div>
-            <span className="dim">2026-06-04</span>{' '}
-            <span className="accent">&#9612;</span>
+            <span className="dim">2026-05-30</span> scaffolded the page
+          </div>
+          <div>
+            <span className="dim">2026-05-31</span> decided what it does (?)
+          </div>
+          <div>
+            <span className="dim">2026-06-01</span> deleted half of it
+          </div>
+          <div>
+            <span className="dim">2026-06-02</span> still thinking
+          </div>
+          <div>
+            <span className="dim">2026-06-04</span> <span className="accent">&#9612;</span>
             <span style={{ color: 'var(--main)' }}>_</span>
           </div>
         </div>

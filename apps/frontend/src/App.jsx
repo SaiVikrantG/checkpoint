@@ -13,8 +13,6 @@ import RequireRole from './components/RequireRole';
 import DevlogsPage from './pages/DevlogsPage';
 import BoardPage from './pages/BoardPage';
 import ArticleViewPage from './pages/ArticleViewPage';
-import { lazy, Suspense } from 'react';
-const EditorPage = lazy(() => import('./pages/EditorPage'));
 import FinderModal from './components/FinderModal';
 import RequireAuth from './components/RequireAuth';
 import UserLayout from './components/UserLayout';
@@ -88,14 +86,25 @@ export default function App() {
           <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/clickme" element={<ClickMePage />} />
-          <Route path="/admin" element={<RequireRole role="admin"><AdminPage /></RequireRole>} />
+          <Route
+            path="/admin"
+            element={
+              <RequireRole role="admin">
+                <AdminPage />
+              </RequireRole>
+            }
+          />
           <Route path="/devlogs" element={<DevlogsPage />} />
           <Route path="/board" element={<BoardPage />} />
-          <Route path="/editor/new" element={<Suspense fallback={null}><EditorPage /></Suspense>} />
-          <Route path="/editor/:id" element={<Suspense fallback={null}><EditorPage /></Suspense>} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
-        <Route element={<RequireAuth><UserLayout onFinderOpen={() => setFinderOpen(true)} /></RequireAuth>}>
+        <Route
+          element={
+            <RequireAuth>
+              <UserLayout onFinderOpen={() => setFinderOpen(true)} />
+            </RequireAuth>
+          }
+        >
           <Route path="/user" element={<UserDashboardPage />} />
           <Route path="/user/articles" element={<UserArticlesPage />} />
           <Route path="/user/articles/new" element={<UserNewArticlePage />} />

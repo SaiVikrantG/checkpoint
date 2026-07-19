@@ -1,11 +1,36 @@
 import { useNavigate } from 'react-router-dom';
 
 const tiles = [
-  { id: '01', title: 'articles', sub: 'long-form writing, notes, essays', meta: '24 posts', path: '/articles' },
-  { id: '02', title: 'projects', sub: 'things i\'ve built · open source', meta: '12 repos', path: '/projects' },
-  { id: '03', title: 'idea_board', sub: 'project ideas · knowledge graph', meta: '', path: '/board' },
+  {
+    id: '01',
+    title: 'articles',
+    sub: 'long-form writing, notes, essays',
+    meta: '24 posts',
+    path: '/articles',
+  },
+  {
+    id: '02',
+    title: 'projects',
+    sub: "things i've built · open source",
+    meta: '12 repos',
+    path: '/projects',
+  },
+  {
+    id: '03',
+    title: 'idea_board',
+    sub: 'project ideas · knowledge graph',
+    meta: '',
+    path: '/board',
+  },
   { id: '04', title: 'about_me', sub: 'who i am, what i care about', meta: '', path: '/about' },
-  { id: '05', title: 'click_me!', sub: '[ work_in_progress ]', meta: '??', path: '/clickme', wip: true },
+  {
+    id: '05',
+    title: 'click_me!',
+    sub: '[ work_in_progress ]',
+    meta: '??',
+    path: '/clickme',
+    wip: true,
+  },
 ];
 
 export default function HomePage() {
@@ -19,8 +44,11 @@ export default function HomePage() {
           <span className="home-cursor">&#9612;</span>checkpoint
         </div>
         <div className="home-sub">
-          a devlog & writing space by <span className="accent" onClick={() => navigate('/about')} style={{ cursor: 'pointer' }}>@Vikrant</span>. type{' '}
-          <span className="kbd">⌘/</span> to jump anywhere.
+          a devlog & writing space by{' '}
+          <span className="accent" onClick={() => navigate('/about')} style={{ cursor: 'pointer' }}>
+            @Vikrant
+          </span>
+          . type <span className="kbd">⌘/</span> to jump anywhere.
         </div>
       </div>
 

@@ -38,16 +38,45 @@ function ClerkApp() {
           fontSize: '13px',
         },
         elements: {
-          card: { backgroundColor: bg2, border: `1px solid ${border}`, borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' },
+          card: {
+            backgroundColor: bg2,
+            border: `1px solid ${border}`,
+            borderRadius: '12px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          },
           headerTitle: { color: fg, fontFamily: mono },
           headerSubtitle: { color: sub, fontFamily: mono },
-          formButtonPrimary: { backgroundColor: main, color: bg2, fontFamily: mono, fontWeight: '500', fontSize: '12px', textTransform: 'lowercase' },
-          formFieldInput: { backgroundColor: bg, border: `1px solid ${border}`, color: fg, fontFamily: mono, fontSize: '13px' },
+          formButtonPrimary: {
+            backgroundColor: main,
+            color: bg2,
+            fontFamily: mono,
+            fontWeight: '500',
+            fontSize: '12px',
+            textTransform: 'lowercase',
+          },
+          formFieldInput: {
+            backgroundColor: bg,
+            border: `1px solid ${border}`,
+            color: fg,
+            fontFamily: mono,
+            fontSize: '13px',
+          },
           formFieldInput__focused: { borderColor: main, boxShadow: `0 0 0 1px ${main}` },
-          formFieldLabel: { color: sub, fontFamily: mono, fontSize: '11px', textTransform: 'lowercase' },
+          formFieldLabel: {
+            color: sub,
+            fontFamily: mono,
+            fontSize: '11px',
+            textTransform: 'lowercase',
+          },
           footerActionLink: { color: main, fontFamily: mono },
           footerActionText: { color: sub, fontFamily: mono },
-          socialButtonsBlockButton: { backgroundColor: bg, border: `1px solid ${border}`, color: fg, fontFamily: mono, fontSize: '12px' },
+          socialButtonsBlockButton: {
+            backgroundColor: bg,
+            border: `1px solid ${border}`,
+            color: fg,
+            fontFamily: mono,
+            fontSize: '12px',
+          },
           dividerLine: { backgroundColor: border },
           dividerText: { color: sub, fontFamily: mono },
           identityPreview: { backgroundColor: bg, border: `1px solid ${border}` },
@@ -69,5 +98,5 @@ function ClerkApp() {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ClerkApp />
-  </React.StrictMode>
+  </React.StrictMode>,
 );

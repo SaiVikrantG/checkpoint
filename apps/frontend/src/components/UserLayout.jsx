@@ -10,7 +10,6 @@ const nav = [
   { id: 'stats', icon: '▤', name: 'statistics', path: '/user/stats', sub: '' },
 ];
 
-
 export default function UserLayout({ onFinderOpen }) {
   const { user } = useUser();
   const { signOut } = useClerk();
@@ -18,11 +17,10 @@ export default function UserLayout({ onFinderOpen }) {
   const location = useLocation();
   const { checkGuard } = useNavigationGuard();
 
-  const currentNav = nav.find((n) =>
-    n.path === '/user'
-      ? location.pathname === '/user'
-      : location.pathname.startsWith(n.path)
-  ) || nav[0];
+  const currentNav =
+    nav.find((n) =>
+      n.path === '/user' ? location.pathname === '/user' : location.pathname.startsWith(n.path),
+    ) || nav[0];
 
   const guardedNavigate = (to) => {
     if (checkGuard(to)) navigate(to);
@@ -37,9 +35,7 @@ export default function UserLayout({ onFinderOpen }) {
         </div>
 
         <div className="user-card">
-          <div className="user-card-avatar">
-            {user?.firstName?.[0] || '@'}
-          </div>
+          <div className="user-card-avatar">{user?.firstName?.[0] || '@'}</div>
           <div className="user-card-meta">
             <div className="user-card-name">@{user?.username || user?.firstName || 'user'}</div>
             <div className="user-card-role dim">{user?.publicMetadata?.role || 'member'}</div>
@@ -49,9 +45,10 @@ export default function UserLayout({ onFinderOpen }) {
         <div className="user-side-eyebrow">// workspace</div>
         <ul className="user-nav">
           {nav.map((n) => {
-            const isActive = n.path === '/user'
-              ? location.pathname === '/user'
-              : location.pathname.startsWith(n.path);
+            const isActive =
+              n.path === '/user'
+                ? location.pathname === '/user'
+                : location.pathname.startsWith(n.path);
             return (
               <li key={n.id}>
                 <div

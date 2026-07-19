@@ -9,8 +9,12 @@ export default function NotFoundPage() {
       <div className="nf-divider" />
       <p className="nf-message">page not found</p>
       <div className="nf-actions">
-        <button className="btn-ghost" onClick={() => navigate(-1)}>← go back</button>
-        <button className="btn-primary" onClick={() => navigate('/')}>home</button>
+        <button className="btn-ghost" onClick={() => navigate(-1)}>
+          ← go back
+        </button>
+        <button className="btn-primary" onClick={() => navigate('/')}>
+          home
+        </button>
       </div>
     </div>
   );

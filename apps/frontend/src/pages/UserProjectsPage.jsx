@@ -8,38 +8,49 @@ const filters = ['all', 'live', 'wip', 'archived'];
 const statusOptions = ['live', 'wip', 'archived'];
 
 export default function UserProjectsPage() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const [activeFilter, setActiveFilter] = useState('all');
   const [projects, setProjects] = useState([]);
   const [selected, setSelected] = useState(new Set());
   const [modal, setModal] = useState(null);
-  const [newProject, setNewProject] = useState({ name: '', description: '', url: '', status: 'wip', stack: '', is_public: true });
+  const [newProject, setNewProject] = useState({
+    name: '',
+    description: '',
+    url: '',
+    status: 'wip',
+    stack: '',
+    is_public: true,
+  });
   const [editProject, setEditProject] = useState(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [prevFilter, setPrevFilter] = useState(activeFilter);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const sentinelRef = useRef(null);
 
   useEffect(() => {
-    getProjects(1, 100, { createdBy: user?.id }).then((res) => {
-      setProjects(res.data);
-      setInitialLoading(false);
-    }).catch((err) => {
-      console.error('Failed to load projects:', err);
-      setInitialLoading(false);
-    });
-  }, []);
+    if (!isLoaded) return;
+    getProjects(1, 100, { createdBy: user?.id })
+      .then((res) => {
+        setProjects(res.data);
+        setInitialLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load projects:', err);
+        setInitialLoading(false);
+      });
+  }, [isLoaded, user?.id]);
 
-  const filtered = activeFilter === 'all'
-    ? projects
-    : projects.filter((p) => p.status === activeFilter);
+  const filtered =
+    activeFilter === 'all' ? projects : projects.filter((p) => p.status === activeFilter);
+
+  if (activeFilter !== prevFilter) {
+    setPrevFilter(activeFilter);
+    setVisibleCount(PAGE_SIZE);
+  }
 
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
-
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [activeFilter]);
 
   const loadMore = useCallback(() => {
     if (!hasMore || loading) return;
@@ -54,8 +65,10 @@ export default function UserProjectsPage() {
     const el = sentinelRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) loadMore(); },
-      { rootMargin: '100px' }
+      ([entry]) => {
+        if (entry.isIntersecting) loadMore();
+      },
+      { rootMargin: '100px' },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -96,7 +109,7 @@ export default function UserProjectsPage() {
         stack: editProject.stack,
         is_public: editProject.is_public,
       });
-      setProjects((prev) => prev.map((p) => p.id === updated.id ? updated : p));
+      setProjects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
       setEditProject(null);
       setModal(null);
     } catch (err) {
@@ -115,19 +128,38 @@ export default function UserProjectsPage() {
         is_public: newProject.is_public,
       });
       setProjects((prev) => [...prev, created]);
-      setNewProject({ name: '', description: '', url: '', status: 'wip', stack: '', is_public: true });
+      setNewProject({
+        name: '',
+        description: '',
+        url: '',
+        status: 'wip',
+        stack: '',
+        is_public: true,
+      });
       setModal(null);
     } catch (err) {
       console.error('Failed to create project:', err);
     }
   };
 
+  if (initialLoading) {
+    return (
+      <div className="av-empty">
+        <span className="dim">loading...</span>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="user-head">
         <div>
           <h1 className="user-h1">projects</h1>
-          <div className="user-sub">// {projects.length} total · {projects.filter((p) => p.status === 'live' || p.status === 'wip').length} active · devlogs and articles can attach here</div>
+          <div className="user-sub">
+            // {projects.length} total ·{' '}
+            {projects.filter((p) => p.status === 'live' || p.status === 'wip').length} active ·
+            devlogs and articles can attach here
+          </div>
         </div>
         <div className="user-head-actions">
           <div className="user-tabs">
@@ -142,7 +174,11 @@ export default function UserProjectsPage() {
             ))}
           </div>
           {selected.size > 0 && (
-            <button className="btn-ghost" style={{ borderColor: '#c0392b', color: '#c0392b' }} onClick={() => setModal('delete')}>
+            <button
+              className="btn-ghost"
+              style={{ borderColor: '#c0392b', color: '#c0392b' }}
+              onClick={() => setModal('delete')}
+            >
               delete ({selected.size})
             </button>
           )}
@@ -186,7 +222,9 @@ export default function UserProjectsPage() {
                   onClick={async () => {
                     try {
                       const updated = await updateProject(p.id, { is_public: !p.is_public });
-                      setProjects((prev) => prev.map((proj) => proj.id === updated.id ? updated : proj));
+                      setProjects((prev) =>
+                        prev.map((proj) => (proj.id === updated.id ? updated : proj)),
+                      );
                     } catch (err) {
                       console.error('Failed to toggle visibility:', err);
                     }
@@ -200,7 +238,11 @@ export default function UserProjectsPage() {
               <div className="up-name">~/{p.name}</div>
               <div className="up-blurb">{p.description}</div>
               <div className="up-stack">
-                {p.stack.map((s) => <span key={s} className="proj-chip">{s}</span>)}
+                {p.stack.map((s) => (
+                  <span key={s} className="proj-chip">
+                    {s}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
@@ -209,161 +251,209 @@ export default function UserProjectsPage() {
 
       {hasMore && (
         <div className="up-sentinel" ref={sentinelRef}>
-          {loading && <div className="up-loader"><span className="up-loader-dot" /><span className="up-loader-dot" /><span className="up-loader-dot" /></div>}
+          {loading && (
+            <div className="up-loader">
+              <span className="up-loader-dot" />
+              <span className="up-loader-dot" />
+              <span className="up-loader-dot" />
+            </div>
+          )}
         </div>
       )}
       {!hasMore && filtered.length > PAGE_SIZE && (
         <div className="up-end dim">// all {filtered.length} projects loaded</div>
       )}
 
-      {modal && createPortal(
-        <div className="modal-overlay" onClick={() => setModal(null)}>
-          <div className="modal-box" onClick={(e) => e.stopPropagation()} style={modal === 'create' || modal === 'edit' ? { maxWidth: 480 } : undefined}>
-            {modal === 'delete' && (
-              <>
-                <div className="modal-title">confirm delete</div>
-                <p className="modal-body">
-                  are you sure you want to delete {selected.size} {selected.size === 1 ? 'project' : 'projects'}? this action cannot be undone.
-                </p>
-                <div className="modal-actions">
-                  <button className="btn-ghost" onClick={() => setModal(null)}>cancel</button>
-                  <button className="btn-ghost modal-btn-danger" onClick={handleDelete}>delete</button>
-                </div>
-              </>
-            )}
-            {modal === 'create' && (
-              <>
-                <div className="modal-title">new project</div>
-                <div className="modal-form">
-                  <label className="modal-label">
-                    <span>name</span>
-                    <input
-                      className="modal-input"
-                      placeholder="project name"
-                      value={newProject.name}
-                      onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
-                    />
-                  </label>
-                  <label className="modal-label">
-                    <span>description</span>
-                    <input
-                      className="modal-input"
-                      placeholder="short blurb"
-                      value={newProject.description}
-                      onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
-                    />
-                  </label>
-                  <label className="modal-label">
-                    <span>url</span>
-                    <input
-                      className="modal-input"
-                      placeholder="https://github.com/..."
-                      value={newProject.url}
-                      onChange={(e) => setNewProject({ ...newProject, url: e.target.value })}
-                    />
-                  </label>
-                  <label className="modal-label">
-                    <span>stack</span>
-                    <input
-                      className="modal-input"
-                      placeholder="go, react, postgres"
-                      value={newProject.stack}
-                      onChange={(e) => setNewProject({ ...newProject, stack: e.target.value })}
-                    />
-                  </label>
-                  <label className="modal-label">
-                    <span>status</span>
-                    <select
-                      className="modal-input"
-                      value={newProject.status}
-                      onChange={(e) => setNewProject({ ...newProject, status: e.target.value })}
-                    >
-                      {statusOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </label>
-                  <div className="modal-label-row">
-                    <span>public</span>
-                    <span
-                      className={'toggle' + (newProject.is_public ? ' toggle-on' : '')}
-                      onClick={() => setNewProject({ ...newProject, is_public: !newProject.is_public })}
-                    >
-                      <span className="toggle-knob" />
-                    </span>
+      {modal &&
+        createPortal(
+          <div className="modal-overlay" onClick={() => setModal(null)}>
+            <div
+              className="modal-box"
+              onClick={(e) => e.stopPropagation()}
+              style={modal === 'create' || modal === 'edit' ? { maxWidth: 480 } : undefined}
+            >
+              {modal === 'delete' && (
+                <>
+                  <div className="modal-title">confirm delete</div>
+                  <p className="modal-body">
+                    are you sure you want to delete {selected.size}{' '}
+                    {selected.size === 1 ? 'project' : 'projects'}? this action cannot be undone.
+                  </p>
+                  <div className="modal-actions">
+                    <button className="btn-ghost" onClick={() => setModal(null)}>
+                      cancel
+                    </button>
+                    <button className="btn-ghost modal-btn-danger" onClick={handleDelete}>
+                      delete
+                    </button>
                   </div>
-                </div>
-                <div className="modal-actions">
-                  <button className="btn-ghost" onClick={() => setModal(null)}>cancel</button>
-                  <button className="btn-primary" disabled={!newProject.name.trim()} onClick={handleCreate}>create</button>
-                </div>
-              </>
-            )}
-            {modal === 'edit' && editProject && (
-              <>
-                <div className="modal-title">edit project</div>
-                <div className="modal-form">
-                  <label className="modal-label">
-                    <span>name</span>
-                    <input
-                      className="modal-input"
-                      value={editProject.name}
-                      onChange={(e) => setEditProject({ ...editProject, name: e.target.value })}
-                    />
-                  </label>
-                  <label className="modal-label">
-                    <span>description</span>
-                    <input
-                      className="modal-input"
-                      value={editProject.description}
-                      onChange={(e) => setEditProject({ ...editProject, description: e.target.value })}
-                    />
-                  </label>
-                  <label className="modal-label">
-                    <span>url</span>
-                    <input
-                      className="modal-input"
-                      placeholder="https://github.com/..."
-                      value={editProject.url || ''}
-                      onChange={(e) => setEditProject({ ...editProject, url: e.target.value })}
-                    />
-                  </label>
-                  <label className="modal-label">
-                    <span>stack</span>
-                    <input
-                      className="modal-input"
-                      value={editProject.stack}
-                      onChange={(e) => setEditProject({ ...editProject, stack: e.target.value })}
-                    />
-                  </label>
-                  <label className="modal-label">
-                    <span>status</span>
-                    <select
-                      className="modal-input"
-                      value={editProject.status}
-                      onChange={(e) => setEditProject({ ...editProject, status: e.target.value })}
-                    >
-                      {statusOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </label>
-                  <div className="modal-label-row">
-                    <span>public</span>
-                    <span
-                      className={'toggle' + (editProject.is_public ? ' toggle-on' : '')}
-                      onClick={() => setEditProject({ ...editProject, is_public: !editProject.is_public })}
-                    >
-                      <span className="toggle-knob" />
-                    </span>
+                </>
+              )}
+              {modal === 'create' && (
+                <>
+                  <div className="modal-title">new project</div>
+                  <div className="modal-form">
+                    <label className="modal-label">
+                      <span>name</span>
+                      <input
+                        className="modal-input"
+                        placeholder="project name"
+                        value={newProject.name}
+                        onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
+                      />
+                    </label>
+                    <label className="modal-label">
+                      <span>description</span>
+                      <input
+                        className="modal-input"
+                        placeholder="short blurb"
+                        value={newProject.description}
+                        onChange={(e) =>
+                          setNewProject({ ...newProject, description: e.target.value })
+                        }
+                      />
+                    </label>
+                    <label className="modal-label">
+                      <span>url</span>
+                      <input
+                        className="modal-input"
+                        placeholder="https://github.com/..."
+                        value={newProject.url}
+                        onChange={(e) => setNewProject({ ...newProject, url: e.target.value })}
+                      />
+                    </label>
+                    <label className="modal-label">
+                      <span>stack</span>
+                      <input
+                        className="modal-input"
+                        placeholder="go, react, postgres"
+                        value={newProject.stack}
+                        onChange={(e) => setNewProject({ ...newProject, stack: e.target.value })}
+                      />
+                    </label>
+                    <label className="modal-label">
+                      <span>status</span>
+                      <select
+                        className="modal-input"
+                        value={newProject.status}
+                        onChange={(e) => setNewProject({ ...newProject, status: e.target.value })}
+                      >
+                        {statusOptions.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="modal-label-row">
+                      <span>public</span>
+                      <span
+                        className={'toggle' + (newProject.is_public ? ' toggle-on' : '')}
+                        onClick={() =>
+                          setNewProject({ ...newProject, is_public: !newProject.is_public })
+                        }
+                      >
+                        <span className="toggle-knob" />
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="modal-actions">
-                  <button className="btn-ghost" onClick={() => setModal(null)}>cancel</button>
-                  <button className="btn-primary" disabled={!editProject.name.trim()} onClick={handleSaveEdit}>save</button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>,
-        document.body
-      )}
+                  <div className="modal-actions">
+                    <button className="btn-ghost" onClick={() => setModal(null)}>
+                      cancel
+                    </button>
+                    <button
+                      className="btn-primary"
+                      disabled={!newProject.name.trim()}
+                      onClick={handleCreate}
+                    >
+                      create
+                    </button>
+                  </div>
+                </>
+              )}
+              {modal === 'edit' && editProject && (
+                <>
+                  <div className="modal-title">edit project</div>
+                  <div className="modal-form">
+                    <label className="modal-label">
+                      <span>name</span>
+                      <input
+                        className="modal-input"
+                        value={editProject.name}
+                        onChange={(e) => setEditProject({ ...editProject, name: e.target.value })}
+                      />
+                    </label>
+                    <label className="modal-label">
+                      <span>description</span>
+                      <input
+                        className="modal-input"
+                        value={editProject.description}
+                        onChange={(e) =>
+                          setEditProject({ ...editProject, description: e.target.value })
+                        }
+                      />
+                    </label>
+                    <label className="modal-label">
+                      <span>url</span>
+                      <input
+                        className="modal-input"
+                        placeholder="https://github.com/..."
+                        value={editProject.url || ''}
+                        onChange={(e) => setEditProject({ ...editProject, url: e.target.value })}
+                      />
+                    </label>
+                    <label className="modal-label">
+                      <span>stack</span>
+                      <input
+                        className="modal-input"
+                        value={editProject.stack}
+                        onChange={(e) => setEditProject({ ...editProject, stack: e.target.value })}
+                      />
+                    </label>
+                    <label className="modal-label">
+                      <span>status</span>
+                      <select
+                        className="modal-input"
+                        value={editProject.status}
+                        onChange={(e) => setEditProject({ ...editProject, status: e.target.value })}
+                      >
+                        {statusOptions.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="modal-label-row">
+                      <span>public</span>
+                      <span
+                        className={'toggle' + (editProject.is_public ? ' toggle-on' : '')}
+                        onClick={() =>
+                          setEditProject({ ...editProject, is_public: !editProject.is_public })
+                        }
+                      >
+                        <span className="toggle-knob" />
+                      </span>
+                    </div>
+                  </div>
+                  <div className="modal-actions">
+                    <button className="btn-ghost" onClick={() => setModal(null)}>
+                      cancel
+                    </button>
+                    <button
+                      className="btn-primary"
+                      disabled={!editProject.name.trim()}
+                      onClick={handleSaveEdit}
+                    >
+                      save
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

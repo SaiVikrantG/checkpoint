@@ -21,9 +21,7 @@ const treeData = [
       },
       {
         day: '2026-06-02',
-        entries: [
-          { t: '20:01', msg: 'first pass at idea graph layout' },
-        ],
+        entries: [{ t: '20:01', msg: 'first pass at idea graph layout' }],
       },
     ],
   },
@@ -39,9 +37,7 @@ const treeData = [
       },
       {
         day: '2026-05-30',
-        entries: [
-          { t: '12:00', msg: 'switched to f32x4 simd for ray packets' },
-        ],
+        entries: [{ t: '12:00', msg: 'switched to f32x4 simd for ray packets' }],
       },
     ],
   },
@@ -59,9 +55,7 @@ const treeData = [
     days: [
       {
         day: '2026-05-28',
-        entries: [
-          { t: '08:42', msg: 'ghostty config + theme toggle macro' },
-        ],
+        entries: [{ t: '08:42', msg: 'ghostty config + theme toggle macro' }],
       },
     ],
   },
@@ -71,9 +65,7 @@ const viewOptions = ['tree', 'list', 'cal'];
 const rangeOptions = ['7d', '30d', 'all'];
 
 export default function DevlogsPage() {
-  const [openProjects, setOpenProjects] = useState(
-    new Set(treeData.map((p) => p.proj))
-  );
+  const [openProjects, setOpenProjects] = useState(new Set(treeData.map((p) => p.proj)));
   const [activeView, setActiveView] = useState('tree');
   const [activeRange, setActiveRange] = useState('30d');
 
@@ -141,9 +133,7 @@ export default function DevlogsPage() {
             >
               <span className="rail-bullet">{openProjects.has(p.proj) ? '▾' : '▸'}</span>
               <span className="rail-name">{p.proj}</span>
-              <span className="rail-count">
-                {p.days.reduce((s, d) => s + d.entries.length, 0)}
-              </span>
+              <span className="rail-count">{p.days.reduce((s, d) => s + d.entries.length, 0)}</span>
             </li>
           ))}
         </ul>

@@ -51,10 +51,16 @@ export default function AdminPage() {
     document.documentElement.style.setProperty('--bg-3', adjustColor(bg, -10));
     document.documentElement.style.setProperty('--fg', fg);
     document.documentElement.style.setProperty('--main', ac);
-    localStorage.setItem('checkpoint-theme', JSON.stringify({ name: name || 'custom', bg, fg, ac }));
+    localStorage.setItem(
+      'checkpoint-theme',
+      JSON.stringify({ name: name || 'custom', bg, fg, ac }),
+    );
   };
 
-  const spark = [4, 7, 5, 9, 12, 8, 6, 11, 14, 10, 13, 9, 15, 12, 18, 14, 11, 16, 20, 17, 15, 19, 22, 18, 16, 21, 24, 20, 19, 23];
+  const spark = [
+    4, 7, 5, 9, 12, 8, 6, 11, 14, 10, 13, 9, 15, 12, 18, 14, 11, 16, 20, 17, 15, 19, 22, 18, 16, 21,
+    24, 20, 19, 23,
+  ];
   const sparkPath = spark.map((v, i) => `${i * (320 / 29)},${64 - (v / 24) * 54}`).join(' ');
 
   return (
@@ -64,10 +70,7 @@ export default function AdminPage() {
           <h1 className="admin-h1">admin</h1>
           <div className="admin-sub">// last sync 14s ago · all systems nominal</div>
         </div>
-        <button
-          className="btn-ghost"
-          onClick={() => signOut(() => navigate('/'))}
-        >
+        <button className="btn-ghost" onClick={() => signOut(() => navigate('/'))}>
           logout
         </button>
       </div>
@@ -88,22 +91,30 @@ export default function AdminPage() {
         <div className="metric">
           <div className="metric-label">articles</div>
           <div className="metric-value">24</div>
-          <div className="metric-foot"><span className="dim">drafts</span> 6</div>
+          <div className="metric-foot">
+            <span className="dim">drafts</span> 6
+          </div>
         </div>
         <div className="metric">
           <div className="metric-label">projects</div>
           <div className="metric-value">12</div>
-          <div className="metric-foot"><span className="dim">active</span> 4</div>
+          <div className="metric-foot">
+            <span className="dim">active</span> 4
+          </div>
         </div>
         <div className="metric">
           <div className="metric-label">devlogs</div>
           <div className="metric-value">213</div>
-          <div className="metric-foot"><span className="dim">this week</span> 11</div>
+          <div className="metric-foot">
+            <span className="dim">this week</span> 11
+          </div>
         </div>
         <div className="metric">
           <div className="metric-label">avg session</div>
           <div className="metric-value">3:42</div>
-          <div className="metric-foot"><span className="dim">bounce</span> 32%</div>
+          <div className="metric-foot">
+            <span className="dim">bounce</span> 32%
+          </div>
         </div>
 
         <div className="admin-panel admin-theme">
@@ -124,7 +135,10 @@ export default function AdminPage() {
                 <div className="theme-preview" style={{ background: t.bg }}>
                   <span className="theme-sw" style={{ background: t.fg }} />
                   <span className="theme-sw" style={{ background: t.ac }} />
-                  <span className="theme-sw" style={{ background: t.bg, border: '1px solid ' + t.fg }} />
+                  <span
+                    className="theme-sw"
+                    style={{ background: t.bg, border: '1px solid ' + t.fg }}
+                  />
                 </div>
                 <div className="theme-name">
                   {t.name}
@@ -142,11 +156,23 @@ export default function AdminPage() {
             <span className="dim">// custom</span>
             <div className="theme-customrow">
               <span>bg</span>
-              <input className="hex-input" value={customBg} onChange={(e) => setCustomBg(e.target.value)} />
+              <input
+                className="hex-input"
+                value={customBg}
+                onChange={(e) => setCustomBg(e.target.value)}
+              />
               <span>fg</span>
-              <input className="hex-input" value={customFg} onChange={(e) => setCustomFg(e.target.value)} />
+              <input
+                className="hex-input"
+                value={customFg}
+                onChange={(e) => setCustomFg(e.target.value)}
+              />
               <span>ac</span>
-              <input className="hex-input" value={customAc} onChange={(e) => setCustomAc(e.target.value)} />
+              <input
+                className="hex-input"
+                value={customAc}
+                onChange={(e) => setCustomAc(e.target.value)}
+              />
               <button
                 className="btn-ghost"
                 style={{ padding: '5px 12px', fontSize: 11, marginLeft: 'auto' }}
@@ -166,8 +192,7 @@ export default function AdminPage() {
           <ul className="activity-list">
             {activityLog.map((a, i) => (
               <li key={i}>
-                <span className="dim">{a.time}</span>{' '}
-                <span className="accent">●</span> {a.msg}
+                <span className="dim">{a.time}</span> <span className="accent">●</span> {a.msg}
               </li>
             ))}
           </ul>

@@ -2,10 +2,30 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 
 const recent = [
-  { kind: 'article', title: 'designing a notch header in css', meta: '2h ago · draft', state: 'draft' },
-  { kind: 'devlog', title: 'wired theme picker into css vars', meta: '5h ago · checkpoint', state: '' },
-  { kind: 'article', title: 'the case for plain markdown', meta: 'yesterday · public', state: 'public' },
-  { kind: 'devlog', title: 'soft shadows working, finally', meta: 'yesterday · rust-rays', state: '' },
+  {
+    kind: 'article',
+    title: 'designing a notch header in css',
+    meta: '2h ago · draft',
+    state: 'draft',
+  },
+  {
+    kind: 'devlog',
+    title: 'wired theme picker into css vars',
+    meta: '5h ago · checkpoint',
+    state: '',
+  },
+  {
+    kind: 'article',
+    title: 'the case for plain markdown',
+    meta: 'yesterday · public',
+    state: 'public',
+  },
+  {
+    kind: 'devlog',
+    title: 'soft shadows working, finally',
+    meta: 'yesterday · rust-rays',
+    state: '',
+  },
   { kind: 'project', title: 'newsletter (new)', meta: '2d ago', state: '' },
 ];
 
@@ -17,9 +37,15 @@ export default function UserDashboardPage() {
   const hour = new Date().getHours();
   let greeting;
   switch (true) {
-    case hour < 12:  greeting = 'good morning'; break;
-    case hour < 17:  greeting = 'good afternoon'; break;
-    default:         greeting = 'good evening'; break;
+    case hour < 12:
+      greeting = 'good morning';
+      break;
+    case hour < 17:
+      greeting = 'good afternoon';
+      break;
+    default:
+      greeting = 'good evening';
+      break;
   }
 
   return (
@@ -28,7 +54,8 @@ export default function UserDashboardPage() {
         <div className="dash-eyebrow">// {greeting},</div>
         <div className="dash-hello">@{name}.</div>
         <div className="dash-sub">
-          you have <span className="accent">3 drafts</span>, <span className="accent">11 devlogs this week</span>, and{' '}
+          you have <span className="accent">3 drafts</span>,{' '}
+          <span className="accent">11 devlogs this week</span>, and{' '}
           <span className="accent">↑ 18%</span> views on the last 30 days.
         </div>
       </div>
@@ -37,12 +64,19 @@ export default function UserDashboardPage() {
         <div className="dash-stats">
           <div className="dash-stat">
             <div className="dash-stat-label">total views</div>
-            <div className="dash-stat-value">12.8k <span className="dash-stat-delta">↑ 18%</span></div>
+            <div className="dash-stat-value">
+              12.8k <span className="dash-stat-delta">↑ 18%</span>
+            </div>
             <div className="dash-stat-foot dim">last 30d</div>
           </div>
           <div className="dash-stat">
             <div className="dash-stat-label">articles</div>
-            <div className="dash-stat-value">24 <span className="dim" style={{ fontSize: 12 }}>/ 18 public</span></div>
+            <div className="dash-stat-value">
+              24{' '}
+              <span className="dim" style={{ fontSize: 12 }}>
+                / 18 public
+              </span>
+            </div>
             <div className="dash-stat-foot dim">6 drafts</div>
           </div>
           <div className="dash-stat">
@@ -60,7 +94,13 @@ export default function UserDashboardPage() {
         <div className="dash-panel dash-recent">
           <div className="dash-panel-head">
             <span>// recent</span>
-            <span className="dim" style={{ cursor: 'pointer' }} onClick={() => navigate('/user/articles')}>view all →</span>
+            <span
+              className="dim"
+              style={{ cursor: 'pointer' }}
+              onClick={() => navigate('/user/articles')}
+            >
+              view all →
+            </span>
           </div>
           <ul className="dash-recent-list">
             {recent.map((r, i) => (
@@ -78,8 +118,12 @@ export default function UserDashboardPage() {
         </div>
 
         <div className="dash-panel dash-streak">
-          <div className="dash-panel-head"><span>// streak</span></div>
-          <div className="dash-streak-value">14 <span className="dim">days</span></div>
+          <div className="dash-panel-head">
+            <span>// streak</span>
+          </div>
+          <div className="dash-streak-value">
+            14 <span className="dim">days</span>
+          </div>
           <div className="dash-streak-grid">
             {Array.from({ length: 30 }).map((_, i) => {
               const v = (i * 7 + 3) % 10;

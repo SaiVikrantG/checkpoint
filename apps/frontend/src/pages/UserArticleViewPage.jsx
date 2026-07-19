@@ -25,13 +25,15 @@ export default function UserArticleViewPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getArticleById(Number(id)).then((data) => {
-      setArticle(data);
-      setLoading(false);
-    }).catch((err) => {
-      console.error('Failed to load article:', err);
-      setLoading(false);
-    });
+    getArticleById(Number(id))
+      .then((data) => {
+        setArticle(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load article:', err);
+        setLoading(false);
+      });
   }, [id]);
 
   useEffect(() => {
@@ -50,14 +52,20 @@ export default function UserArticleViewPage() {
   }, [article]);
 
   if (loading) {
-    return <div className="av-empty"><span className="dim">loading...</span></div>;
+    return (
+      <div className="av-empty">
+        <span className="dim">loading...</span>
+      </div>
+    );
   }
 
   if (!article) {
     return (
       <div className="av-empty">
         <span className="dim">article not found</span>
-        <button className="btn-ghost" onClick={() => navigate('/user/articles')}>← back to articles</button>
+        <button className="btn-ghost" onClick={() => navigate('/user/articles')}>
+          ← back to articles
+        </button>
       </div>
     );
   }
@@ -66,7 +74,13 @@ export default function UserArticleViewPage() {
     <>
       <div className="comp-bar">
         <div className="comp-bar-left">
-          <span className="dim" style={{ cursor: 'pointer' }} onClick={() => navigate('/user/articles')}>← articles /</span>
+          <span
+            className="dim"
+            style={{ cursor: 'pointer' }}
+            onClick={() => navigate('/user/articles')}
+          >
+            ← articles /
+          </span>
           <span className="accent">{article.title}</span>
           <span className={'badge ' + (article.is_public ? 'badge-draft' : 'badge-warn')}>
             {article.is_public ? 'public' : 'private'}
@@ -74,9 +88,25 @@ export default function UserArticleViewPage() {
         </div>
         <div className="comp-bar-right">
           <span className="dim">
-            {article.views.toLocaleString()} views · ~{Math.max(1, Math.round(article.content.replace(/<[^>]*>/g, ' ').trim().split(/\s+/).filter(Boolean).length / 200))} min read
+            {article.views.toLocaleString()} views · ~
+            {Math.max(
+              1,
+              Math.round(
+                article.content
+                  .replace(/<[^>]*>/g, ' ')
+                  .trim()
+                  .split(/\s+/)
+                  .filter(Boolean).length / 200,
+              ),
+            )}{' '}
+            min read
           </span>
-          <button className="btn-primary" onClick={() => navigate(`/user/articles/${article.id}/edit`)}>edit</button>
+          <button
+            className="btn-primary"
+            onClick={() => navigate(`/user/articles/${article.id}/edit`)}
+          >
+            edit
+          </button>
         </div>
       </div>
 
@@ -84,12 +114,27 @@ export default function UserArticleViewPage() {
         <article className="av-body" ref={articleRef}>
           <h1 className="av-title">{article.title}</h1>
           <div className="av-meta">
-            <span className="dim">{new Date(article.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-            {article.project_name && <><span className="dim">·</span><span className="ut-proj-chip">~/{article.project_name}</span></>}
+            <span className="dim">
+              {new Date(article.created_at).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </span>
+            {article.project_name && (
+              <>
+                <span className="dim">·</span>
+                <span className="ut-proj-chip">~/{article.project_name}</span>
+              </>
+            )}
           </div>
           {article.tags?.length > 0 && (
             <div className="av-tags">
-              {article.tags.map((t) => <span key={t} className="art-tag">{t}</span>)}
+              {article.tags.map((t) => (
+                <span key={t} className="art-tag">
+                  {t}
+                </span>
+              ))}
             </div>
           )}
           <div className="editor-content" dangerouslySetInnerHTML={{ __html: article.content }} />

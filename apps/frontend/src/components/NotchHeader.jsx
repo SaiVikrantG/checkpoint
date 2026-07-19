@@ -23,11 +23,13 @@ export default function NotchHeader({ onFinderOpen }) {
     const update = () => {
       const now = new Date();
       setTime(
-        now.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true,
-        }).toLowerCase()
+        now
+          .toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+          })
+          .toLowerCase(),
       );
     };
     update();
@@ -65,7 +67,9 @@ export default function NotchHeader({ onFinderOpen }) {
           {navItems.map((item) => (
             <span
               key={item.path}
-              ref={(el) => { itemRefs.current[item.path] = el; }}
+              ref={(el) => {
+                itemRefs.current[item.path] = el;
+              }}
               className={'notch-item' + (location.pathname === item.path ? ' active' : '')}
               onClick={() => navigate(item.path)}
             >

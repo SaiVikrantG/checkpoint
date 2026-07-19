@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { marked } from 'marked';
 import mermaid from 'mermaid';
 
@@ -127,7 +127,7 @@ graph TD
 
 Choose the format that will still work in 10 years. That format is plain text.`,
   },
-  'raymarching': {
+  raymarching: {
     title: 'raymarching, but slowly',
     date: '2026-05-20',
     readTime: '12 min',
@@ -214,17 +214,14 @@ Next up: adding soft shadows and ambient occlusion.`,
 export default function ArticleViewPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const [htmlContent, setHtmlContent] = useState('');
   const articleRef = useRef(null);
 
   const article = placeholderArticles[slug];
 
-  useEffect(() => {
-    if (article) {
-      mermaidId = 0;
-      setHtmlContent(marked(article.content));
-    }
-  }, [slug, article]);
+  const htmlContent = useMemo(() => {
+    if (!article) return '';
+    return marked(article.content);
+  }, [article]);
 
   useEffect(() => {
     if (htmlContent && articleRef.current) {
@@ -240,7 +237,9 @@ export default function ArticleViewPage() {
       <div className="article-view">
         <div className="article-view-empty">
           <p>article not found</p>
-          <button className="btn-ghost" onClick={() => navigate('/articles')}>← back to articles</button>
+          <button className="btn-ghost" onClick={() => navigate('/articles')}>
+            ← back to articles
+          </button>
         </div>
       </div>
     );
@@ -249,7 +248,9 @@ export default function ArticleViewPage() {
   return (
     <div className="article-view">
       <div className="article-view-head">
-        <button className="btn-ghost" onClick={() => navigate('/articles')}>← articles</button>
+        <button className="btn-ghost" onClick={() => navigate('/articles')}>
+          ← articles
+        </button>
         <span className="article-view-cat">{article.category}</span>
       </div>
       <h1 className="article-view-title">{article.title}</h1>

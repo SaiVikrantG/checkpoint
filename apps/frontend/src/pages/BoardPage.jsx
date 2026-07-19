@@ -34,16 +34,30 @@ function buildGraph(width, height) {
   });
 
   const sim = forceSimulation(nodes)
-    .force('link', forceLink(linkDefs).id((d) => d.id).distance(180).strength(0.4))
-    .force('charge', forceManyBody().strength((d) => (d.type === 'cat' ? -800 : -300)))
+    .force(
+      'link',
+      forceLink(linkDefs)
+        .id((d) => d.id)
+        .distance(180)
+        .strength(0.4),
+    )
+    .force(
+      'charge',
+      forceManyBody().strength((d) => (d.type === 'cat' ? -800 : -300)),
+    )
     .force('center', forceCenter(width / 2, height / 2))
-    .force('collide', forceCollide((d) => (d.type === 'cat' ? 70 : 30)))
+    .force(
+      'collide',
+      forceCollide((d) => (d.type === 'cat' ? 70 : 30)),
+    )
     .stop();
 
   for (let i = 0; i < 300; i++) sim.tick();
 
   const nodePositions = {};
-  nodes.forEach((n) => { nodePositions[n.id] = { x: n.x, y: n.y }; });
+  nodes.forEach((n) => {
+    nodePositions[n.id] = { x: n.x, y: n.y };
+  });
 
   const links = linkDefs.map((l) => ({
     sourceId: typeof l.source === 'object' ? l.source.id : l.source,
@@ -77,7 +91,10 @@ export default function BoardPage() {
   }, []);
 
   useEffect(() => {
+    // Re-initializes locally-mutable state (nodePositions gets dragged independently
+    // afterward via handleMouseMove), not purely derived data — legitimate effect use.
     const result = buildGraph(dims.w, dims.h);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNodePositions(result.nodePositions);
     setLinks(result.links);
     setView({ x: 0, y: 0, scale: 1 });
@@ -97,31 +114,37 @@ export default function BoardPage() {
     setDragging({ id: nodeId });
   }, []);
 
-  const handleCanvasMouseDown = useCallback((e) => {
-    if (e.target === svgRef.current || e.target.tagName === 'rect') {
-      const svgP = getSvgPoint(e);
-      setPanning({ startX: svgP.x, startY: svgP.y, viewX: view.x, viewY: view.y });
-    }
-  }, [getSvgPoint, view]);
+  const handleCanvasMouseDown = useCallback(
+    (e) => {
+      if (e.target === svgRef.current || e.target.tagName === 'rect') {
+        const svgP = getSvgPoint(e);
+        setPanning({ startX: svgP.x, startY: svgP.y, viewX: view.x, viewY: view.y });
+      }
+    },
+    [getSvgPoint, view],
+  );
 
-  const handleMouseMove = useCallback((e) => {
-    if (dragging) {
-      const svgP = getSvgPoint(e);
-      const worldX = (svgP.x - view.x) / view.scale;
-      const worldY = (svgP.y - view.y) / view.scale;
-      setNodePositions((prev) => ({
-        ...prev,
-        [dragging.id]: { x: worldX, y: worldY },
-      }));
-    } else if (panning) {
-      const svgP = getSvgPoint(e);
-      setView((v) => ({
-        ...v,
-        x: panning.viewX + (svgP.x - panning.startX),
-        y: panning.viewY + (svgP.y - panning.startY),
-      }));
-    }
-  }, [dragging, panning, getSvgPoint, view]);
+  const handleMouseMove = useCallback(
+    (e) => {
+      if (dragging) {
+        const svgP = getSvgPoint(e);
+        const worldX = (svgP.x - view.x) / view.scale;
+        const worldY = (svgP.y - view.y) / view.scale;
+        setNodePositions((prev) => ({
+          ...prev,
+          [dragging.id]: { x: worldX, y: worldY },
+        }));
+      } else if (panning) {
+        const svgP = getSvgPoint(e);
+        setView((v) => ({
+          ...v,
+          x: panning.viewX + (svgP.x - panning.startX),
+          y: panning.viewY + (svgP.y - panning.startY),
+        }));
+      }
+    },
+    [dragging, panning, getSvgPoint, view],
+  );
 
   const handleMouseUp = useCallback(() => {
     setDragging(null);
@@ -129,34 +152,38 @@ export default function BoardPage() {
   }, []);
 
   const handleWheelRef = useRef(null);
-  handleWheelRef.current = (e) => {
-    e.preventDefault();
-    const svg = svgRef.current;
-    if (!svg) return;
-    const pt = svg.createSVGPoint();
-    pt.x = e.clientX;
-    pt.y = e.clientY;
-    const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+  useEffect(() => {
+    handleWheelRef.current = (e) => {
+      e.preventDefault();
+      const svg = svgRef.current;
+      if (!svg) return;
+      const pt = svg.createSVGPoint();
+      pt.x = e.clientX;
+      pt.y = e.clientY;
+      const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
 
-    if (e.ctrlKey) {
-      const delta = Math.pow(0.99, e.deltaY);
-      setView((v) => {
-        const newScale = Math.max(0.3, Math.min(3, v.scale * delta));
-        const ratio = newScale / v.scale;
-        return {
-          scale: newScale,
-          x: svgP.x - (svgP.x - v.x) * ratio,
-          y: svgP.y - (svgP.y - v.y) * ratio,
-        };
-      });
-    } else {
-      setView((v) => ({
-        ...v,
-        x: v.x - e.deltaX,
-        y: v.y - e.deltaY,
-      }));
-    }
-  };
+      if (e.ctrlKey) {
+        const delta = Math.pow(0.99, e.deltaY);
+        setView((v) => {
+          const newScale = Math.max(0.3, Math.min(3, v.scale * delta));
+          const ratio = newScale / v.scale;
+          return {
+            scale: newScale,
+            x: svgP.x - (svgP.x - v.x) * ratio,
+            y: svgP.y - (svgP.y - v.y) * ratio,
+          };
+        });
+      } else {
+        setView((v) => ({
+          ...v,
+          x: v.x - e.deltaX,
+          y: v.y - e.deltaY,
+        }));
+      }
+    };
+  });
+
+  const hasPositions = nodePositions !== null;
 
   useEffect(() => {
     const el = containerRef.current;
@@ -176,18 +203,24 @@ export default function BoardPage() {
       el.removeEventListener('gesturechange', prevent);
       el.removeEventListener('gestureend', prevent);
     };
-  }, [nodePositions !== null]);
+  }, [hasPositions]);
 
-  const handleNodeClick = useCallback((node) => {
-    if (node.type === 'proj' && node.path) {
-      navigate(node.path);
-    }
-  }, [navigate]);
+  const handleNodeClick = useCallback(
+    (node) => {
+      if (node.type === 'proj' && node.path) {
+        navigate(node.path);
+      }
+    },
+    [navigate],
+  );
 
-  const isHighlighted = useCallback((sourceId, targetId) => {
-    if (!hovered) return false;
-    return hovered === sourceId || hovered === targetId;
-  }, [hovered]);
+  const isHighlighted = useCallback(
+    (sourceId, targetId) => {
+      if (!hovered) return false;
+      return hovered === sourceId || hovered === targetId;
+    },
+    [hovered],
+  );
 
   const resetLayout = useCallback(() => {
     const result = buildGraph(dims.w, dims.h);
@@ -211,7 +244,10 @@ export default function BoardPage() {
       <div className="board-head">
         <div>
           <h1 className="board-h1">idea_board</h1>
-          <div className="board-sub">// a graph of what i'm thinking about · drag nodes · scroll to zoom · click projects to open</div>
+          <div className="board-sub">
+            // a graph of what i'm thinking about · drag nodes · scroll to zoom · click projects to
+            open
+          </div>
         </div>
         <div className="board-legend">
           {categories.map((c) => (
@@ -268,42 +304,63 @@ export default function BoardPage() {
               );
             })}
 
-            {allNodes.filter((n) => n.type === 'cat').map((c) => (
-              <g
-                key={c.id}
-                style={{ cursor: 'grab' }}
-                onMouseDown={(e) => handleMouseDown(e, c.id)}
-                onMouseEnter={() => setHovered(c.id)}
-                onMouseLeave={() => setHovered(null)}
-              >
-                <circle cx={c.x} cy={c.y} r="34" fill={c.color} fillOpacity="0.12" stroke={c.color} strokeOpacity="0.4" />
-                <circle cx={c.x} cy={c.y} r="14" fill={c.color} />
-                <text x={c.x} y={c.y + 56} className="node-label cat-label" fill={c.color}>
-                  {c.id}
-                </text>
-              </g>
-            ))}
+            {allNodes
+              .filter((n) => n.type === 'cat')
+              .map((c) => (
+                <g
+                  key={c.id}
+                  style={{ cursor: 'grab' }}
+                  onMouseDown={(e) => handleMouseDown(e, c.id)}
+                  onMouseEnter={() => setHovered(c.id)}
+                  onMouseLeave={() => setHovered(null)}
+                >
+                  <circle
+                    cx={c.x}
+                    cy={c.y}
+                    r="34"
+                    fill={c.color}
+                    fillOpacity="0.12"
+                    stroke={c.color}
+                    strokeOpacity="0.4"
+                  />
+                  <circle cx={c.x} cy={c.y} r="14" fill={c.color} />
+                  <text x={c.x} y={c.y + 56} className="node-label cat-label" fill={c.color}>
+                    {c.id}
+                  </text>
+                </g>
+              ))}
 
-            {allNodes.filter((n) => n.type === 'proj').map((p) => (
-              <g
-                key={p.id}
-                style={{ cursor: 'pointer' }}
-                onMouseDown={(e) => handleMouseDown(e, p.id)}
-                onMouseEnter={() => setHovered(p.id)}
-                onMouseLeave={() => setHovered(null)}
-                onClick={() => handleNodeClick(p)}
-              >
-                <circle cx={p.x} cy={p.y} r="8" fill="var(--fg)" stroke="var(--bg)" strokeWidth="2" />
-                <text x={p.x + 14} y={p.y + 4} className="node-label proj-label">
-                  {p.id}
-                </text>
-              </g>
-            ))}
+            {allNodes
+              .filter((n) => n.type === 'proj')
+              .map((p) => (
+                <g
+                  key={p.id}
+                  style={{ cursor: 'pointer' }}
+                  onMouseDown={(e) => handleMouseDown(e, p.id)}
+                  onMouseEnter={() => setHovered(p.id)}
+                  onMouseLeave={() => setHovered(null)}
+                  onClick={() => handleNodeClick(p)}
+                >
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r="8"
+                    fill="var(--fg)"
+                    stroke="var(--bg)"
+                    strokeWidth="2"
+                  />
+                  <text x={p.x + 14} y={p.y + 4} className="node-label proj-label">
+                    {p.id}
+                  </text>
+                </g>
+              ))}
           </g>
         </svg>
 
         <div className="board-controls">
-          <button className="board-btn" onClick={resetLayout}>re-layout</button>
+          <button className="board-btn" onClick={resetLayout}>
+            re-layout
+          </button>
           <span className="board-zoom">{zoomPercent}%</span>
         </div>
       </div>

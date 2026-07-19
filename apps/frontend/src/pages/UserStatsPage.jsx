@@ -1,6 +1,9 @@
 import { useState } from 'react';
 
-const trend = [120, 180, 140, 210, 260, 190, 170, 250, 310, 240, 290, 220, 340, 280, 400, 330, 260, 360, 440, 380, 350, 420, 490, 410, 360, 470, 540, 460, 430, 510];
+const trend = [
+  120, 180, 140, 210, 260, 190, 170, 250, 310, 240, 290, 220, 340, 280, 400, 330, 260, 360, 440,
+  380, 350, 420, 490, 410, 360, 470, 540, 460, 430, 510,
+];
 const top = [
   { name: 'raymarching, but slowly', views: 3214 },
   { name: 'designing a notch header in css', views: 3180 },
@@ -62,22 +65,30 @@ export default function UserStatsPage() {
         <div className="stats-big stats-big-sm">
           <div className="stats-big-label">articles</div>
           <div className="stats-big-value">24</div>
-          <div className="dim" style={{ fontSize: 11 }}>18 public · 6 drafts</div>
+          <div className="dim" style={{ fontSize: 11 }}>
+            18 public · 6 drafts
+          </div>
         </div>
         <div className="stats-big stats-big-sm">
           <div className="stats-big-label">devlogs</div>
           <div className="stats-big-value">213</div>
-          <div className="dim" style={{ fontSize: 11 }}>+11 this week</div>
+          <div className="dim" style={{ fontSize: 11 }}>
+            +11 this week
+          </div>
         </div>
         <div className="stats-big stats-big-sm">
           <div className="stats-big-label">projects</div>
           <div className="stats-big-value">12</div>
-          <div className="dim" style={{ fontSize: 11 }}>4 active</div>
+          <div className="dim" style={{ fontSize: 11 }}>
+            4 active
+          </div>
         </div>
         <div className="stats-big stats-big-sm">
           <div className="stats-big-label">avg / article</div>
           <div className="stats-big-value">535</div>
-          <div className="dim" style={{ fontSize: 11 }}>views</div>
+          <div className="dim" style={{ fontSize: 11 }}>
+            views
+          </div>
         </div>
       </div>
 
@@ -91,10 +102,13 @@ export default function UserStatsPage() {
             {[0, 1, 2, 3].map((i) => (
               <line
                 key={i}
-                x1="0" x2={w}
+                x1="0"
+                x2={w}
                 y1={(h - 20) * (i / 3) + 10}
                 y2={(h - 20) * (i / 3) + 10}
-                stroke="var(--border)" strokeOpacity="0.6" strokeDasharray="2,4"
+                stroke="var(--border)"
+                strokeOpacity="0.6"
+                strokeDasharray="2,4"
               />
             ))}
             <defs>
@@ -105,34 +119,50 @@ export default function UserStatsPage() {
             </defs>
             <path
               d={
-                'M 0 ' + h + ' ' +
-                trend.map((v, i) => `L ${i * (w / (n - 1))} ${h - 10 - (v / max) * (h - 30)}`).join(' ') +
+                'M 0 ' +
+                h +
+                ' ' +
+                trend
+                  .map((v, i) => `L ${i * (w / (n - 1))} ${h - 10 - (v / max) * (h - 30)}`)
+                  .join(' ') +
                 ` L ${w} ${h} Z`
               }
               fill="url(#trendFill)"
             />
             <polyline
-              points={trend.map((v, i) => `${i * (w / (n - 1))},${h - 10 - (v / max) * (h - 30)}`).join(' ')}
-              fill="none" stroke="var(--main)" strokeWidth="2"
+              points={trend
+                .map((v, i) => `${i * (w / (n - 1))},${h - 10 - (v / max) * (h - 30)}`)
+                .join(' ')}
+              fill="none"
+              stroke="var(--main)"
+              strokeWidth="2"
             />
             <circle
               cx={(n - 1) * (w / (n - 1))}
               cy={h - 10 - (trend[n - 1] / max) * (h - 30)}
-              r="4" fill="var(--main)"
+              r="4"
+              fill="var(--main)"
             />
           </svg>
           <div className="trend-axis">
-            <span>30d ago</span><span>20d</span><span>10d</span><span>today</span>
+            <span>30d ago</span>
+            <span>20d</span>
+            <span>10d</span>
+            <span>today</span>
           </div>
         </div>
 
         <div className="stats-panel stats-refs">
-          <div className="panel-head"><span>// referrers</span></div>
+          <div className="panel-head">
+            <span>// referrers</span>
+          </div>
           <ul className="refs-list">
             {refs.map((r) => (
               <li key={r.src} className="ref-row">
                 <span className="ref-src">{r.src}</span>
-                <span className="ref-bar"><span className="ref-bar-fill" style={{ width: r.pct + '%' }} /></span>
+                <span className="ref-bar">
+                  <span className="ref-bar-fill" style={{ width: r.pct + '%' }} />
+                </span>
                 <span className="ref-pct">{r.pct}%</span>
               </li>
             ))}
@@ -150,7 +180,10 @@ export default function UserStatsPage() {
                 <span className="topbar-rank">{String(i + 1).padStart(2, '0')}</span>
                 <span className="topbar-name">{a.name}</span>
                 <span className="topbar-bar">
-                  <span className="topbar-bar-fill" style={{ width: (a.views / maxBar * 100) + '%' }} />
+                  <span
+                    className="topbar-bar-fill"
+                    style={{ width: (a.views / maxBar) * 100 + '%' }}
+                  />
                 </span>
                 <span className="topbar-num">{a.views.toLocaleString()}</span>
               </li>

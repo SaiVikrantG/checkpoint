@@ -1,4 +1,4 @@
-import { apiFetch, toSnakeCase } from './api';
+import { apiFetch } from './api';
 
 export async function getProjects(page = 1, limit = 20, { createdBy } = {}) {
   let url = `/projects?page=${page}&limit=${limit}`;
@@ -21,9 +21,13 @@ export async function createProject(project) {
     description: project.description || null,
     url: project.url || null,
     status: project.status || 'wip',
-    stack: typeof project.stack === 'string'
-      ? project.stack.split(',').map((s) => s.trim()).filter(Boolean)
-      : project.stack || [],
+    stack:
+      typeof project.stack === 'string'
+        ? project.stack
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : project.stack || [],
     isPublic: project.is_public ?? true,
   };
   const data = await apiFetch('/projects', {
@@ -40,9 +44,13 @@ export async function updateProject(id, updates) {
   if (updates.url !== undefined) payload.url = updates.url;
   if (updates.status !== undefined) payload.status = updates.status;
   if (updates.stack !== undefined) {
-    payload.stack = typeof updates.stack === 'string'
-      ? updates.stack.split(',').map((s) => s.trim()).filter(Boolean)
-      : updates.stack;
+    payload.stack =
+      typeof updates.stack === 'string'
+        ? updates.stack
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : updates.stack;
   }
   if (updates.is_public !== undefined) payload.isPublic = updates.is_public;
 

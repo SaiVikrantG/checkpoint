@@ -10,6 +10,9 @@ import { common, createLowlight } from 'lowlight';
 
 const lowlight = createLowlight(common);
 
+// `collaborative` is a placeholder for planned real-time editing (yjs is already a
+// project dependency); not wired up yet, so it's accepted but unused for now.
+// eslint-disable-next-line no-unused-vars
 export default function Editor({ content = '', onUpdate, collaborative = false }) {
   const extensions = [
     StarterKit.configure({
@@ -59,7 +62,19 @@ export default function Editor({ content = '', onUpdate, collaborative = false }
   );
 }
 
-const LANGUAGES = ['plaintext', 'javascript', 'typescript', 'go', 'python', 'html', 'css', 'sql', 'bash', 'json', 'mermaid'];
+const LANGUAGES = [
+  'plaintext',
+  'javascript',
+  'typescript',
+  'go',
+  'python',
+  'html',
+  'css',
+  'sql',
+  'bash',
+  'json',
+  'mermaid',
+];
 
 function EditorToolbar({ editor }) {
   const btn = (label, action, isActive) => (
@@ -74,7 +89,9 @@ function EditorToolbar({ editor }) {
   );
 
   const inCodeBlock = editor.isActive('codeBlock');
-  const currentLang = inCodeBlock ? (editor.getAttributes('codeBlock').language || 'plaintext') : null;
+  const currentLang = inCodeBlock
+    ? editor.getAttributes('codeBlock').language || 'plaintext'
+    : null;
 
   return (
     <div className="editor-toolbar">
@@ -86,21 +103,45 @@ function EditorToolbar({ editor }) {
       </div>
       <span className="toolbar-sep" />
       <div className="toolbar-group">
-        {btn('H1', () => editor.chain().focus().toggleHeading({ level: 1 }).run(), editor.isActive('heading', { level: 1 }))}
-        {btn('H2', () => editor.chain().focus().toggleHeading({ level: 2 }).run(), editor.isActive('heading', { level: 2 }))}
-        {btn('H3', () => editor.chain().focus().toggleHeading({ level: 3 }).run(), editor.isActive('heading', { level: 3 }))}
+        {btn(
+          'H1',
+          () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
+          editor.isActive('heading', { level: 1 }),
+        )}
+        {btn(
+          'H2',
+          () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
+          editor.isActive('heading', { level: 2 }),
+        )}
+        {btn(
+          'H3',
+          () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
+          editor.isActive('heading', { level: 3 }),
+        )}
       </div>
       <span className="toolbar-sep" />
       <div className="toolbar-group">
-        {btn('•', () => editor.chain().focus().toggleBulletList().run(), editor.isActive('bulletList'))}
-        {btn('1.', () => editor.chain().focus().toggleOrderedList().run(), editor.isActive('orderedList'))}
+        {btn(
+          '•',
+          () => editor.chain().focus().toggleBulletList().run(),
+          editor.isActive('bulletList'),
+        )}
+        {btn(
+          '1.',
+          () => editor.chain().focus().toggleOrderedList().run(),
+          editor.isActive('orderedList'),
+        )}
         {btn('☐', () => editor.chain().focus().toggleTaskList().run(), editor.isActive('taskList'))}
       </div>
       <span className="toolbar-sep" />
       <div className="toolbar-group">
         {btn('—', () => editor.chain().focus().setHorizontalRule().run(), false)}
         {btn('< >', () => editor.chain().focus().toggleCodeBlock().run(), inCodeBlock)}
-        {btn('"', () => editor.chain().focus().toggleBlockquote().run(), editor.isActive('blockquote'))}
+        {btn(
+          '"',
+          () => editor.chain().focus().toggleBlockquote().run(),
+          editor.isActive('blockquote'),
+        )}
       </div>
       {inCodeBlock && (
         <>
@@ -108,9 +149,19 @@ function EditorToolbar({ editor }) {
           <select
             className="toolbar-lang-select"
             value={currentLang}
-            onChange={(e) => editor.chain().focus().updateAttributes('codeBlock', { language: e.target.value }).run()}
+            onChange={(e) =>
+              editor
+                .chain()
+                .focus()
+                .updateAttributes('codeBlock', { language: e.target.value })
+                .run()
+            }
           >
-            {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
+            {LANGUAGES.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
           </select>
         </>
       )}
