@@ -139,7 +139,6 @@ func (global *GlobalMiddlewares) GlobalErrorHandler(err error, c echo.Context) {
 
 	case errors.As(err, &echoErr):
 		status = echoErr.Code
-		// code = errs.MakeUpperCaseWithUnderscores(http.StatusText(status))
 		if msg, ok := echoErr.Message.(string); ok {
 			message = msg
 		} else {
@@ -148,8 +147,6 @@ func (global *GlobalMiddlewares) GlobalErrorHandler(err error, c echo.Context) {
 
 	default:
 		status = http.StatusInternalServerError
-		// code = errs.MakeUpperCaseWithUnderscores(
-		// 	http.StatusText(http.StatusInternalServerError))
 		message = http.StatusText(http.StatusInternalServerError)
 	}
 

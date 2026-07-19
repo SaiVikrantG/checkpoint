@@ -8,6 +8,7 @@ import (
 	"github.com/SaiVikrantG/checkpoint/internal/model"
 	"github.com/SaiVikrantG/checkpoint/internal/repositories"
 	"github.com/SaiVikrantG/checkpoint/internal/server"
+	"github.com/SaiVikrantG/checkpoint/internal/sqlerr"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -61,7 +62,9 @@ func (s *DevlogService) GetDevlogByID(ctx context.Context, id int64) (model.Devl
 	devlog, err := s.repository.GetDevlogByID(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return model.Devlog{}, errors.NewNotFoundError("devlog not found", true)
+			notFoundErr := errors.NewNotFoundError("devlog not found", true)
+			notFoundErr.Code = sqlerr.NotFoundCode("devlogs")
+			return model.Devlog{}, notFoundErr
 		}
 		return model.Devlog{}, err
 	}
@@ -76,12 +79,16 @@ func (s *DevlogService) UpdateDevlog(ctx context.Context, id int64, devlog *mode
 	existing, err := s.repository.GetDevlogByID(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, errors.NewNotFoundError("devlog not found", true)
+			notFoundErr := errors.NewNotFoundError("devlog not found", true)
+			notFoundErr.Code = sqlerr.NotFoundCode("devlogs")
+			return nil, notFoundErr
 		}
 		return nil, err
 	}
 	if !canModify(existing.CreatedBy, userID, userRole) {
-		return nil, errors.NewForbiddenError("you do not have permission to update this devlog", true)
+		forbiddenErr := errors.NewForbiddenError("you do not have permission to update this devlog", true)
+		forbiddenErr.Code = sqlerr.ForbiddenCode("devlogs")
+		return nil, forbiddenErr
 	}
 
 	if devlog.Title == "" {
@@ -98,12 +105,16 @@ func (s *DevlogService) DeleteDevlog(ctx context.Context, id int64, userID, user
 	existing, err := s.repository.GetDevlogByID(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return errors.NewNotFoundError("devlog not found", true)
+			notFoundErr := errors.NewNotFoundError("devlog not found", true)
+			notFoundErr.Code = sqlerr.NotFoundCode("devlogs")
+			return notFoundErr
 		}
 		return err
 	}
 	if !canModify(existing.CreatedBy, userID, userRole) {
-		return errors.NewForbiddenError("you do not have permission to delete this devlog", true)
+		forbiddenErr := errors.NewForbiddenError("you do not have permission to delete this devlog", true)
+		forbiddenErr.Code = sqlerr.ForbiddenCode("devlogs")
+		return forbiddenErr
 	}
 	return s.repository.DeleteDevlog(ctx, id)
 }

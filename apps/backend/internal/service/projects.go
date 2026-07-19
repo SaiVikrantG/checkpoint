@@ -8,6 +8,7 @@ import (
 	"github.com/SaiVikrantG/checkpoint/internal/model"
 	"github.com/SaiVikrantG/checkpoint/internal/repositories"
 	"github.com/SaiVikrantG/checkpoint/internal/server"
+	"github.com/SaiVikrantG/checkpoint/internal/sqlerr"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -44,7 +45,9 @@ func (s *ProjectService) GetProjectByID(ctx context.Context, id int64) (model.Pr
 	project, err := s.repository.GetProjectByID(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return model.Project{}, errors.NewNotFoundError("project not found", true)
+			notFoundErr := errors.NewNotFoundError("project not found", true)
+			notFoundErr.Code = sqlerr.NotFoundCode("projects")
+			return model.Project{}, notFoundErr
 		}
 		return model.Project{}, err
 	}
@@ -59,12 +62,16 @@ func (s *ProjectService) DeleteProject(ctx context.Context, id int64, userID, us
 	existing, err := s.repository.GetProjectByID(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return errors.NewNotFoundError("project not found", true)
+			notFoundErr := errors.NewNotFoundError("project not found", true)
+			notFoundErr.Code = sqlerr.NotFoundCode("projects")
+			return notFoundErr
 		}
 		return err
 	}
 	if !canModify(existing.CreatedBy, userID, userRole) {
-		return errors.NewForbiddenError("you do not have permission to delete this project", true)
+		forbiddenErr := errors.NewForbiddenError("you do not have permission to delete this project", true)
+		forbiddenErr.Code = sqlerr.ForbiddenCode("projects")
+		return forbiddenErr
 	}
 	return s.repository.DeleteProject(ctx, id)
 }
@@ -73,12 +80,16 @@ func (s *ProjectService) UpdateProject(ctx context.Context, id int64, project *m
 	existingProject, err := s.repository.GetProjectByID(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, errors.NewNotFoundError("project not found", true)
+			notFoundErr := errors.NewNotFoundError("project not found", true)
+			notFoundErr.Code = sqlerr.NotFoundCode("projects")
+			return nil, notFoundErr
 		}
 		return nil, err
 	}
 	if !canModify(existingProject.CreatedBy, userID, userRole) {
-		return nil, errors.NewForbiddenError("you do not have permission to update this project", true)
+		forbiddenErr := errors.NewForbiddenError("you do not have permission to update this project", true)
+		forbiddenErr.Code = sqlerr.ForbiddenCode("projects")
+		return nil, forbiddenErr
 	}
 
 	if project.Name == "" {

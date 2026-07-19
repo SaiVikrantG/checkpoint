@@ -32,8 +32,8 @@ func (r *ProjectRepository) GetAllProjects(ctx context.Context, page, limit int,
 	}
 
 	rows, err := r.queries.GetAllProjects(ctx, db.GetAllProjectsParams{
-		Limit:     int32(limit),
-		Offset:    int32((page - 1) * limit),
+		Limit:     int32(limit),              //nolint:gosec // bounded by handler validation
+		Offset:    int32((page - 1) * limit), //nolint:gosec // bounded by handler validation
 		CreatedBy: createdByParam,
 	})
 	if err != nil {

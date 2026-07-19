@@ -1,8 +1,6 @@
 package middlewares
 
 import (
-	"context"
-
 	"github.com/SaiVikrantG/checkpoint/internal/logger"
 	"github.com/SaiVikrantG/checkpoint/internal/server"
 	"github.com/labstack/echo/v4"
@@ -54,10 +52,6 @@ func (ce *ContextEnhancer) EnhanceContext() echo.MiddlewareFunc {
 
 			// Store the enhanced logger in context
 			c.Set(LoggerKey, &contextLogger)
-
-			// Create a new context with the logger
-			ctx := context.WithValue(c.Request().Context(), LoggerKey, &contextLogger)
-			c.SetRequest(c.Request().WithContext(ctx))
 
 			return next(c)
 		}

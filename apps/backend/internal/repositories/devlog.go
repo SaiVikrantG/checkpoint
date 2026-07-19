@@ -23,8 +23,8 @@ func (r *DevlogRepository) GetAllDevlogs(ctx context.Context, page, limit int, c
 	}
 
 	rows, err := r.queries.GetAllDevlogs(ctx, db.GetAllDevlogsParams{
-		Limit:     int32(limit),
-		Offset:    int32((page - 1) * limit),
+		Limit:     int32(limit),              //nolint:gosec // bounded by handler validation
+		Offset:    int32((page - 1) * limit), //nolint:gosec // bounded by handler validation
 		CreatedBy: createdByParam,
 	})
 	if err != nil {
@@ -47,8 +47,8 @@ func (r *DevlogRepository) GetAllDevlogs(ctx context.Context, page, limit int, c
 func (r *DevlogRepository) GetDevlogsByProjectID(ctx context.Context, projectID int64, page, limit int) ([]model.Devlog, int64, error) {
 	rows, err := r.queries.GetDevlogsByProjectID(ctx, db.GetDevlogsByProjectIDParams{
 		ProjectID: projectID,
-		Limit:     int32(limit),
-		Offset:    int32((page - 1) * limit),
+		Limit:     int32(limit),              //nolint:gosec // bounded by handler validation
+		Offset:    int32((page - 1) * limit), //nolint:gosec // bounded by handler validation
 	})
 	if err != nil {
 		return nil, 0, err
@@ -124,4 +124,3 @@ func toModelDevlog(d db.Devlog) model.Devlog {
 		UpdatedBy: textToPtr(d.UpdatedBy),
 	}
 }
-

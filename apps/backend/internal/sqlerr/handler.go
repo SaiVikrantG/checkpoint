@@ -41,31 +41,51 @@ func ConvertPgError(src *pgconn.PgError) *Error {
 	}
 }
 
-// generateErrorCode creates consistent error codes from database errors
-func generateErrorCode(tableName string, errType Code) string {
-	if tableName == "" {
-		tableName = "RECORD"
+// BuildErrorCode formats a stable, machine-readable error code from an entity name and an action.
+func BuildErrorCode(entityName, action string) string {
+	if entityName == "" {
+		entityName = "RECORD"
 	}
 
-	domain := strings.ToUpper(tableName)
-	// Singularize the table name
+	domain := strings.ToUpper(entityName)
+	// Singularize the entity name
 	if strings.HasSuffix(domain, "S") && len(domain) > 1 {
 		domain = domain[:len(domain)-1]
 	}
 
-	action := "ERROR"
-	switch errType {
-	case ForeignKeyViolation:
-		action = "NOT_FOUND"
-	case UniqueViolation:
-		action = "ALREADY_EXISTS"
-	case NotNullViolation:
-		action = "REQUIRED"
-	case CheckViolation:
-		action = "INVALID"
-	}
-
 	return fmt.Sprintf("%s_%s", domain, action)
+}
+
+// NotFoundCode returns the stable error code for a "not found" outcome on the given entity.
+func NotFoundCode(entityName string) string {
+	return BuildErrorCode(entityName, "NOT_FOUND")
+}
+
+// ForbiddenCode returns the stable error code for a "forbidden" outcome on the given entity.
+func ForbiddenCode(entityName string) string {
+	return BuildErrorCode(entityName, "FORBIDDEN")
+}
+
+// generateErrorCode creates a consistent error code for a database constraint violation.
+// For ForeignKeyViolation, the code names the referenced entity that is actually missing
+// (e.g. PROJECT_NOT_FOUND for a devlog referencing a nonexistent project), not the table
+// holding the bad reference.
+func generateErrorCode(sqlErr *Error) string {
+	switch sqlErr.Code {
+	case ForeignKeyViolation:
+		if referenced := getEntityNameFromConstraint(sqlErr.ConstraintName); referenced != "" {
+			return BuildErrorCode(referenced, "NOT_FOUND")
+		}
+		return BuildErrorCode(sqlErr.TableName, "NOT_FOUND")
+	case UniqueViolation:
+		return BuildErrorCode(sqlErr.TableName, "ALREADY_EXISTS")
+	case NotNullViolation:
+		return BuildErrorCode(sqlErr.TableName, "REQUIRED")
+	case CheckViolation:
+		return BuildErrorCode(sqlErr.TableName, "INVALID")
+	default:
+		return BuildErrorCode(sqlErr.TableName, "ERROR")
+	}
 }
 
 // formatUserFriendlyMessage generates a user-friendly error message
@@ -104,8 +124,10 @@ func getEntityName(tableName, columnName string) string {
 		return humanizeText(strings.TrimSuffix(strings.ToLower(columnName), "_id"))
 	}
 
-	// Second priority: constraint name (e.g. "articles_project_id_fkey" → "project")
-	// Postgres names FK constraints as <table>_<col>_fkey
+	// Fall back to the table name (e.g. "devlogs" → "devlog")
+	if tableName != "" {
+		return humanizeText(strings.ToLower(strings.TrimSuffix(tableName, "s")))
+	}
 	return "record"
 }
 
@@ -172,19 +194,23 @@ func HandleError(err error) error {
 		sqlErr := ConvertPgError(pgerr)
 
 		// Generate an appropriate error code and message
-		// errorCode := generateErrorCode(sqlErr.TableName, sqlErr.Code)
+		errorCode := generateErrorCode(sqlErr)
 		userMessage := formatUserFriendlyMessage(sqlErr)
 
 		switch sqlErr.Code {
 		case ForeignKeyViolation:
-			return errs.NewBadRequestError(userMessage, false, nil, nil)
+			httpErr := errs.NewBadRequestError(userMessage, false, nil, nil)
+			httpErr.Code = errorCode
+			return httpErr
 
 		case UniqueViolation:
 			columnName := extractColumnForUniqueViolation(sqlErr.ConstraintName)
 			if columnName != "" {
 				userMessage = strings.ReplaceAll(userMessage, "identifier", humanizeText(columnName))
 			}
-			return errs.NewBadRequestError(userMessage, true, nil, nil)
+			httpErr := errs.NewBadRequestError(userMessage, true, nil, nil)
+			httpErr.Code = errorCode
+			return httpErr
 
 		case NotNullViolation:
 			fieldErrors := []errs.FieldError{
@@ -193,10 +219,14 @@ func HandleError(err error) error {
 					Error: "is required",
 				},
 			}
-			return errs.NewBadRequestError(userMessage, true, fieldErrors, nil)
+			httpErr := errs.NewBadRequestError(userMessage, true, fieldErrors, nil)
+			httpErr.Code = errorCode
+			return httpErr
 
 		case CheckViolation:
-			return errs.NewBadRequestError(userMessage, true, nil, nil)
+			httpErr := errs.NewBadRequestError(userMessage, true, nil, nil)
+			httpErr.Code = errorCode
+			return httpErr
 
 		default:
 			return errs.NewInternalServerError()
@@ -211,8 +241,9 @@ func HandleError(err error) error {
 		if strings.Contains(errMsg, tablePrefix) {
 			table := strings.Split(strings.Split(errMsg, tablePrefix)[1], ":")[0]
 			entityName := getEntityName(table, "")
-			return errs.NewNotFoundError(fmt.Sprintf("%s not found",
-				entityName), true)
+			httpErr := errs.NewNotFoundError(fmt.Sprintf("%s not found", entityName), true)
+			httpErr.Code = NotFoundCode(table)
+			return httpErr
 		}
 		return errs.NewNotFoundError("Resource not found", false)
 	}

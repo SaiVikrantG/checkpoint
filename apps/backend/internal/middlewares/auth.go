@@ -76,7 +76,7 @@ func (auth *AuthMiddleWare) RequireAuth(next echo.HandlerFunc) echo.HandlerFunc 
 		// Store user information in context
 		c.Set("user_id", claims.Subject)
 		c.Set("user_role", claims.ActiveOrganizationRole)
-		c.Set("permissions", claims.Claims.ActiveOrganizationPermissions)
+		c.Set("permissions", claims.ActiveOrganizationPermissions)
 
 		// Log successful authentication
 		auth.server.Logger.Info().

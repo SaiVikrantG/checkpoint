@@ -23,8 +23,8 @@ func (r *ArticleRepository) GetAllArticles(ctx context.Context, page, limit int,
 	}
 
 	rows, err := r.queries.GetAllArticles(ctx, db.GetAllArticlesParams{
-		Limit:     int32(limit),
-		Offset:    int32((page - 1) * limit),
+		Limit:     int32(limit),              //nolint:gosec // bounded by handler validation
+		Offset:    int32((page - 1) * limit), //nolint:gosec // bounded by handler validation
 		CreatedBy: createdByParam,
 	})
 	if err != nil {
@@ -147,14 +147,14 @@ func toModelArticleFromListRow(a db.GetAllArticlesRow) model.Article {
 		ProjectID:   projectID,
 		ProjectName: textToPtr(a.ProjectName),
 		Title:       a.Title,
-		Content:   a.Content,
-		Slug:      textToPtr(a.Slug),
-		Tags:      a.Tags,
-		Views:     a.Views,
-		Status:    a.Status,
-		IsPublic:  a.IsPublic.Bool,
-		CreatedBy: a.CreatedBy,
-		UpdatedBy: textToPtr(a.UpdatedBy),
+		Content:     a.Content,
+		Slug:        textToPtr(a.Slug),
+		Tags:        a.Tags,
+		Views:       a.Views,
+		Status:      a.Status,
+		IsPublic:    a.IsPublic.Bool,
+		CreatedBy:   a.CreatedBy,
+		UpdatedBy:   textToPtr(a.UpdatedBy),
 	}
 }
 

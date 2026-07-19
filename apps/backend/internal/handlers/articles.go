@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"math"
 	"time"
 
 	"github.com/SaiVikrantG/checkpoint/internal/errors"
@@ -34,6 +35,17 @@ func (r GetAllArticlesRequest) Validate() error {
 	if r.Limit > 100 {
 		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
 			{Field: "limit", Error: "must not exceed 100"},
+		}, nil)
+	}
+
+	effectiveLimit := r.Limit
+	if effectiveLimit <= 0 {
+		effectiveLimit = 20
+	}
+	maxPage := math.MaxInt32/effectiveLimit + 1
+	if r.Page > maxPage {
+		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
+			{Field: "page", Error: "exceeds maximum allowed page for the given limit"},
 		}, nil)
 	}
 	return nil

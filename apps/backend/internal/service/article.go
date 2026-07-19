@@ -45,7 +45,9 @@ func (s *ArticleService) GetArticleByID(ctx context.Context, id int64) (model.Ar
 	article, err := s.repository.GetArticleByID(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return model.Article{}, errors.NewNotFoundError("article not found", true)
+			notFoundErr := errors.NewNotFoundError("article not found", true)
+			notFoundErr.Code = sqlerr.NotFoundCode("articles")
+			return model.Article{}, notFoundErr
 		}
 		return model.Article{}, err
 	}
@@ -64,12 +66,16 @@ func (s *ArticleService) UpdateArticle(ctx context.Context, id int64, article *m
 	existing, err := s.repository.GetArticleByID(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, errors.NewNotFoundError("article not found", true)
+			notFoundErr := errors.NewNotFoundError("article not found", true)
+			notFoundErr.Code = sqlerr.NotFoundCode("articles")
+			return nil, notFoundErr
 		}
 		return nil, err
 	}
 	if !canModify(existing.CreatedBy, userID, userRole) {
-		return nil, errors.NewForbiddenError("you do not have permission to update this article", true)
+		forbiddenErr := errors.NewForbiddenError("you do not have permission to update this article", true)
+		forbiddenErr.Code = sqlerr.ForbiddenCode("articles")
+		return nil, forbiddenErr
 	}
 
 	if article.Title == "" {
@@ -99,12 +105,16 @@ func (s *ArticleService) DeleteArticle(ctx context.Context, id int64, userID, us
 	existing, err := s.repository.GetArticleByID(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return errors.NewNotFoundError("article not found", true)
+			notFoundErr := errors.NewNotFoundError("article not found", true)
+			notFoundErr.Code = sqlerr.NotFoundCode("articles")
+			return notFoundErr
 		}
 		return err
 	}
 	if !canModify(existing.CreatedBy, userID, userRole) {
-		return errors.NewForbiddenError("you do not have permission to delete this article", true)
+		forbiddenErr := errors.NewForbiddenError("you do not have permission to delete this article", true)
+		forbiddenErr.Code = sqlerr.ForbiddenCode("articles")
+		return forbiddenErr
 	}
 	return s.repository.DeleteArticle(ctx, id)
 }
