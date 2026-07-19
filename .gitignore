@@ -7,3 +7,8 @@ node_modules/
 /.claudeignore
 /BACKLOG.md
 /CLAUDE.md
+/assets
+/npm_safety_guide.md
+/apps/frontend/dist/assets
+/apps/frontend/dist
+/checkpoint
