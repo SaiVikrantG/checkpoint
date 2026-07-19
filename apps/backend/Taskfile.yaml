@@ -67,3 +67,8 @@ tasks:
     - go mod tidy
     - echo 'Verifying dependencies...'
     - go mod verify
+
+  lint:
+    desc: run golangci-lint against the backend
+    cmds:
+    - golangci-lint run ./...
