@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/backend
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: checkpoint
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      CHECKPOINT_PRIMARY.ENV: local
+      CHECKPOINT_SERVER.PORT: '8080'
+      CHECKPOINT_SERVER.READ_TIMEOUT: '10'
+      CHECKPOINT_SERVER.WRITE_TIMEOUT: '10'
+      CHECKPOINT_SERVER.IDLE_TIMEOUT: '60'
+      CHECKPOINT_SERVER.CORS_ALLOWED_ORIGINS: 'http://localhost:5173'
+      CHECKPOINT_DATABASE.HOST: localhost
+      CHECKPOINT_DATABASE.PORT: '5432'
+      CHECKPOINT_DATABASE.USER: postgres
+      CHECKPOINT_DATABASE.PASSWORD: ''
+      CHECKPOINT_DATABASE.NAME: checkpoint
+      CHECKPOINT_DATABASE.SSL_MODE: disable
+      CHECKPOINT_DATABASE.MAX_OPEN_CONNS: '10'
+      CHECKPOINT_DATABASE.MAX_IDLE_CONNS: '5'
+      CHECKPOINT_DATABASE.CONN_MAX_LIFETIME: '300'
+      CHECKPOINT_DATABASE.CONN_MAX_IDLE_TIME: '60'
+      CHECKPOINT_AUTH.SECRET_KEY: ci-test-secret
+      CHECKPOINT_AUTH.WEBHOOK_SECRET: ci-test-webhook-secret
+      CHECKPOINT_AUTH.DEFAULT_ROLE: user
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.2'
+          cache-dependency-path: apps/backend/go.sum
+
+      - uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+
+      - name: Install golangci-lint
+        run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.12.2
+
+      - name: Lint
+        run: task lint
+
+      - name: Build
+        run: task build
+
+      - name: Test
+        run: task test
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: apps/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build

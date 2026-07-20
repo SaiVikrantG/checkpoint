@@ -37,6 +37,11 @@ tasks:
     cmds:
     - go run ./cmd/backend/main.go
 
+  build:
+    desc: build the checkpoint backend binary
+    cmds:
+    - go build -o bin/backend ./cmd/backend/main.go
+
   migrations:new:
     desc: create a new database migration
     vars:
@@ -72,3 +77,8 @@ tasks:
     desc: run golangci-lint against the backend
     cmds:
     - golangci-lint run ./...
+
+  test:
+    desc: run all backend tests (requires a live Postgres connection)
+    cmds:
+    - go test ./...
