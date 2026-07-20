@@ -16,22 +16,30 @@ func NewArticleRepository(q *db.Queries) *ArticleRepository {
 	return &ArticleRepository{queries: q}
 }
 
-func (r *ArticleRepository) GetAllArticles(ctx context.Context, page, limit int, createdBy string) ([]model.Article, int64, error) {
+func (r *ArticleRepository) GetAllArticles(ctx context.Context, page, limit int, createdBy, requestingUserID string) ([]model.Article, int64, error) {
 	createdByParam := pgtype.Text{}
 	if createdBy != "" {
 		createdByParam = pgtype.Text{String: createdBy, Valid: true}
 	}
+	requestingUserIDParam := pgtype.Text{}
+	if requestingUserID != "" {
+		requestingUserIDParam = pgtype.Text{String: requestingUserID, Valid: true}
+	}
 
 	rows, err := r.queries.GetAllArticles(ctx, db.GetAllArticlesParams{
-		Limit:     int32(limit),              //nolint:gosec // bounded by handler validation
-		Offset:    int32((page - 1) * limit), //nolint:gosec // bounded by handler validation
-		CreatedBy: createdByParam,
+		Limit:            int32(limit),              //nolint:gosec // bounded by handler validation
+		Offset:           int32((page - 1) * limit), //nolint:gosec // bounded by handler validation
+		CreatedBy:        createdByParam,
+		RequestingUserID: requestingUserIDParam,
 	})
 	if err != nil {
 		return nil, 0, err
 	}
 
-	total, err := r.queries.GetArticlesCount(ctx, createdByParam)
+	total, err := r.queries.GetArticlesCount(ctx, db.GetArticlesCountParams{
+		CreatedBy:        createdByParam,
+		RequestingUserID: requestingUserIDParam,
+	})
 	if err != nil {
 		return nil, 0, err
 	}
@@ -44,12 +52,36 @@ func (r *ArticleRepository) GetAllArticles(ctx context.Context, page, limit int,
 	return articles, total, nil
 }
 
-func (r *ArticleRepository) GetArticleByID(ctx context.Context, id int64) (model.Article, error) {
-	row, err := r.queries.GetArticleByID(ctx, id)
+func (r *ArticleRepository) GetArticleByID(ctx context.Context, id int64, requestingUserID string) (model.Article, error) {
+	requestingUserIDParam := pgtype.Text{}
+	if requestingUserID != "" {
+		requestingUserIDParam = pgtype.Text{String: requestingUserID, Valid: true}
+	}
+
+	row, err := r.queries.GetArticleByID(ctx, db.GetArticleByIDParams{
+		ID:               id,
+		RequestingUserID: requestingUserIDParam,
+	})
 	if err != nil {
 		return model.Article{}, err
 	}
 	return toModelArticleFromRow(row), nil
+}
+
+func (r *ArticleRepository) GetArticleBySlug(ctx context.Context, slug, requestingUserID string) (model.Article, error) {
+	requestingUserIDParam := pgtype.Text{}
+	if requestingUserID != "" {
+		requestingUserIDParam = pgtype.Text{String: requestingUserID, Valid: true}
+	}
+
+	row, err := r.queries.GetArticleBySlug(ctx, db.GetArticleBySlugParams{
+		Slug:             pgtype.Text{String: slug, Valid: true},
+		RequestingUserID: requestingUserIDParam,
+	})
+	if err != nil {
+		return model.Article{}, err
+	}
+	return toModelArticleFromSlugRow(row), nil
 }
 
 func (r *ArticleRepository) CreateArticle(ctx context.Context, article *model.Article) (*model.Article, error) {
@@ -133,6 +165,32 @@ func toModelArticleFromRow(a db.GetArticleByIDRow) model.Article {
 }
 
 func toModelArticleFromListRow(a db.GetAllArticlesRow) model.Article {
+	var projectID *int64
+	if a.ProjectID.Valid {
+		projectID = &a.ProjectID.Int64
+	}
+
+	return model.Article{
+		Base: model.Base{
+			BaseWithId:        model.BaseWithId{ID: a.ID},
+			BaseWithCreatedAt: model.BaseWithCreatedAt{CreatedAt: timeFromPg(a.CreatedAt)},
+			BaseWithUpdatedAt: model.BaseWithUpdatedAt{UpdatedAt: timeFromPg(a.UpdatedAt)},
+		},
+		ProjectID:   projectID,
+		ProjectName: textToPtr(a.ProjectName),
+		Title:       a.Title,
+		Content:     a.Content,
+		Slug:        textToPtr(a.Slug),
+		Tags:        a.Tags,
+		Views:       a.Views,
+		Status:      a.Status,
+		IsPublic:    a.IsPublic.Bool,
+		CreatedBy:   a.CreatedBy,
+		UpdatedBy:   textToPtr(a.UpdatedBy),
+	}
+}
+
+func toModelArticleFromSlugRow(a db.GetArticleBySlugRow) model.Article {
 	var projectID *int64
 	if a.ProjectID.Valid {
 		projectID = &a.ProjectID.Int64

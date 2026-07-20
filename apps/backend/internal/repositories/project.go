@@ -17,30 +17,46 @@ func NewProjectRepository(q *db.Queries) *ProjectRepository {
 	return &ProjectRepository{queries: q}
 }
 
-func (r *ProjectRepository) GetProjectByID(ctx context.Context, id int64) (model.Project, error) {
-	row, err := r.queries.GetProjectByID(ctx, id)
+func (r *ProjectRepository) GetProjectByID(ctx context.Context, id int64, requestingUserID string) (model.Project, error) {
+	requestingUserIDParam := pgtype.Text{}
+	if requestingUserID != "" {
+		requestingUserIDParam = pgtype.Text{String: requestingUserID, Valid: true}
+	}
+
+	row, err := r.queries.GetProjectByID(ctx, db.GetProjectByIDParams{
+		ID:               id,
+		RequestingUserID: requestingUserIDParam,
+	})
 	if err != nil {
 		return model.Project{}, err
 	}
 	return toModelProjectFromRow(row), nil
 }
 
-func (r *ProjectRepository) GetAllProjects(ctx context.Context, page, limit int, createdBy string) ([]model.Project, int64, error) {
+func (r *ProjectRepository) GetAllProjects(ctx context.Context, page, limit int, createdBy, requestingUserID string) ([]model.Project, int64, error) {
 	createdByParam := pgtype.Text{}
 	if createdBy != "" {
 		createdByParam = pgtype.Text{String: createdBy, Valid: true}
 	}
+	requestingUserIDParam := pgtype.Text{}
+	if requestingUserID != "" {
+		requestingUserIDParam = pgtype.Text{String: requestingUserID, Valid: true}
+	}
 
 	rows, err := r.queries.GetAllProjects(ctx, db.GetAllProjectsParams{
-		Limit:     int32(limit),              //nolint:gosec // bounded by handler validation
-		Offset:    int32((page - 1) * limit), //nolint:gosec // bounded by handler validation
-		CreatedBy: createdByParam,
+		Limit:            int32(limit),              //nolint:gosec // bounded by handler validation
+		Offset:           int32((page - 1) * limit), //nolint:gosec // bounded by handler validation
+		CreatedBy:        createdByParam,
+		RequestingUserID: requestingUserIDParam,
 	})
 	if err != nil {
 		return nil, 0, err
 	}
 
-	total, err := r.queries.GetProjectsCount(ctx, createdByParam)
+	total, err := r.queries.GetProjectsCount(ctx, db.GetProjectsCountParams{
+		CreatedBy:        createdByParam,
+		RequestingUserID: requestingUserIDParam,
+	})
 	if err != nil {
 		return nil, 0, err
 	}

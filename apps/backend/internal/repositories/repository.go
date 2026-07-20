@@ -6,16 +6,18 @@ import (
 )
 
 type Repository struct {
-	ProjectRepo *ProjectRepository
-	ArticleRepo *ArticleRepository
-	DevlogRepo  *DevlogRepository
+	ProjectRepo  *ProjectRepository
+	ArticleRepo  *ArticleRepository
+	DevlogRepo   *DevlogRepository
+	SettingsRepo *SettingsRepository
 }
 
 func RepositoryInit(server *server.Server) *Repository {
 	queries := db.New(server.Db.Pool)
 	return &Repository{
-		ProjectRepo: NewProjectRepository(queries),
-		ArticleRepo: NewArticleRepository(queries),
-		DevlogRepo:  NewDevlogRepository(queries),
+		ProjectRepo:  NewProjectRepository(queries),
+		ArticleRepo:  NewArticleRepository(queries),
+		DevlogRepo:   NewDevlogRepository(queries),
+		SettingsRepo: NewSettingsRepository(queries),
 	}
 }

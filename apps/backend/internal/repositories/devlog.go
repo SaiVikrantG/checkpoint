@@ -16,22 +16,30 @@ func NewDevlogRepository(q *db.Queries) *DevlogRepository {
 	return &DevlogRepository{queries: q}
 }
 
-func (r *DevlogRepository) GetAllDevlogs(ctx context.Context, page, limit int, createdBy string) ([]model.Devlog, int64, error) {
+func (r *DevlogRepository) GetAllDevlogs(ctx context.Context, page, limit int, createdBy, requestingUserID string) ([]model.Devlog, int64, error) {
 	createdByParam := pgtype.Text{}
 	if createdBy != "" {
 		createdByParam = pgtype.Text{String: createdBy, Valid: true}
 	}
+	requestingUserIDParam := pgtype.Text{}
+	if requestingUserID != "" {
+		requestingUserIDParam = pgtype.Text{String: requestingUserID, Valid: true}
+	}
 
 	rows, err := r.queries.GetAllDevlogs(ctx, db.GetAllDevlogsParams{
-		Limit:     int32(limit),              //nolint:gosec // bounded by handler validation
-		Offset:    int32((page - 1) * limit), //nolint:gosec // bounded by handler validation
-		CreatedBy: createdByParam,
+		Limit:            int32(limit),              //nolint:gosec // bounded by handler validation
+		Offset:           int32((page - 1) * limit), //nolint:gosec // bounded by handler validation
+		CreatedBy:        createdByParam,
+		RequestingUserID: requestingUserIDParam,
 	})
 	if err != nil {
 		return nil, 0, err
 	}
 
-	total, err := r.queries.GetDevlogsCount(ctx, createdByParam)
+	total, err := r.queries.GetDevlogsCount(ctx, db.GetDevlogsCountParams{
+		CreatedBy:        createdByParam,
+		RequestingUserID: requestingUserIDParam,
+	})
 	if err != nil {
 		return nil, 0, err
 	}
@@ -44,17 +52,26 @@ func (r *DevlogRepository) GetAllDevlogs(ctx context.Context, page, limit int, c
 	return devlogs, total, nil
 }
 
-func (r *DevlogRepository) GetDevlogsByProjectID(ctx context.Context, projectID int64, page, limit int) ([]model.Devlog, int64, error) {
+func (r *DevlogRepository) GetDevlogsByProjectID(ctx context.Context, projectID int64, page, limit int, requestingUserID string) ([]model.Devlog, int64, error) {
+	requestingUserIDParam := pgtype.Text{}
+	if requestingUserID != "" {
+		requestingUserIDParam = pgtype.Text{String: requestingUserID, Valid: true}
+	}
+
 	rows, err := r.queries.GetDevlogsByProjectID(ctx, db.GetDevlogsByProjectIDParams{
-		ProjectID: projectID,
-		Limit:     int32(limit),              //nolint:gosec // bounded by handler validation
-		Offset:    int32((page - 1) * limit), //nolint:gosec // bounded by handler validation
+		ProjectID:        projectID,
+		Limit:            int32(limit),              //nolint:gosec // bounded by handler validation
+		Offset:           int32((page - 1) * limit), //nolint:gosec // bounded by handler validation
+		RequestingUserID: requestingUserIDParam,
 	})
 	if err != nil {
 		return nil, 0, err
 	}
 
-	total, err := r.queries.GetDevlogsCountByProjectID(ctx, projectID)
+	total, err := r.queries.GetDevlogsCountByProjectID(ctx, db.GetDevlogsCountByProjectIDParams{
+		ProjectID:        projectID,
+		RequestingUserID: requestingUserIDParam,
+	})
 	if err != nil {
 		return nil, 0, err
 	}
@@ -67,8 +84,16 @@ func (r *DevlogRepository) GetDevlogsByProjectID(ctx context.Context, projectID 
 	return devlogs, total, nil
 }
 
-func (r *DevlogRepository) GetDevlogByID(ctx context.Context, id int64) (model.Devlog, error) {
-	row, err := r.queries.GetDevlogByID(ctx, id)
+func (r *DevlogRepository) GetDevlogByID(ctx context.Context, id int64, requestingUserID string) (model.Devlog, error) {
+	requestingUserIDParam := pgtype.Text{}
+	if requestingUserID != "" {
+		requestingUserIDParam = pgtype.Text{String: requestingUserID, Valid: true}
+	}
+
+	row, err := r.queries.GetDevlogByID(ctx, db.GetDevlogByIDParams{
+		ID:               id,
+		RequestingUserID: requestingUserIDParam,
+	})
 	if err != nil {
 		return model.Devlog{}, err
 	}
