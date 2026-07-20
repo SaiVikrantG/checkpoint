@@ -60,7 +60,8 @@ func (h *ArticleHandler) handleGetAllArticlesLogic(c echo.Context, req GetAllArt
 	if limit <= 0 {
 		limit = 20
 	}
-	return h.articleServices.GetAllArticles(c.Request().Context(), page, limit, req.CreatedBy)
+	requestingUserID, _ := c.Get("user_id").(string)
+	return h.articleServices.GetAllArticles(c.Request().Context(), page, limit, req.CreatedBy, requestingUserID)
 }
 
 func (h *ArticleHandler) GetAllArticles() echo.HandlerFunc {
@@ -83,11 +84,36 @@ func (r GetArticleByIDRequest) Validate() error {
 }
 
 func (h *ArticleHandler) handleGetArticleByIDLogic(c echo.Context, req GetArticleByIDRequest) (model.Article, error) {
-	return h.articleServices.GetArticleByID(c.Request().Context(), req.ID)
+	requestingUserID, _ := c.Get("user_id").(string)
+	return h.articleServices.GetArticleByID(c.Request().Context(), req.ID, requestingUserID)
 }
 
 func (h *ArticleHandler) GetArticleByID() echo.HandlerFunc {
 	return Handle(h.Handler, h.handleGetArticleByIDLogic, 200, GetArticleByIDRequest{})
+}
+
+// GetArticleBySlug
+
+type GetArticleBySlugRequest struct {
+	Slug string `param:"slug"`
+}
+
+func (r GetArticleBySlugRequest) Validate() error {
+	if r.Slug == "" {
+		return errors.NewBadRequestError("Invalid request", false, []errors.FieldError{
+			{Field: "slug", Error: "slug is required"},
+		}, nil)
+	}
+	return nil
+}
+
+func (h *ArticleHandler) handleGetArticleBySlugLogic(c echo.Context, req GetArticleBySlugRequest) (model.Article, error) {
+	requestingUserID, _ := c.Get("user_id").(string)
+	return h.articleServices.GetArticleBySlug(c.Request().Context(), req.Slug, requestingUserID)
+}
+
+func (h *ArticleHandler) GetArticleBySlug() echo.HandlerFunc {
+	return Handle(h.Handler, h.handleGetArticleBySlugLogic, 200, GetArticleBySlugRequest{})
 }
 
 // CreateArticle

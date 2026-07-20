@@ -60,7 +60,8 @@ func (h *DevlogHandler) handleGetAllDevlogsLogic(c echo.Context, req GetAllDevlo
 	if limit <= 0 {
 		limit = 20
 	}
-	return h.devlogServices.GetAllDevlogs(c.Request().Context(), page, limit, req.CreatedBy)
+	requestingUserID, _ := c.Get("user_id").(string)
+	return h.devlogServices.GetAllDevlogs(c.Request().Context(), page, limit, req.CreatedBy, requestingUserID)
 }
 
 func (h *DevlogHandler) GetAllDevlogs() echo.HandlerFunc {
@@ -109,7 +110,8 @@ func (h *DevlogHandler) handleGetDevlogsByProjectIDLogic(c echo.Context, req Get
 	if limit <= 0 {
 		limit = 20
 	}
-	return h.devlogServices.GetDevlogsByProjectID(c.Request().Context(), req.ProjectID, page, limit)
+	requestingUserID, _ := c.Get("user_id").(string)
+	return h.devlogServices.GetDevlogsByProjectID(c.Request().Context(), req.ProjectID, page, limit, requestingUserID)
 }
 
 func (h *DevlogHandler) GetDevlogsByProjectID() echo.HandlerFunc {
@@ -132,7 +134,8 @@ func (r GetDevlogByIDRequest) Validate() error {
 }
 
 func (h *DevlogHandler) handleGetDevlogByIDLogic(c echo.Context, req GetDevlogByIDRequest) (model.Devlog, error) {
-	return h.devlogServices.GetDevlogByID(c.Request().Context(), req.ID)
+	requestingUserID, _ := c.Get("user_id").(string)
+	return h.devlogServices.GetDevlogByID(c.Request().Context(), req.ID, requestingUserID)
 }
 
 func (h *DevlogHandler) GetDevlogByID() echo.HandlerFunc {

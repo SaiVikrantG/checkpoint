@@ -37,7 +37,8 @@ func (r GetProjectByIDRequest) Validate() error {
 }
 
 func (h *ProjectHandler) handleGetProjectLogic(c echo.Context, req GetProjectByIDRequest) (model.Project, error) {
-	project, err := h.projectServices.GetProjectByID(c.Request().Context(), req.ID)
+	requestingUserID, _ := c.Get("user_id").(string)
+	project, err := h.projectServices.GetProjectByID(c.Request().Context(), req.ID, requestingUserID)
 	if err != nil {
 		return model.Project{}, err
 	}
@@ -80,7 +81,8 @@ func (h *ProjectHandler) handleGetAllProjectsLogic(c echo.Context, req GetAllPro
 	if limit <= 0 {
 		limit = 20
 	}
-	return h.projectServices.GetAllProjects(c.Request().Context(), page, limit, req.CreatedBy)
+	requestingUserID, _ := c.Get("user_id").(string)
+	return h.projectServices.GetAllProjects(c.Request().Context(), page, limit, req.CreatedBy, requestingUserID)
 }
 
 func (h *ProjectHandler) GetAllProjects() echo.HandlerFunc {
