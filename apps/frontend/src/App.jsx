@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
@@ -26,19 +26,14 @@ import UserArticleViewPage from './pages/UserArticleViewPage';
 import UserNewDevlogPage from './pages/UserNewDevlogPage';
 import AuthRedirect from './components/AuthRedirect';
 import NotFoundPage from './pages/NotFoundPage';
+import { getThemeSettings } from './data/settings';
 
-function applyStoredTheme() {
-  try {
-    const saved = localStorage.getItem('checkpoint-theme');
-    if (saved) {
-      const { bg, fg, ac } = JSON.parse(saved);
-      document.documentElement.style.setProperty('--bg', bg);
-      document.documentElement.style.setProperty('--bg-2', adjustBg(bg, 6));
-      document.documentElement.style.setProperty('--bg-3', adjustBg(bg, -10));
-      document.documentElement.style.setProperty('--fg', fg);
-      document.documentElement.style.setProperty('--main', ac);
-    }
-  } catch {}
+function applyTheme({ bg, fg, ac }) {
+  document.documentElement.style.setProperty('--bg', bg);
+  document.documentElement.style.setProperty('--bg-2', adjustBg(bg, 6));
+  document.documentElement.style.setProperty('--bg-3', adjustBg(bg, -10));
+  document.documentElement.style.setProperty('--fg', fg);
+  document.documentElement.style.setProperty('--main', ac);
 }
 
 function adjustBg(hex, amount) {
@@ -53,20 +48,29 @@ function adjustBg(hex, amount) {
 
 export default function App() {
   const [finderOpen, setFinderOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
-    applyStoredTheme();
+    getThemeSettings()
+      .then(applyTheme)
+      .catch((err) => console.error('Failed to load theme settings:', err));
   }, []);
 
-  const handleKeyDown = useCallback((e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === '/') {
-      e.preventDefault();
-      setFinderOpen((prev) => !prev);
-    }
-    if (e.key === 'Escape') {
-      setFinderOpen(false);
-    }
-  }, []);
+  // Finder is disabled on the public side for now, so the ⌘/ shortcut only
+  // opens it while inside the user dashboard.
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (!location.pathname.startsWith('/user')) return;
+      if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+        e.preventDefault();
+        setFinderOpen((prev) => !prev);
+      }
+      if (e.key === 'Escape') {
+        setFinderOpen(false);
+      }
+    },
+    [location.pathname],
+  );
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);

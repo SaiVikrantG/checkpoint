@@ -42,19 +42,27 @@ export default function UserDevlogsPage() {
   }, [isLoaded, user?.id, preselected]);
 
   const selectedProjectObj = projects.find((p) => p.name === selectedProject);
+  const [pageInfo, setPageInfo] = useState({ page: 1, totalPages: 1 });
 
   useEffect(() => {
     if (!selectedProjectObj) return;
     const projectId = selectedProjectObj.id;
     if (devlogCache.current.has(projectId)) {
-      setEntries(devlogCache.current.get(projectId));
+      const cached = devlogCache.current.get(projectId);
+      setEntries(cached.entries);
+      setPageInfo({ page: cached.page, totalPages: cached.totalPages });
       return;
     }
     setEntriesLoading(true);
-    getDevlogsByProject(projectId, 1, 100)
+    getDevlogsByProject(projectId, 1, DEVLOG_PAGE_SIZE)
       .then((res) => {
-        devlogCache.current.set(projectId, res.data);
+        devlogCache.current.set(projectId, {
+          entries: res.data,
+          page: res.page,
+          totalPages: res.totalPages,
+        });
         setEntries(res.data);
+        setPageInfo({ page: res.page, totalPages: res.totalPages });
       })
       .catch(() => setEntries([]))
       .finally(() => setEntriesLoading(false));
@@ -84,27 +92,35 @@ export default function UserDevlogsPage() {
 
   const totalCount = entries.length;
 
-  const [visibleCount, setVisibleCount] = useState(DEVLOG_PAGE_SIZE);
   const [prevSelectedProject, setPrevSelectedProject] = useState(selectedProject);
   const [loadingMore, setLoadingMore] = useState(false);
   const entrySentinelRef = useRef(null);
 
   if (selectedProject !== prevSelectedProject) {
     setPrevSelectedProject(selectedProject);
-    setVisibleCount(DEVLOG_PAGE_SIZE);
   }
 
-  const visibleEntries = entries.slice(0, visibleCount);
-  const hasMoreEntries = visibleCount < entries.length;
+  const selectedProjectId = selectedProjectObj?.id;
+  const hasMoreEntries = pageInfo.page < pageInfo.totalPages;
 
   const loadMoreEntries = useCallback(() => {
-    if (!hasMoreEntries || loadingMore) return;
+    if (!selectedProjectId || !hasMoreEntries || loadingMore) return;
+    const cached = devlogCache.current.get(selectedProjectId);
     setLoadingMore(true);
-    setTimeout(() => {
-      setVisibleCount((v) => Math.min(v + DEVLOG_PAGE_SIZE, entries.length));
-      setLoadingMore(false);
-    }, 400);
-  }, [hasMoreEntries, loadingMore, entries.length]);
+    getDevlogsByProject(selectedProjectId, cached.page + 1, DEVLOG_PAGE_SIZE)
+      .then((res) => {
+        const merged = [...cached.entries, ...res.data];
+        devlogCache.current.set(selectedProjectId, {
+          entries: merged,
+          page: res.page,
+          totalPages: res.totalPages,
+        });
+        setEntries(merged);
+        setPageInfo({ page: res.page, totalPages: res.totalPages });
+      })
+      .catch((err) => console.error('Failed to load more devlogs:', err))
+      .finally(() => setLoadingMore(false));
+  }, [selectedProjectId, hasMoreEntries, loadingMore]);
 
   useEffect(() => {
     const el = entrySentinelRef.current;
@@ -121,7 +137,7 @@ export default function UserDevlogsPage() {
 
   const dateGroups = useMemo(() => {
     const map = {};
-    for (const entry of visibleEntries) {
+    for (const entry of entries) {
       const date = new Date(entry.created_at).toLocaleDateString('en-IN', {
         year: 'numeric',
         month: '2-digit',
@@ -131,7 +147,7 @@ export default function UserDevlogsPage() {
       map[date].push(entry);
     }
     return Object.entries(map);
-  }, [visibleEntries]);
+  }, [entries]);
 
   const formatTime = (iso) =>
     new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
@@ -170,10 +186,14 @@ export default function UserDevlogsPage() {
       composeHtml.current = '';
       setComposeKey((k) => k + 1);
       devlogCache.current.delete(proj?.id);
-      const res = await getDevlogsByProject(proj.id, 1, 100);
-      devlogCache.current.set(proj.id, res.data);
+      const res = await getDevlogsByProject(proj.id, 1, DEVLOG_PAGE_SIZE);
+      devlogCache.current.set(proj.id, {
+        entries: res.data,
+        page: res.page,
+        totalPages: res.totalPages,
+      });
       setEntries(res.data);
-      setVisibleCount(DEVLOG_PAGE_SIZE);
+      setPageInfo({ page: res.page, totalPages: res.totalPages });
       titleRef.current?.focus();
     } catch (err) {
       console.error('Failed to save devlog:', err);

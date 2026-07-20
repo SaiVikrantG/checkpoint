@@ -15,6 +15,11 @@ export async function getArticleById(id) {
   return mapArticle(data);
 }
 
+export async function getArticleBySlug(slug) {
+  const data = await apiFetch(`/articles/slug/${encodeURIComponent(slug)}`);
+  return mapArticle(data);
+}
+
 export async function createArticle(article) {
   const payload = {
     title: article.title,

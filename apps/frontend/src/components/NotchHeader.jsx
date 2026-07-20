@@ -5,10 +5,13 @@ const allNavItems = [
   { label: 'Home', path: '/' },
   { label: 'Articles', path: '/articles' },
   { label: 'Projects', path: '/projects' },
+  { label: 'Devlogs', path: '/devlogs' },
   { label: 'Board', path: '/board' },
   { label: 'About', path: '/about' },
 ];
 
+// `onFinderOpen` is unused while the finder is disabled on the public side (see below).
+// eslint-disable-next-line no-unused-vars
 export default function NotchHeader({ onFinderOpen }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -77,6 +80,7 @@ export default function NotchHeader({ onFinderOpen }) {
             </span>
           ))}
         </div>
+        {/* Finder disabled on the public side for now.
         <span className="notch-sep" />
         <span className="notch-kbd" onClick={onFinderOpen}>
           {'⌘/ · Ctrl/'}
@@ -84,6 +88,7 @@ export default function NotchHeader({ onFinderOpen }) {
         <span className="notch-search" onClick={onFinderOpen}>
           &#8981;
         </span>
+        */}
       </div>
     </div>
   );

@@ -188,8 +188,8 @@ export default function UserNewDevlogPage() {
     const proj = projects.find((p) => p.name === selectedProject);
     // Clearing stale results as part of synchronizing with the fetch below,
     // same effect's concern — not a standalone derived-state assignment.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!proj) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRecentEntries([]);
       return;
     }

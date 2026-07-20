@@ -144,11 +144,10 @@ export default function UserNewArticlePage() {
     if (changed) setStatus('new changes');
     if (val.trim().length > 0) setHint('');
     setSlug(
-      '/articles/' +
-        val
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/(^-|-$)/g, ''),
+      val
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, ''),
     );
   };
 

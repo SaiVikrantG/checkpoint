@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useClerk } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
+import { getThemeSettings, updateThemeSettings } from '../data/settings';
 
 const presetThemes = [
   { name: 'serika dark', bg: '#323437', fg: '#d1d0c5', ac: '#e2b714' },
@@ -28,22 +29,24 @@ const topPages = [
   { rank: '05', name: '/about', num: '617' },
 ];
 
-function getSavedTheme() {
-  try {
-    const saved = localStorage.getItem('checkpoint-theme');
-    if (saved) return JSON.parse(saved);
-  } catch {}
-  return null;
-}
-
 export default function AdminPage() {
   const { signOut } = useClerk();
   const navigate = useNavigate();
-  const saved = getSavedTheme();
-  const [activeTheme, setActiveTheme] = useState(saved?.name || 'serika dark');
-  const [customBg, setCustomBg] = useState(saved?.bg || '#323437');
-  const [customFg, setCustomFg] = useState(saved?.fg || '#d1d0c5');
-  const [customAc, setCustomAc] = useState(saved?.ac || '#e2b714');
+  const [activeTheme, setActiveTheme] = useState('serika dark');
+  const [customBg, setCustomBg] = useState('#323437');
+  const [customFg, setCustomFg] = useState('#d1d0c5');
+  const [customAc, setCustomAc] = useState('#e2b714');
+
+  useEffect(() => {
+    getThemeSettings()
+      .then((theme) => {
+        setActiveTheme(theme.name || 'custom');
+        setCustomBg(theme.bg);
+        setCustomFg(theme.fg);
+        setCustomAc(theme.ac);
+      })
+      .catch((err) => console.error('Failed to load theme settings:', err));
+  }, []);
 
   const applyTheme = (bg, fg, ac, name) => {
     document.documentElement.style.setProperty('--bg', bg);
@@ -51,9 +54,8 @@ export default function AdminPage() {
     document.documentElement.style.setProperty('--bg-3', adjustColor(bg, -10));
     document.documentElement.style.setProperty('--fg', fg);
     document.documentElement.style.setProperty('--main', ac);
-    localStorage.setItem(
-      'checkpoint-theme',
-      JSON.stringify({ name: name || 'custom', bg, fg, ac }),
+    updateThemeSettings({ name: name || 'custom', bg, fg, ac }).catch((err) =>
+      console.error('Failed to save theme settings:', err),
     );
   };
 

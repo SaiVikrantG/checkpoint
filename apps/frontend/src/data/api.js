@@ -8,12 +8,9 @@ export async function apiFetch(path, options = {}) {
     ...options.headers,
   };
 
-  const method = (options.method || 'GET').toUpperCase();
-  if (method !== 'GET') {
-    const token = await getAuthToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
+  const token = await getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
   const res = await fetch(`${API_BASE}${path}`, {
