@@ -3,12 +3,14 @@ package middlewares
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/SaiVikrantG/checkpoint/internal/errors"
 	"github.com/SaiVikrantG/checkpoint/internal/server"
 	"github.com/clerk/clerk-sdk-go/v2"
 	clerkhttp "github.com/clerk/clerk-sdk-go/v2/http"
+	"github.com/clerk/clerk-sdk-go/v2/jwt"
 	"github.com/labstack/echo/v4"
 )
 
@@ -88,4 +90,35 @@ func (auth *AuthMiddleWare) RequireAuth(next echo.HandlerFunc) echo.HandlerFunc 
 
 		return next(c)
 	})
+}
+
+// OptionalAuth verifies a Clerk session JWT if the Authorization header is
+// present, but never rejects the request. Anonymous requests proceed with
+// no "user_id" set in the context. This is what lets public GET routes
+// know the caller's identity (for visibility filtering) without requiring
+// a session.
+func (auth *AuthMiddleWare) OptionalAuth(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		header := c.Request().Header.Get("Authorization")
+		token := strings.TrimPrefix(header, "Bearer ")
+		if token == "" || token == header {
+			return next(c)
+		}
+
+		claims, err := jwt.Verify(c.Request().Context(), &jwt.VerifyParams{Token: token})
+		if err != nil {
+			auth.server.Logger.Debug().
+				Err(err).
+				Str("function", "OptionalAuth").
+				Str("request_id", GetRequestID(c)).
+				Msg("optional auth token verification failed, proceeding as anonymous")
+			return next(c)
+		}
+
+		c.Set("user_id", claims.Subject)
+		c.Set("user_role", claims.ActiveOrganizationRole)
+		c.Set("permissions", claims.ActiveOrganizationPermissions)
+
+		return next(c)
+	}
 }
