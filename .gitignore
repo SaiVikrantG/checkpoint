@@ -12,3 +12,5 @@ node_modules/
 /apps/frontend/dist/assets
 /apps/frontend/dist
 /checkpoint
+/apps/backend/bin
+.DS_Store
