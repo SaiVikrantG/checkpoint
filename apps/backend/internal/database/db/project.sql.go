@@ -69,15 +69,17 @@ func (q *Queries) DeleteProject(ctx context.Context, id int64) error {
 const getAllProjects = `-- name: GetAllProjects :many
 SELECT id, name, description, url, status, stack, is_public, created_by, updated_by, created_at, updated_at
 FROM projects
-WHERE ($3::text IS NULL OR created_by = $3)
+WHERE (is_public = true OR ($3::text IS NOT NULL AND created_by = $3))
+  AND ($4::text IS NULL OR created_by = $4)
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
 `
 
 type GetAllProjectsParams struct {
-	Limit     int32       `json:"limit"`
-	Offset    int32       `json:"offset"`
-	CreatedBy pgtype.Text `json:"created_by"`
+	Limit            int32       `json:"limit"`
+	Offset           int32       `json:"offset"`
+	RequestingUserID pgtype.Text `json:"requesting_user_id"`
+	CreatedBy        pgtype.Text `json:"created_by"`
 }
 
 type GetAllProjectsRow struct {
@@ -95,7 +97,12 @@ type GetAllProjectsRow struct {
 }
 
 func (q *Queries) GetAllProjects(ctx context.Context, arg GetAllProjectsParams) ([]GetAllProjectsRow, error) {
-	rows, err := q.db.Query(ctx, getAllProjects, arg.Limit, arg.Offset, arg.CreatedBy)
+	rows, err := q.db.Query(ctx, getAllProjects,
+		arg.Limit,
+		arg.Offset,
+		arg.RequestingUserID,
+		arg.CreatedBy,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +137,13 @@ const getProjectByID = `-- name: GetProjectByID :one
 SELECT id, name, description, url, status, stack, is_public, created_by, updated_by, created_at, updated_at
 FROM projects
 WHERE id = $1
+  AND (is_public = true OR ($2::text IS NOT NULL AND created_by = $2))
 `
+
+type GetProjectByIDParams struct {
+	ID               int64       `json:"id"`
+	RequestingUserID pgtype.Text `json:"requesting_user_id"`
+}
 
 type GetProjectByIDRow struct {
 	ID          int64            `json:"id"`
@@ -146,8 +159,8 @@ type GetProjectByIDRow struct {
 	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
 }
 
-func (q *Queries) GetProjectByID(ctx context.Context, id int64) (GetProjectByIDRow, error) {
-	row := q.db.QueryRow(ctx, getProjectByID, id)
+func (q *Queries) GetProjectByID(ctx context.Context, arg GetProjectByIDParams) (GetProjectByIDRow, error) {
+	row := q.db.QueryRow(ctx, getProjectByID, arg.ID, arg.RequestingUserID)
 	var i GetProjectByIDRow
 	err := row.Scan(
 		&i.ID,
@@ -167,11 +180,17 @@ func (q *Queries) GetProjectByID(ctx context.Context, id int64) (GetProjectByIDR
 
 const getProjectsCount = `-- name: GetProjectsCount :one
 SELECT COUNT(*) FROM projects
-WHERE ($1::text IS NULL OR created_by = $1)
+WHERE (is_public = true OR ($1::text IS NOT NULL AND created_by = $1))
+  AND ($2::text IS NULL OR created_by = $2)
 `
 
-func (q *Queries) GetProjectsCount(ctx context.Context, createdBy pgtype.Text) (int64, error) {
-	row := q.db.QueryRow(ctx, getProjectsCount, createdBy)
+type GetProjectsCountParams struct {
+	RequestingUserID pgtype.Text `json:"requesting_user_id"`
+	CreatedBy        pgtype.Text `json:"created_by"`
+}
+
+func (q *Queries) GetProjectsCount(ctx context.Context, arg GetProjectsCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getProjectsCount, arg.RequestingUserID, arg.CreatedBy)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

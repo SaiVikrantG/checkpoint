@@ -1,7 +1,8 @@
 -- name: GetProjectByID :one
 SELECT id, name, description, url, status, stack, is_public, created_by, updated_by, created_at, updated_at
 FROM projects
-WHERE id = $1;
+WHERE id = $1
+  AND (is_public = true OR (sqlc.narg('requesting_user_id')::text IS NOT NULL AND created_by = sqlc.narg('requesting_user_id')));
 
 -- name: CreateProject :one
 INSERT INTO projects (name, description, url, status, stack, is_public, created_by, created_at)
@@ -11,13 +12,15 @@ RETURNING *;
 -- name: GetAllProjects :many
 SELECT id, name, description, url, status, stack, is_public, created_by, updated_by, created_at, updated_at
 FROM projects
-WHERE (sqlc.narg('created_by')::text IS NULL OR created_by = sqlc.narg('created_by'))
+WHERE (is_public = true OR (sqlc.narg('requesting_user_id')::text IS NOT NULL AND created_by = sqlc.narg('requesting_user_id')))
+  AND (sqlc.narg('created_by')::text IS NULL OR created_by = sqlc.narg('created_by'))
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2;
 
 -- name: GetProjectsCount :one
 SELECT COUNT(*) FROM projects
-WHERE (sqlc.narg('created_by')::text IS NULL OR created_by = sqlc.narg('created_by'));
+WHERE (is_public = true OR (sqlc.narg('requesting_user_id')::text IS NOT NULL AND created_by = sqlc.narg('requesting_user_id')))
+  AND (sqlc.narg('created_by')::text IS NULL OR created_by = sqlc.narg('created_by'));
 
 -- name: DeleteProject :exec
 DELETE FROM projects

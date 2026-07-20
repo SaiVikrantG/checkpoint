@@ -1,28 +1,34 @@
 -- name: GetDevlogByID :one
 SELECT id, project_id, title, content, is_public, created_by, updated_by, created_at, updated_at
 FROM devlogs
-WHERE id = $1;
+WHERE id = $1
+  AND (is_public = true OR (sqlc.narg('requesting_user_id')::text IS NOT NULL AND created_by = sqlc.narg('requesting_user_id')));
 
 -- name: GetAllDevlogs :many
 SELECT id, project_id, title, content, is_public, created_by, updated_by, created_at, updated_at
 FROM devlogs
-WHERE (sqlc.narg('created_by')::text IS NULL OR created_by = sqlc.narg('created_by'))
+WHERE (is_public = true OR (sqlc.narg('requesting_user_id')::text IS NOT NULL AND created_by = sqlc.narg('requesting_user_id')))
+  AND (sqlc.narg('created_by')::text IS NULL OR created_by = sqlc.narg('created_by'))
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2;
 
 -- name: GetDevlogsCount :one
 SELECT COUNT(*) FROM devlogs
-WHERE (sqlc.narg('created_by')::text IS NULL OR created_by = sqlc.narg('created_by'));
+WHERE (is_public = true OR (sqlc.narg('requesting_user_id')::text IS NOT NULL AND created_by = sqlc.narg('requesting_user_id')))
+  AND (sqlc.narg('created_by')::text IS NULL OR created_by = sqlc.narg('created_by'));
 
 -- name: GetDevlogsByProjectID :many
 SELECT id, project_id, title, content, is_public, created_by, updated_by, created_at, updated_at
 FROM devlogs
 WHERE project_id = $1
+  AND (is_public = true OR (sqlc.narg('requesting_user_id')::text IS NOT NULL AND created_by = sqlc.narg('requesting_user_id')))
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3;
 
 -- name: GetDevlogsCountByProjectID :one
-SELECT COUNT(*) FROM devlogs WHERE project_id = $1;
+SELECT COUNT(*) FROM devlogs
+WHERE project_id = $1
+  AND (is_public = true OR (sqlc.narg('requesting_user_id')::text IS NOT NULL AND created_by = sqlc.narg('requesting_user_id')));
 
 -- name: CreateDevlog :one
 INSERT INTO devlogs (project_id, title, content, is_public, created_by, created_at)

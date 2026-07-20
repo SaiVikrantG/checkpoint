@@ -63,19 +63,26 @@ func (q *Queries) DeleteDevlog(ctx context.Context, id int64) error {
 const getAllDevlogs = `-- name: GetAllDevlogs :many
 SELECT id, project_id, title, content, is_public, created_by, updated_by, created_at, updated_at
 FROM devlogs
-WHERE ($3::text IS NULL OR created_by = $3)
+WHERE (is_public = true OR ($3::text IS NOT NULL AND created_by = $3))
+  AND ($4::text IS NULL OR created_by = $4)
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
 `
 
 type GetAllDevlogsParams struct {
-	Limit     int32       `json:"limit"`
-	Offset    int32       `json:"offset"`
-	CreatedBy pgtype.Text `json:"created_by"`
+	Limit            int32       `json:"limit"`
+	Offset           int32       `json:"offset"`
+	RequestingUserID pgtype.Text `json:"requesting_user_id"`
+	CreatedBy        pgtype.Text `json:"created_by"`
 }
 
 func (q *Queries) GetAllDevlogs(ctx context.Context, arg GetAllDevlogsParams) ([]Devlog, error) {
-	rows, err := q.db.Query(ctx, getAllDevlogs, arg.Limit, arg.Offset, arg.CreatedBy)
+	rows, err := q.db.Query(ctx, getAllDevlogs,
+		arg.Limit,
+		arg.Offset,
+		arg.RequestingUserID,
+		arg.CreatedBy,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -108,10 +115,16 @@ const getDevlogByID = `-- name: GetDevlogByID :one
 SELECT id, project_id, title, content, is_public, created_by, updated_by, created_at, updated_at
 FROM devlogs
 WHERE id = $1
+  AND (is_public = true OR ($2::text IS NOT NULL AND created_by = $2))
 `
 
-func (q *Queries) GetDevlogByID(ctx context.Context, id int64) (Devlog, error) {
-	row := q.db.QueryRow(ctx, getDevlogByID, id)
+type GetDevlogByIDParams struct {
+	ID               int64       `json:"id"`
+	RequestingUserID pgtype.Text `json:"requesting_user_id"`
+}
+
+func (q *Queries) GetDevlogByID(ctx context.Context, arg GetDevlogByIDParams) (Devlog, error) {
+	row := q.db.QueryRow(ctx, getDevlogByID, arg.ID, arg.RequestingUserID)
 	var i Devlog
 	err := row.Scan(
 		&i.ID,
@@ -131,18 +144,25 @@ const getDevlogsByProjectID = `-- name: GetDevlogsByProjectID :many
 SELECT id, project_id, title, content, is_public, created_by, updated_by, created_at, updated_at
 FROM devlogs
 WHERE project_id = $1
+  AND (is_public = true OR ($4::text IS NOT NULL AND created_by = $4))
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
 `
 
 type GetDevlogsByProjectIDParams struct {
-	ProjectID int64 `json:"project_id"`
-	Limit     int32 `json:"limit"`
-	Offset    int32 `json:"offset"`
+	ProjectID        int64       `json:"project_id"`
+	Limit            int32       `json:"limit"`
+	Offset           int32       `json:"offset"`
+	RequestingUserID pgtype.Text `json:"requesting_user_id"`
 }
 
 func (q *Queries) GetDevlogsByProjectID(ctx context.Context, arg GetDevlogsByProjectIDParams) ([]Devlog, error) {
-	rows, err := q.db.Query(ctx, getDevlogsByProjectID, arg.ProjectID, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getDevlogsByProjectID,
+		arg.ProjectID,
+		arg.Limit,
+		arg.Offset,
+		arg.RequestingUserID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -173,22 +193,35 @@ func (q *Queries) GetDevlogsByProjectID(ctx context.Context, arg GetDevlogsByPro
 
 const getDevlogsCount = `-- name: GetDevlogsCount :one
 SELECT COUNT(*) FROM devlogs
-WHERE ($1::text IS NULL OR created_by = $1)
+WHERE (is_public = true OR ($1::text IS NOT NULL AND created_by = $1))
+  AND ($2::text IS NULL OR created_by = $2)
 `
 
-func (q *Queries) GetDevlogsCount(ctx context.Context, createdBy pgtype.Text) (int64, error) {
-	row := q.db.QueryRow(ctx, getDevlogsCount, createdBy)
+type GetDevlogsCountParams struct {
+	RequestingUserID pgtype.Text `json:"requesting_user_id"`
+	CreatedBy        pgtype.Text `json:"created_by"`
+}
+
+func (q *Queries) GetDevlogsCount(ctx context.Context, arg GetDevlogsCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getDevlogsCount, arg.RequestingUserID, arg.CreatedBy)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
 const getDevlogsCountByProjectID = `-- name: GetDevlogsCountByProjectID :one
-SELECT COUNT(*) FROM devlogs WHERE project_id = $1
+SELECT COUNT(*) FROM devlogs
+WHERE project_id = $1
+  AND (is_public = true OR ($2::text IS NOT NULL AND created_by = $2))
 `
 
-func (q *Queries) GetDevlogsCountByProjectID(ctx context.Context, projectID int64) (int64, error) {
-	row := q.db.QueryRow(ctx, getDevlogsCountByProjectID, projectID)
+type GetDevlogsCountByProjectIDParams struct {
+	ProjectID        int64       `json:"project_id"`
+	RequestingUserID pgtype.Text `json:"requesting_user_id"`
+}
+
+func (q *Queries) GetDevlogsCountByProjectID(ctx context.Context, arg GetDevlogsCountByProjectIDParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getDevlogsCountByProjectID, arg.ProjectID, arg.RequestingUserID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

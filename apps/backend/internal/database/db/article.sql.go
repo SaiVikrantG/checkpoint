@@ -74,15 +74,17 @@ const getAllArticles = `-- name: GetAllArticles :many
 SELECT a.id, a.project_id, p.name AS project_name, a.title, a.content, a.slug, a.tags, a.views, a.status, a.is_public, a.created_by, a.updated_by, a.created_at, a.updated_at
 FROM articles a
 LEFT JOIN projects p ON p.id = a.project_id
-WHERE ($3::text IS NULL OR a.created_by = $3)
+WHERE (a.is_public = true OR ($3::text IS NOT NULL AND a.created_by = $3))
+  AND ($4::text IS NULL OR a.created_by = $4)
 ORDER BY a.created_at DESC
 LIMIT $1 OFFSET $2
 `
 
 type GetAllArticlesParams struct {
-	Limit     int32       `json:"limit"`
-	Offset    int32       `json:"offset"`
-	CreatedBy pgtype.Text `json:"created_by"`
+	Limit            int32       `json:"limit"`
+	Offset           int32       `json:"offset"`
+	RequestingUserID pgtype.Text `json:"requesting_user_id"`
+	CreatedBy        pgtype.Text `json:"created_by"`
 }
 
 type GetAllArticlesRow struct {
@@ -103,7 +105,12 @@ type GetAllArticlesRow struct {
 }
 
 func (q *Queries) GetAllArticles(ctx context.Context, arg GetAllArticlesParams) ([]GetAllArticlesRow, error) {
-	rows, err := q.db.Query(ctx, getAllArticles, arg.Limit, arg.Offset, arg.CreatedBy)
+	rows, err := q.db.Query(ctx, getAllArticles,
+		arg.Limit,
+		arg.Offset,
+		arg.RequestingUserID,
+		arg.CreatedBy,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +148,13 @@ const getArticleByID = `-- name: GetArticleByID :one
 SELECT id, project_id, title, content, slug, tags, views, status, is_public, created_by, updated_by, created_at, updated_at
 FROM articles
 WHERE id = $1
+  AND (is_public = true OR ($2::text IS NOT NULL AND created_by = $2))
 `
+
+type GetArticleByIDParams struct {
+	ID               int64       `json:"id"`
+	RequestingUserID pgtype.Text `json:"requesting_user_id"`
+}
 
 type GetArticleByIDRow struct {
 	ID        int64            `json:"id"`
@@ -159,8 +172,8 @@ type GetArticleByIDRow struct {
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }
 
-func (q *Queries) GetArticleByID(ctx context.Context, id int64) (GetArticleByIDRow, error) {
-	row := q.db.QueryRow(ctx, getArticleByID, id)
+func (q *Queries) GetArticleByID(ctx context.Context, arg GetArticleByIDParams) (GetArticleByIDRow, error) {
+	row := q.db.QueryRow(ctx, getArticleByID, arg.ID, arg.RequestingUserID)
 	var i GetArticleByIDRow
 	err := row.Scan(
 		&i.ID,
@@ -180,13 +193,71 @@ func (q *Queries) GetArticleByID(ctx context.Context, id int64) (GetArticleByIDR
 	return i, err
 }
 
-const getArticlesCount = `-- name: GetArticlesCount :one
-SELECT COUNT(*) FROM articles
-WHERE ($1::text IS NULL OR created_by = $1)
+const getArticleBySlug = `-- name: GetArticleBySlug :one
+SELECT a.id, a.project_id, p.name AS project_name, a.title, a.content, a.slug, a.tags, a.views, a.status, a.is_public, a.created_by, a.updated_by, a.created_at, a.updated_at
+FROM articles a
+LEFT JOIN projects p ON p.id = a.project_id
+WHERE a.slug = $1
+  AND (a.is_public = true OR ($2::text IS NOT NULL AND a.created_by = $2))
 `
 
-func (q *Queries) GetArticlesCount(ctx context.Context, createdBy pgtype.Text) (int64, error) {
-	row := q.db.QueryRow(ctx, getArticlesCount, createdBy)
+type GetArticleBySlugParams struct {
+	Slug             pgtype.Text `json:"slug"`
+	RequestingUserID pgtype.Text `json:"requesting_user_id"`
+}
+
+type GetArticleBySlugRow struct {
+	ID          int64            `json:"id"`
+	ProjectID   pgtype.Int8      `json:"project_id"`
+	ProjectName pgtype.Text      `json:"project_name"`
+	Title       string           `json:"title"`
+	Content     string           `json:"content"`
+	Slug        pgtype.Text      `json:"slug"`
+	Tags        []string         `json:"tags"`
+	Views       int64            `json:"views"`
+	Status      string           `json:"status"`
+	IsPublic    pgtype.Bool      `json:"is_public"`
+	CreatedBy   string           `json:"created_by"`
+	UpdatedBy   pgtype.Text      `json:"updated_by"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+}
+
+func (q *Queries) GetArticleBySlug(ctx context.Context, arg GetArticleBySlugParams) (GetArticleBySlugRow, error) {
+	row := q.db.QueryRow(ctx, getArticleBySlug, arg.Slug, arg.RequestingUserID)
+	var i GetArticleBySlugRow
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.ProjectName,
+		&i.Title,
+		&i.Content,
+		&i.Slug,
+		&i.Tags,
+		&i.Views,
+		&i.Status,
+		&i.IsPublic,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getArticlesCount = `-- name: GetArticlesCount :one
+SELECT COUNT(*) FROM articles
+WHERE (is_public = true OR ($1::text IS NOT NULL AND created_by = $1))
+  AND ($2::text IS NULL OR created_by = $2)
+`
+
+type GetArticlesCountParams struct {
+	RequestingUserID pgtype.Text `json:"requesting_user_id"`
+	CreatedBy        pgtype.Text `json:"created_by"`
+}
+
+func (q *Queries) GetArticlesCount(ctx context.Context, arg GetArticlesCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getArticlesCount, arg.RequestingUserID, arg.CreatedBy)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

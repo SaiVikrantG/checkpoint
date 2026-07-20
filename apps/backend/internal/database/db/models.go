@@ -57,3 +57,13 @@ type Reaction struct {
 	UserID       string           `json:"user_id"`
 	CreatedAt    pgtype.Timestamp `json:"created_at"`
 }
+
+type SiteSetting struct {
+	ID        int16            `json:"id"`
+	Name      string           `json:"name"`
+	Bg        string           `json:"bg"`
+	Fg        string           `json:"fg"`
+	Ac        string           `json:"ac"`
+	UpdatedBy pgtype.Text      `json:"updated_by"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+}
