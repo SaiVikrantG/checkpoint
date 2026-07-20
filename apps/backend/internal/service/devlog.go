@@ -24,8 +24,8 @@ func NewDevlogService(server *server.Server, devlogRepo *repositories.DevlogRepo
 	}
 }
 
-func (s *DevlogService) GetAllDevlogs(ctx context.Context, page, limit int, createdBy string) (model.PaginatedResponse[model.Devlog], error) {
-	devlogs, total, err := s.repository.GetAllDevlogs(ctx, page, limit, createdBy)
+func (s *DevlogService) GetAllDevlogs(ctx context.Context, page, limit int, createdBy, requestingUserID string) (model.PaginatedResponse[model.Devlog], error) {
+	devlogs, total, err := s.repository.GetAllDevlogs(ctx, page, limit, createdBy, requestingUserID)
 	if err != nil {
 		return model.PaginatedResponse[model.Devlog]{}, err
 	}
@@ -41,8 +41,8 @@ func (s *DevlogService) GetAllDevlogs(ctx context.Context, page, limit int, crea
 	}, nil
 }
 
-func (s *DevlogService) GetDevlogsByProjectID(ctx context.Context, projectID int64, page, limit int) (model.PaginatedResponse[model.Devlog], error) {
-	devlogs, total, err := s.repository.GetDevlogsByProjectID(ctx, projectID, page, limit)
+func (s *DevlogService) GetDevlogsByProjectID(ctx context.Context, projectID int64, page, limit int, requestingUserID string) (model.PaginatedResponse[model.Devlog], error) {
+	devlogs, total, err := s.repository.GetDevlogsByProjectID(ctx, projectID, page, limit, requestingUserID)
 	if err != nil {
 		return model.PaginatedResponse[model.Devlog]{}, err
 	}
@@ -58,8 +58,8 @@ func (s *DevlogService) GetDevlogsByProjectID(ctx context.Context, projectID int
 	}, nil
 }
 
-func (s *DevlogService) GetDevlogByID(ctx context.Context, id int64) (model.Devlog, error) {
-	devlog, err := s.repository.GetDevlogByID(ctx, id)
+func (s *DevlogService) GetDevlogByID(ctx context.Context, id int64, requestingUserID string) (model.Devlog, error) {
+	devlog, err := s.repository.GetDevlogByID(ctx, id, requestingUserID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			notFoundErr := errors.NewNotFoundError("devlog not found", true)
@@ -76,7 +76,7 @@ func (s *DevlogService) CreateDevlog(ctx context.Context, devlog *model.Devlog) 
 }
 
 func (s *DevlogService) UpdateDevlog(ctx context.Context, id int64, devlog *model.Devlog, userID, userRole string) (*model.Devlog, error) {
-	existing, err := s.repository.GetDevlogByID(ctx, id)
+	existing, err := s.repository.GetDevlogByID(ctx, id, userID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			notFoundErr := errors.NewNotFoundError("devlog not found", true)
@@ -102,7 +102,7 @@ func (s *DevlogService) UpdateDevlog(ctx context.Context, id int64, devlog *mode
 }
 
 func (s *DevlogService) DeleteDevlog(ctx context.Context, id int64, userID, userRole string) error {
-	existing, err := s.repository.GetDevlogByID(ctx, id)
+	existing, err := s.repository.GetDevlogByID(ctx, id, userID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			notFoundErr := errors.NewNotFoundError("devlog not found", true)

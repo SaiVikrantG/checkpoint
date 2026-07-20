@@ -7,9 +7,9 @@ import (
 )
 
 func registerDevlogRoutes(g *echo.Group, h *handlers.Handlers, auth *middlewares.AuthMiddleWare) {
-	g.GET("/devlogs", h.Devlogs.GetAllDevlogs())
-	g.GET("/devlogs/project/:projectId", h.Devlogs.GetDevlogsByProjectID())
-	g.GET("/devlogs/:id", h.Devlogs.GetDevlogByID())
+	g.GET("/devlogs", h.Devlogs.GetAllDevlogs(), auth.OptionalAuth)
+	g.GET("/devlogs/project/:projectId", h.Devlogs.GetDevlogsByProjectID(), auth.OptionalAuth)
+	g.GET("/devlogs/:id", h.Devlogs.GetDevlogByID(), auth.OptionalAuth)
 
 	g.POST("/devlogs", h.Devlogs.CreateDevlog(), auth.RequireAuth)
 	g.PATCH("/devlogs/:id", h.Devlogs.UpdateDevlog(), auth.RequireAuth)

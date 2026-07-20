@@ -24,8 +24,8 @@ func NewArticleService(server *server.Server, articleRepo *repositories.ArticleR
 	}
 }
 
-func (s *ArticleService) GetAllArticles(ctx context.Context, page, limit int, createdBy string) (model.PaginatedResponse[model.Article], error) {
-	articles, total, err := s.repository.GetAllArticles(ctx, page, limit, createdBy)
+func (s *ArticleService) GetAllArticles(ctx context.Context, page, limit int, createdBy, requestingUserID string) (model.PaginatedResponse[model.Article], error) {
+	articles, total, err := s.repository.GetAllArticles(ctx, page, limit, createdBy, requestingUserID)
 	if err != nil {
 		return model.PaginatedResponse[model.Article]{}, err
 	}
@@ -41,8 +41,21 @@ func (s *ArticleService) GetAllArticles(ctx context.Context, page, limit int, cr
 	}, nil
 }
 
-func (s *ArticleService) GetArticleByID(ctx context.Context, id int64) (model.Article, error) {
-	article, err := s.repository.GetArticleByID(ctx, id)
+func (s *ArticleService) GetArticleByID(ctx context.Context, id int64, requestingUserID string) (model.Article, error) {
+	article, err := s.repository.GetArticleByID(ctx, id, requestingUserID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			notFoundErr := errors.NewNotFoundError("article not found", true)
+			notFoundErr.Code = sqlerr.NotFoundCode("articles")
+			return model.Article{}, notFoundErr
+		}
+		return model.Article{}, err
+	}
+	return article, nil
+}
+
+func (s *ArticleService) GetArticleBySlug(ctx context.Context, slug, requestingUserID string) (model.Article, error) {
+	article, err := s.repository.GetArticleBySlug(ctx, slug, requestingUserID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			notFoundErr := errors.NewNotFoundError("article not found", true)
@@ -63,7 +76,7 @@ func (s *ArticleService) CreateArticle(ctx context.Context, article *model.Artic
 }
 
 func (s *ArticleService) UpdateArticle(ctx context.Context, id int64, article *model.Article, userID, userRole string) (*model.Article, error) {
-	existing, err := s.repository.GetArticleByID(ctx, id)
+	existing, err := s.repository.GetArticleByID(ctx, id, userID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			notFoundErr := errors.NewNotFoundError("article not found", true)
@@ -102,7 +115,7 @@ func (s *ArticleService) UpdateArticle(ctx context.Context, id int64, article *m
 }
 
 func (s *ArticleService) DeleteArticle(ctx context.Context, id int64, userID, userRole string) error {
-	existing, err := s.repository.GetArticleByID(ctx, id)
+	existing, err := s.repository.GetArticleByID(ctx, id, userID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			notFoundErr := errors.NewNotFoundError("article not found", true)

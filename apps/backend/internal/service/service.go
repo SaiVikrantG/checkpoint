@@ -16,6 +16,7 @@ type Services struct {
 	Projects *ProjectService
 	Articles *ArticleService
 	Devlogs  *DevlogService
+	Settings *SettingsService
 }
 
 func NewService(server *server.Server, repos *repositories.Repository) (*Services, error) {
@@ -23,11 +24,13 @@ func NewService(server *server.Server, repos *repositories.Repository) (*Service
 	projectService := NewProjectService(server, repos.ProjectRepo)
 	articleService := NewArticleService(server, repos.ArticleRepo)
 	devlogService := NewDevlogService(server, repos.DevlogRepo)
+	settingsService := NewSettingsService(server, repos.SettingsRepo)
 
 	return &Services{
 		Auth:     authService,
 		Projects: projectService,
 		Articles: articleService,
 		Devlogs:  devlogService,
+		Settings: settingsService,
 	}, nil
 }

@@ -7,8 +7,9 @@ import (
 )
 
 func registerArticleRoutes(g *echo.Group, h *handlers.Handlers, auth *middlewares.AuthMiddleWare) {
-	g.GET("/articles", h.Articles.GetAllArticles())
-	g.GET("/articles/:id", h.Articles.GetArticleByID())
+	g.GET("/articles", h.Articles.GetAllArticles(), auth.OptionalAuth)
+	g.GET("/articles/slug/:slug", h.Articles.GetArticleBySlug(), auth.OptionalAuth)
+	g.GET("/articles/:id", h.Articles.GetArticleByID(), auth.OptionalAuth)
 
 	g.POST("/articles", h.Articles.CreateArticle(), auth.RequireAuth)
 	g.PATCH("/articles/:id", h.Articles.UpdateArticle(), auth.RequireAuth)

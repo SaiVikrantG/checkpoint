@@ -24,8 +24,8 @@ func NewProjectService(server *server.Server, projectRepo *repositories.ProjectR
 	}
 }
 
-func (s *ProjectService) GetAllProjects(ctx context.Context, page, limit int, createdBy string) (model.PaginatedResponse[model.Project], error) {
-	projects, total, err := s.repository.GetAllProjects(ctx, page, limit, createdBy)
+func (s *ProjectService) GetAllProjects(ctx context.Context, page, limit int, createdBy, requestingUserID string) (model.PaginatedResponse[model.Project], error) {
+	projects, total, err := s.repository.GetAllProjects(ctx, page, limit, createdBy, requestingUserID)
 	if err != nil {
 		return model.PaginatedResponse[model.Project]{}, err
 	}
@@ -41,8 +41,8 @@ func (s *ProjectService) GetAllProjects(ctx context.Context, page, limit int, cr
 	}, nil
 }
 
-func (s *ProjectService) GetProjectByID(ctx context.Context, id int64) (model.Project, error) {
-	project, err := s.repository.GetProjectByID(ctx, id)
+func (s *ProjectService) GetProjectByID(ctx context.Context, id int64, requestingUserID string) (model.Project, error) {
+	project, err := s.repository.GetProjectByID(ctx, id, requestingUserID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			notFoundErr := errors.NewNotFoundError("project not found", true)
@@ -59,7 +59,7 @@ func (s *ProjectService) CreateProject(ctx context.Context, project *model.Proje
 }
 
 func (s *ProjectService) DeleteProject(ctx context.Context, id int64, userID, userRole string) error {
-	existing, err := s.repository.GetProjectByID(ctx, id)
+	existing, err := s.repository.GetProjectByID(ctx, id, userID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			notFoundErr := errors.NewNotFoundError("project not found", true)
@@ -77,7 +77,7 @@ func (s *ProjectService) DeleteProject(ctx context.Context, id int64, userID, us
 }
 
 func (s *ProjectService) UpdateProject(ctx context.Context, id int64, project *model.Project, userID, userRole string) (*model.Project, error) {
-	existingProject, err := s.repository.GetProjectByID(ctx, id)
+	existingProject, err := s.repository.GetProjectByID(ctx, id, userID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			notFoundErr := errors.NewNotFoundError("project not found", true)

@@ -7,8 +7,8 @@ import (
 )
 
 func registerProjectRoutes(g *echo.Group, h *handlers.Handlers, auth *middlewares.AuthMiddleWare) {
-	g.GET("/projects", h.Projects.GetAllProjects())
-	g.GET("/projects/:id", h.Projects.GetProjectByID())
+	g.GET("/projects", h.Projects.GetAllProjects(), auth.OptionalAuth)
+	g.GET("/projects/:id", h.Projects.GetProjectByID(), auth.OptionalAuth)
 
 	g.POST("/projects", h.Projects.CreateProject(), auth.RequireAuth)
 	g.PATCH("/projects/:id", h.Projects.UpdateProject(), auth.RequireAuth)

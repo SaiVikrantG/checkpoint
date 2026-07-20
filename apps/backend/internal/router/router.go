@@ -64,6 +64,7 @@ func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services
 	registerArticleRoutes(v1, h, middlewares.Auth)
 	registerDevlogRoutes(v1, h, middlewares.Auth)
 	registerWebhookRoutes(v1, h)
+	registerSettingsRoutes(v1, h, middlewares.Auth)
 
 	return router
 }
