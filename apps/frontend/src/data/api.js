@@ -1,6 +1,17 @@
 import { getAuthToken } from './auth';
 
 const API_BASE = '/api/v1';
+const FALLBACK_ERROR_MESSAGE = 'Something went wrong, please try again.';
+
+export class ApiError extends Error {
+  constructor(message, { status, code, fieldErrors } = {}) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+    this.fieldErrors = fieldErrors || [];
+  }
+}
 
 export async function apiFetch(path, options = {}) {
   const headers = {
@@ -8,19 +19,28 @@ export async function apiFetch(path, options = {}) {
     ...options.headers,
   };
 
-  const token = await getAuthToken();
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
+  let res;
+  try {
+    const token = await getAuthToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-  });
+    res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch {
+    throw new ApiError(FALLBACK_ERROR_MESSAGE);
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.message || `API error: ${res.status}`);
+    throw new ApiError(body.message || FALLBACK_ERROR_MESSAGE, {
+      status: res.status,
+      code: body.code,
+      fieldErrors: body.errors,
+    });
   }
 
   if (res.status === 204) return null;

@@ -4,6 +4,7 @@ import { useUser } from '@clerk/clerk-react';
 import { getDevlogsByProject, createDevlog } from '../data/devlogs';
 import { getProjects } from '../data/projects';
 import Editor from '../components/Editor';
+import { useToast } from '../context/ToastContext';
 
 const DEVLOG_PAGE_SIZE = 10;
 
@@ -20,6 +21,7 @@ export default function UserDevlogsPage() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [entriesLoading, setEntriesLoading] = useState(false);
   const devlogCache = useRef(new Map());
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -37,9 +39,10 @@ export default function UserDevlogsPage() {
       })
       .catch((err) => {
         console.error('Failed to load projects:', err);
+        showToast(err.message);
         setInitialLoading(false);
       });
-  }, [isLoaded, user?.id, preselected]);
+  }, [isLoaded, user?.id, preselected, showToast]);
 
   const selectedProjectObj = projects.find((p) => p.name === selectedProject);
   const [pageInfo, setPageInfo] = useState({ page: 1, totalPages: 1 });
@@ -64,7 +67,11 @@ export default function UserDevlogsPage() {
         setEntries(res.data);
         setPageInfo({ page: res.page, totalPages: res.totalPages });
       })
-      .catch(() => setEntries([]))
+      .catch((err) => {
+        console.error('Failed to load devlogs:', err);
+        showToast(err.message);
+        setEntries([]);
+      })
       .finally(() => setEntriesLoading(false));
     // Intentionally scoped to the project id, not the whole object: `selectedProjectObj`
     // is a fresh `.find()` result every render, and refetching on every unrelated
@@ -118,9 +125,12 @@ export default function UserDevlogsPage() {
         setEntries(merged);
         setPageInfo({ page: res.page, totalPages: res.totalPages });
       })
-      .catch((err) => console.error('Failed to load more devlogs:', err))
+      .catch((err) => {
+        console.error('Failed to load more devlogs:', err);
+        showToast(err.message);
+      })
       .finally(() => setLoadingMore(false));
-  }, [selectedProjectId, hasMoreEntries, loadingMore]);
+  }, [selectedProjectId, hasMoreEntries, loadingMore, showToast]);
 
   useEffect(() => {
     const el = entrySentinelRef.current;
@@ -197,9 +207,10 @@ export default function UserDevlogsPage() {
       titleRef.current?.focus();
     } catch (err) {
       console.error('Failed to save devlog:', err);
+      showToast(err.message);
     }
     setSaving(false);
-  }, [composeTitle, selectedProject, projects]);
+  }, [composeTitle, selectedProject, projects, showToast]);
 
   const handleGlobalKeyDown = useCallback(
     (e) => {

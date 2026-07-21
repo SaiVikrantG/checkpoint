@@ -7,6 +7,7 @@ node_modules/
 /.claudeignore
 /BACKLOG.md
 /CLAUDE.md
+/DEPLOYMENT.md
 /assets
 /npm_safety_guide.md
 /apps/frontend/dist/assets

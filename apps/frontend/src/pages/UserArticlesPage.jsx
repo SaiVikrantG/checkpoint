@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { getArticles, deleteArticles, updateArticle } from '../data/articles';
+import { useToast } from '../context/ToastContext';
 
 const filters = ['all', 'public', 'private'];
 const PAGE_SIZE = 10;
@@ -16,6 +17,7 @@ export default function UserArticlesPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [initialLoading, setInitialLoading] = useState(true);
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -26,9 +28,10 @@ export default function UserArticlesPage() {
       })
       .catch((err) => {
         console.error('Failed to load articles:', err);
+        showToast(err.message);
         setInitialLoading(false);
       });
-  }, [isLoaded, user?.id]);
+  }, [isLoaded, user?.id, showToast]);
 
   const filtered = useMemo(() => {
     let result = articles;
@@ -69,6 +72,7 @@ export default function UserArticlesPage() {
       setShowDeleteModal(false);
     } catch (err) {
       console.error('Failed to delete articles:', err);
+      showToast(err.message);
     }
   };
 
@@ -82,6 +86,7 @@ export default function UserArticlesPage() {
       setVisibilityTarget(null);
     } catch (err) {
       console.error('Failed to update article visibility:', err);
+      showToast(err.message);
     }
   };
 

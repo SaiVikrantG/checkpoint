@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import mermaid from 'mermaid';
 import { getDevlogs } from '../data/devlogs';
 import { getProjects } from '../data/projects';
+import { useToast } from '../context/ToastContext';
 
 const rangeOptions = ['7d', '30d', 'all'];
 const PAGE_SIZE = 20;
@@ -32,6 +33,7 @@ export default function DevlogsPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const readerRef = useRef(null);
   const sentinelRef = useRef(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     Promise.all([getDevlogs(1, PAGE_SIZE), getProjects(1, 100)])
@@ -45,9 +47,10 @@ export default function DevlogsPage() {
       })
       .catch((err) => {
         console.error('Failed to load devlogs:', err);
+        showToast(err.message);
         setLoading(false);
       });
-  }, []);
+  }, [showToast]);
 
   const hasMore = pageInfo.page < pageInfo.totalPages;
 
@@ -64,9 +67,12 @@ export default function DevlogsPage() {
           return next;
         });
       })
-      .catch((err) => console.error('Failed to load more devlogs:', err))
+      .catch((err) => {
+        console.error('Failed to load more devlogs:', err);
+        showToast(err.message);
+      })
       .finally(() => setLoadingMore(false));
-  }, [hasMore, loadingMore, pageInfo.page]);
+  }, [hasMore, loadingMore, pageInfo.page, showToast]);
 
   useEffect(() => {
     const el = sentinelRef.current;

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getProjects } from '../data/projects';
+import { useToast } from '../context/ToastContext';
 
 const filters = ['all', 'live', 'wip', 'archived'];
 
@@ -7,6 +8,7 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
+  const { showToast } = useToast();
 
   useEffect(() => {
     getProjects(1, 100)
@@ -16,9 +18,10 @@ export default function ProjectsPage() {
       })
       .catch((err) => {
         console.error('Failed to load projects:', err);
+        showToast(err.message);
         setLoading(false);
       });
-  }, []);
+  }, [showToast]);
 
   const filtered =
     activeFilter === 'all' ? projects : projects.filter((p) => p.status === activeFilter);

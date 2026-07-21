@@ -6,6 +6,7 @@ import Editor from '../components/Editor';
 import { getArticleById, updateArticle, createArticle } from '../data/articles';
 import { getProjects } from '../data/projects';
 import { useNavigationGuard } from '../context/NavigationGuardContext';
+import { useToast } from '../context/ToastContext';
 
 export default function UserNewArticlePage() {
   const { id } = useParams();
@@ -24,6 +25,7 @@ export default function UserNewArticlePage() {
   const [isPublic, setIsPublic] = useState(true);
   const [wordCount, setWordCount] = useState(0);
   const [status, setStatus] = useState('draft');
+  const { showToast } = useToast();
 
   const savedState = useRef({
     title: '',
@@ -65,11 +67,12 @@ export default function UserNewArticlePage() {
         }
       } catch (err) {
         console.error('Failed to load article data:', err);
+        showToast(err.message);
       }
       setArticleLoading(false);
     };
     load();
-  }, [id, isLoaded, user?.id]);
+  }, [id, isLoaded, user?.id, showToast]);
   const currentContentText = useRef('');
   const hasContent = useRef(false);
 
@@ -206,6 +209,7 @@ export default function UserNewArticlePage() {
       setTagsDirty(false);
     } catch (err) {
       console.error('Failed to save article:', err);
+      showToast(err.message);
       setStatus('error');
     }
   };

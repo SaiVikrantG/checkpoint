@@ -28,7 +28,11 @@ export default [
     },
   },
   {
-    files: ['src/main.jsx', 'src/context/NavigationGuardContext.jsx'],
+    files: [
+      'src/main.jsx',
+      'src/context/NavigationGuardContext.jsx',
+      'src/context/ToastContext.jsx',
+    ],
     rules: {
       'react-refresh/only-export-components': 'off',
     },

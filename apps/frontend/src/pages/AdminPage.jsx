@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useClerk } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
 import { getThemeSettings, updateThemeSettings } from '../data/settings';
+import { useToast } from '../context/ToastContext';
 
 const presetThemes = [
   { name: 'serika dark', bg: '#323437', fg: '#d1d0c5', ac: '#e2b714' },
@@ -36,6 +37,7 @@ export default function AdminPage() {
   const [customBg, setCustomBg] = useState('#323437');
   const [customFg, setCustomFg] = useState('#d1d0c5');
   const [customAc, setCustomAc] = useState('#e2b714');
+  const { showToast } = useToast();
 
   useEffect(() => {
     getThemeSettings()
@@ -45,8 +47,11 @@ export default function AdminPage() {
         setCustomFg(theme.fg);
         setCustomAc(theme.ac);
       })
-      .catch((err) => console.error('Failed to load theme settings:', err));
-  }, []);
+      .catch((err) => {
+        console.error('Failed to load theme settings:', err);
+        showToast(err.message);
+      });
+  }, [showToast]);
 
   const applyTheme = (bg, fg, ac, name) => {
     document.documentElement.style.setProperty('--bg', bg);
@@ -54,9 +59,10 @@ export default function AdminPage() {
     document.documentElement.style.setProperty('--bg-3', adjustColor(bg, -10));
     document.documentElement.style.setProperty('--fg', fg);
     document.documentElement.style.setProperty('--main', ac);
-    updateThemeSettings({ name: name || 'custom', bg, fg, ac }).catch((err) =>
-      console.error('Failed to save theme settings:', err),
-    );
+    updateThemeSettings({ name: name || 'custom', bg, fg, ac }).catch((err) => {
+      console.error('Failed to save theme settings:', err);
+      showToast(err.message);
+    });
   };
 
   const spark = [

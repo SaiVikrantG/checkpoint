@@ -27,6 +27,7 @@ import UserNewDevlogPage from './pages/UserNewDevlogPage';
 import AuthRedirect from './components/AuthRedirect';
 import NotFoundPage from './pages/NotFoundPage';
 import { getThemeSettings } from './data/settings';
+import { useToast } from './context/ToastContext';
 
 function applyTheme({ bg, fg, ac }) {
   document.documentElement.style.setProperty('--bg', bg);
@@ -49,12 +50,16 @@ function adjustBg(hex, amount) {
 export default function App() {
   const [finderOpen, setFinderOpen] = useState(false);
   const location = useLocation();
+  const { showToast } = useToast();
 
   useEffect(() => {
     getThemeSettings()
       .then(applyTheme)
-      .catch((err) => console.error('Failed to load theme settings:', err));
-  }, []);
+      .catch((err) => {
+        console.error('Failed to load theme settings:', err);
+        showToast(err.message);
+      });
+  }, [showToast]);
 
   // Finder is disabled on the public side for now, so the ⌘/ shortcut only
   // opens it while inside the user dashboard.

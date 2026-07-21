@@ -6,6 +6,7 @@ import Editor from '../components/Editor';
 import { getProjects } from '../data/projects';
 import { getDevlogById, getDevlogsByProject, createDevlog, updateDevlog } from '../data/devlogs';
 import { useNavigationGuard } from '../context/NavigationGuardContext';
+import { useToast } from '../context/ToastContext';
 
 export default function UserNewDevlogPage() {
   const { id } = useParams();
@@ -22,6 +23,7 @@ export default function UserNewDevlogPage() {
   const [status, setStatus] = useState('draft');
   const [modal, setModal] = useState(null);
   const [hint, setHint] = useState('');
+  const { showToast } = useToast();
 
   const latestHtml = useRef('');
   const currentText = useRef('');
@@ -60,11 +62,12 @@ export default function UserNewDevlogPage() {
         };
       } catch (err) {
         console.error('Failed to load devlog data:', err);
+        showToast(err.message);
       }
       setPageLoading(false);
     };
     loadData();
-  }, [id, isLoaded, user?.id]);
+  }, [id, isLoaded, user?.id, showToast]);
 
   const [titleDirty, setTitleDirty] = useState(false);
   const [contentDirty, setContentDirty] = useState(false);
@@ -173,6 +176,7 @@ export default function UserNewDevlogPage() {
       setProjectDirty(false);
     } catch (err) {
       console.error('Failed to save devlog:', err);
+      showToast(err.message);
       setStatus('error');
     }
   };

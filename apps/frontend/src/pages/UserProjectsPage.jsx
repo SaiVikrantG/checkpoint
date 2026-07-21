@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useUser } from '@clerk/clerk-react';
 import { getProjects, createProject, updateProject, deleteProject } from '../data/projects';
+import { useToast } from '../context/ToastContext';
 
 const PAGE_SIZE = 6;
 const filters = ['all', 'live', 'wip', 'archived'];
@@ -27,6 +28,7 @@ export default function UserProjectsPage() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const sentinelRef = useRef(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -37,9 +39,10 @@ export default function UserProjectsPage() {
       })
       .catch((err) => {
         console.error('Failed to load projects:', err);
+        showToast(err.message);
         setInitialLoading(false);
       });
-  }, [isLoaded, user?.id]);
+  }, [isLoaded, user?.id, showToast]);
 
   const filtered =
     activeFilter === 'all' ? projects : projects.filter((p) => p.status === activeFilter);
@@ -91,6 +94,7 @@ export default function UserProjectsPage() {
       setModal(null);
     } catch (err) {
       console.error('Failed to delete projects:', err);
+      showToast(err.message);
     }
   };
 
@@ -114,6 +118,7 @@ export default function UserProjectsPage() {
       setModal(null);
     } catch (err) {
       console.error('Failed to update project:', err);
+      showToast(err.message);
     }
   };
 
@@ -139,6 +144,7 @@ export default function UserProjectsPage() {
       setModal(null);
     } catch (err) {
       console.error('Failed to create project:', err);
+      showToast(err.message);
     }
   };
 
@@ -227,6 +233,7 @@ export default function UserProjectsPage() {
                       );
                     } catch (err) {
                       console.error('Failed to toggle visibility:', err);
+                      showToast(err.message);
                     }
                   }}
                 >

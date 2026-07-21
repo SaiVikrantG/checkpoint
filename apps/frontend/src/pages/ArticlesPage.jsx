@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getArticles } from '../data/articles';
+import { useToast } from '../context/ToastContext';
 
 const sorts = ['newest', 'oldest', 'read time'];
 
@@ -20,6 +21,7 @@ export default function ArticlesPage() {
   const [activeCat, setActiveCat] = useState('all');
   const [activeSort, setActiveSort] = useState('newest');
   const [search, setSearch] = useState('');
+  const { showToast } = useToast();
 
   useEffect(() => {
     getArticles(1, 100)
@@ -29,9 +31,10 @@ export default function ArticlesPage() {
       })
       .catch((err) => {
         console.error('Failed to load articles:', err);
+        showToast(err.message);
         setLoading(false);
       });
-  }, []);
+  }, [showToast]);
 
   const categories = useMemo(() => {
     const counts = new Map();

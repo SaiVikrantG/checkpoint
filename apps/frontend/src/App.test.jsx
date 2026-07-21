@@ -3,13 +3,16 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import App from './App';
 import { NavigationGuardProvider } from './context/NavigationGuardContext';
+import { ToastProvider } from './context/ToastContext';
 
 function renderAt(path) {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <NavigationGuardProvider>
-        <App />
-      </NavigationGuardProvider>
+      <ToastProvider>
+        <NavigationGuardProvider>
+          <App />
+        </NavigationGuardProvider>
+      </ToastProvider>
     </MemoryRouter>,
   );
 }

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import mermaid from 'mermaid';
 import { getArticleById } from '../data/articles';
+import { useToast } from '../context/ToastContext';
 
 mermaid.initialize({
   startOnLoad: false,
@@ -23,6 +24,7 @@ export default function UserArticleViewPage() {
   const articleRef = useRef(null);
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
 
   useEffect(() => {
     getArticleById(Number(id))
@@ -32,9 +34,10 @@ export default function UserArticleViewPage() {
       })
       .catch((err) => {
         console.error('Failed to load article:', err);
+        showToast(err.message);
         setLoading(false);
       });
-  }, [id]);
+  }, [id, showToast]);
 
   useEffect(() => {
     if (!article || !articleRef.current) return;

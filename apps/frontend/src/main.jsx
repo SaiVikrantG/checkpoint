@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { ClerkProvider } from '@clerk/clerk-react';
 import App from './App';
 import { NavigationGuardProvider } from './context/NavigationGuardContext';
+import { ToastProvider } from './context/ToastContext';
 import './styles/theme.css';
 import './styles/pages.css';
 import './styles/user.css';
@@ -87,9 +88,11 @@ function ClerkApp() {
       }}
     >
       <BrowserRouter>
-        <NavigationGuardProvider>
-          <App />
-        </NavigationGuardProvider>
+        <ToastProvider>
+          <NavigationGuardProvider>
+            <App />
+          </NavigationGuardProvider>
+        </ToastProvider>
       </BrowserRouter>
     </ClerkProvider>
   );
