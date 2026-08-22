@@ -12,6 +12,11 @@ DEPLOY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPOSE="docker compose -f $DEPLOY_DIR/docker-compose.yml --env-file $DEPLOY_DIR/.env --env-file $DEPLOY_DIR/current-tag.env"
 LOCK_FILE="$DEPLOY_DIR/.deploy.lock"
 
+# docker compose gives an inherited shell/process env var priority over --env-file
+# values for ${VAR} interpolation. current-tag.env must be the sole source of truth
+# for BACKEND_TAG, so drop any inherited value before it can shadow the file.
+unset BACKEND_TAG
+
 # .env holds dotted keys (CHECKPOINT_AUTH.SECRET_KEY etc, read by the Go app via koanf,
 # not valid bash variable names) so it can't be `source`-d whole here. Pull out only the
 # underscore-named deploy-tooling keys we need, directly.
