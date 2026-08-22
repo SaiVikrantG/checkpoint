@@ -12,7 +12,7 @@
     "trigger-rule": {
       "match": {
         "type": "value",
-        "value": "{{ getenv \"CHECKPOINT_DEPLOY_WEBHOOK_SECRET\" | js }}",
+        "value": "{{ getenv "CHECKPOINT_DEPLOY_WEBHOOK_SECRET" | js }}",
         "parameter": {
           "source": "header",
           "name": "Authorization"
