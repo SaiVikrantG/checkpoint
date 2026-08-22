@@ -1,4 +1,7 @@
 .env
+/deploy/backups/
+/deploy/current-tag.env
+/deploy/.deploy.lock
 
 node_modules/
 

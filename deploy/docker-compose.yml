@@ -15,13 +15,14 @@ services:
       retries: 5
 
   backend:
-    image: ghcr.io/saivikrantg/checkpoint-backend:latest
+    image: ghcr.io/saivikrantg/checkpoint-backend:${BACKEND_TAG}
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
     env_file:
       - .env
+      - current-tag.env
     environment:
       CHECKPOINT_PRIMARY.ENV: production
       CHECKPOINT_DATABASE.HOST: postgres
@@ -30,6 +31,31 @@ services:
       CHECKPOINT_DATABASE.PASSWORD: ${POSTGRES_PASSWORD}
       CHECKPOINT_DATABASE.NAME: ${POSTGRES_DB}
       CHECKPOINT_SERVER.CORS_ALLOWED_ORIGINS: https://${DOMAIN}
+
+  diun:
+    image: crazymax/diun:latest
+    restart: unless-stopped
+    command: serve
+    volumes:
+      - diun_data:/data
+      - ./diun.yml:/etc/diun/diun.yml:ro
+    environment:
+      TZ: UTC
+    env_file:
+      - .env
+
+  webhook:
+    build:
+      context: .
+      dockerfile: webhook.Dockerfile
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./hooks.json:/etc/webhook/hooks.json:ro
+      - .:/deploy
+    command: ['-verbose', '-hooks=/etc/webhook/hooks.json', '-template', '-hotreload']
+    env_file:
+      - .env
 
   caddy:
     image: caddy:2-alpine
@@ -51,3 +77,4 @@ volumes:
   pgdata:
   caddy_data:
   caddy_config:
+  diun_data:

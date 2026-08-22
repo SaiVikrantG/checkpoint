@@ -1,0 +1,24 @@
+watch:
+  workers: 1
+  schedule: "*/2 * * * *"
+
+providers:
+  static:
+    - name: checkpoint-backend
+      image: ghcr.io/saivikrantg/checkpoint-backend
+      watchRepo: true
+      regexTag: '^v[0-9]+\.[0-9]+\.[0-9]+$'
+
+regopts:
+  - name: ghcr
+    selector: ghcr.io
+    username: saivikrantg
+    password: ${CHECKPOINT_DEPLOY_GHCR_PAT}
+
+notif:
+  webhook:
+    endpoint: 'http://webhook:9000/hooks/deploy-backend'
+    method: POST
+    headers:
+      authorization: ${CHECKPOINT_DEPLOY_WEBHOOK_SECRET}
+    timeout: 10s
