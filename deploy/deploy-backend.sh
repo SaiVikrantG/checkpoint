@@ -55,6 +55,24 @@ health_check() {
   return 1
 }
 
+# Sets current-tag.env to $1, pulls + starts backend on it, then health-checks.
+# Returns non-zero on ANY failure in that chain (pull, up, or health check) so the
+# caller can treat "image doesn't exist" the same as "started but unhealthy" —
+# both need to trigger rollback, not abort the script via set -e.
+deploy_and_check() {
+  local tag="$1"
+  sed -i "s/^BACKEND_TAG=.*/BACKEND_TAG=$tag/" "$DEPLOY_DIR/current-tag.env"
+  if ! $COMPOSE pull backend; then
+    log "pull failed for $tag"
+    return 1
+  fi
+  if ! $COMPOSE up -d backend; then
+    log "up failed for $tag"
+    return 1
+  fi
+  health_check
+}
+
 exec 9>"$LOCK_FILE"
 if ! flock -n 9; then
   log "another deploy is already in progress, exiting"
@@ -78,28 +96,21 @@ if [ "$NEW_TAG" = "$LAST_GOOD_TAG" ]; then
 fi
 
 log "deploying $NEW_TAG (previous: $LAST_GOOD_TAG)"
-sed -i "s/^BACKEND_TAG=.*/BACKEND_TAG=$NEW_TAG/" "$DEPLOY_DIR/current-tag.env"
 
-$COMPOSE pull backend
-$COMPOSE up -d backend
-
-if health_check; then
+if deploy_and_check "$NEW_TAG"; then
   log "deploy of $NEW_TAG succeeded"
   notify "checkpoint backend deployed: $NEW_TAG"
   exit 0
 fi
 
-log "health check failed for $NEW_TAG, rolling back to $LAST_GOOD_TAG"
-sed -i "s/^BACKEND_TAG=.*/BACKEND_TAG=$LAST_GOOD_TAG/" "$DEPLOY_DIR/current-tag.env"
-$COMPOSE pull backend
-$COMPOSE up -d backend
+log "$NEW_TAG failed, rolling back to $LAST_GOOD_TAG"
 
-if health_check; then
+if deploy_and_check "$LAST_GOOD_TAG"; then
   log "rollback to $LAST_GOOD_TAG succeeded"
-  notify "checkpoint backend rollback: $NEW_TAG failed health check, reverted to $LAST_GOOD_TAG"
+  notify "checkpoint backend rollback: $NEW_TAG failed, reverted to $LAST_GOOD_TAG"
   exit 1
 fi
 
-log "CRITICAL: rollback to $LAST_GOOD_TAG also failed health check, manual intervention required"
+log "CRITICAL: rollback to $LAST_GOOD_TAG also failed, manual intervention required"
 notify "CRITICAL: checkpoint backend deploy AND rollback both failed ($NEW_TAG -> $LAST_GOOD_TAG). SSH in now."
 exit 1
