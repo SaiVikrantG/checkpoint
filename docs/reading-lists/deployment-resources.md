@@ -60,7 +60,7 @@ Diun's job in our setup: poll GHCR every 2 minutes for new `v*` tags on `checkpo
 | Resource | Summary | Level |
 |----------|---------|-------|
 | [Diun — Overview](https://crazymax.dev/diun/) | Official docs homepage — the core idea: providers (what to watch) + notifiers (how to tell you) are separate, composable concerns. Read this first. | Beginner |
-| [Diun — Static Provider](https://crazymax.dev/diun/providers/static/) | How `deploy/diun.yml`'s `providers.static` block works — explicitly naming one image to watch (vs. the `docker` provider, which auto-discovers from running containers; we don't use that mode since Diun itself never needs Docker socket access). | Beginner |
+| [Diun — File Provider](https://crazymax.dev/diun/providers/file/) | How `deploy/diun.yml`'s `providers.file` block (pointing at `deploy/images.yml`) works — explicitly naming one image to watch (vs. the `docker` provider, which auto-discovers from running containers; we don't use that mode since Diun itself never needs Docker socket access). Diun v4 has no `static` provider — that's a name from an earlier plan that never shipped; `file` is the real equivalent. | Beginner |
 | [Diun — Webhook Notifier](https://crazymax.dev/diun/notif/webhook/) | Explains the fixed JSON payload format Diun POSTs (`image`, `status`, `digest`, etc.) — important because this is *not* a templated URL like most webhook configs; it's why `deploy/hooks.json` pulls the tag out of the payload body instead of a query string. | Beginner |
 
 ## 9. adnanh/webhook — HTTP-Triggered Shell Commands

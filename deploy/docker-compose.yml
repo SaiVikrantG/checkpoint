@@ -39,6 +39,7 @@ services:
     volumes:
       - diun_data:/data
       - ./diun.yml:/etc/diun/diun.yml:ro
+      - ./images.yml:/etc/diun/images.yml:ro
     environment:
       TZ: UTC
     env_file:
