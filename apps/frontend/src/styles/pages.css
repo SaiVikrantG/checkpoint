@@ -2189,11 +2189,11 @@
 }
 .node-label {
   font-family: 'Roboto Mono', monospace;
-  font-size: 12px;
+  font-size: var(--label-size, 12px);
   pointer-events: none;
 }
 .cat-label {
-  font-size: 13px;
+  font-size: var(--label-size-cat, 13px);
   text-anchor: middle;
   letter-spacing: 0.02em;
 }
