@@ -42,6 +42,8 @@ services:
       - ./images.yml:/etc/diun/images.yml:ro
     environment:
       TZ: UTC
+      DIUN_REGOPTS_0_PASSWORD: ${CHECKPOINT_DEPLOY_GHCR_PAT}
+      DIUN_NOTIF_WEBHOOK_HEADERS_AUTHORIZATION: ${CHECKPOINT_DEPLOY_WEBHOOK_SECRET}
     env_file:
       - .env
 

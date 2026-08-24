@@ -10,12 +10,9 @@ regopts:
   - name: ghcr
     selector: name
     username: saivikrantg
-    password: ${CHECKPOINT_DEPLOY_GHCR_PAT}
 
 notif:
   webhook:
     endpoint: 'http://webhook:9000/hooks/deploy-backend'
     method: POST
-    headers:
-      authorization: ${CHECKPOINT_DEPLOY_WEBHOOK_SECRET}
     timeout: 10s
