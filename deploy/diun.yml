@@ -8,7 +8,7 @@ providers:
 
 regopts:
   - name: ghcr
-    selector: ghcr.io
+    selector: name
     username: saivikrantg
     password: ${CHECKPOINT_DEPLOY_GHCR_PAT}
 
