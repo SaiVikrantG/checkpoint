@@ -12,6 +12,16 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag is on master
+        run: |
+          git fetch origin master
+          if ! git merge-base --is-ancestor "${{ github.sha }}" origin/master; then
+            echo "::error::Tag ${{ github.ref_name }} does not point to a commit on master — refusing to publish."
+            exit 1
+          fi
 
       - uses: docker/login-action@v3
         with:
