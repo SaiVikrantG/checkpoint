@@ -1,0 +1,13 @@
+watch:
+  workers: 1
+  schedule: "*/2 * * * *"
+
+providers:
+  file:
+    filename: /etc/diun/images.yml
+
+notif:
+  webhook:
+    endpoint: 'http://webhook:9000/hooks/deploy-backend'
+    method: POST
+    timeout: 10s

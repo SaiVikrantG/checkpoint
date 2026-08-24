@@ -1,0 +1,23 @@
+[
+  {
+    "id": "deploy-backend",
+    "execute-command": "/deploy/deploy-backend.sh",
+    "command-working-directory": "/deploy",
+    "pass-arguments-to-command": [
+      {
+        "source": "payload",
+        "name": "image"
+      }
+    ],
+    "trigger-rule": {
+      "match": {
+        "type": "value",
+        "value": "{{ getenv "CHECKPOINT_DEPLOY_WEBHOOK_SECRET" | js }}",
+        "parameter": {
+          "source": "header",
+          "name": "Authorization"
+        }
+      }
+    }
+  }
+]

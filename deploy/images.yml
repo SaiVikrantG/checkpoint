@@ -1,0 +1,5 @@
+- name: ghcr.io/saivikrantg/checkpoint-backend
+  watch_repo: true
+  include_tags:
+    - '^v[0-9]+\.[0-9]+\.[0-9]+$'
+  regopt: ghcr
