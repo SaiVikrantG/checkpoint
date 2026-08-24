@@ -83,6 +83,16 @@ This is the glue: a tiny server that receives Diun's POST, checks a shared secre
 | [Kubernetes: Rolling Update Deployment](https://kubernetes.io/docs/tutorials/kubernetes-basics/deploy-app/deploy-intro/) | Not something we're adopting, but reading how a "real" orchestrator gates traffic on readiness and can auto-rollback explains *why* `deploy-backend.sh` health-checks before calling a deploy done, instead of just restarting and hoping (what Watchtower did). | Beginner |
 | [Docker Docs: Protect the Docker daemon socket](https://docs.docker.com/engine/security/protect-access/) | Explains exactly what access `/var/run/docker.sock` grants — relevant because the `webhook` container holds this socket to run `docker compose pull/up`, which is effectively root-equivalent host access. Worth understanding the tradeoff we accepted rather than skipping past it. | Intermediate |
 
+## 11. Restricting Release Tags to Main
+
+`publish-backend.yml` triggers on any `v*` tag push, from any branch — GitHub Actions has no native way to combine `tags:` and `branches:` filters as an AND condition (confirmed against GitHub's own docs), so nothing stops a `v*` tag on a feature branch from publishing an image and auto-triggering a real VPS deploy via Diun. The fix is an in-job guard using `git merge-base --is-ancestor` to verify the tagged commit is actually reachable from `main` before the job proceeds.
+
+| Resource | Summary | Level |
+|----------|---------|-------|
+| [How to Verify if a Git Tag Was Created on the Master Branch — w3tutorials](https://www.w3tutorials.net/blog/verify-if-a-tag-was-done-in-the-master-branch/) | The exact pattern used: resolve the tag to a commit, then `git merge-base --is-ancestor <tag-commit> origin/main` to confirm it's on main before letting a release workflow continue. | Intermediate |
+| [Branch for Release — Trunk Based Development](https://trunkbaseddevelopment.com/branch-for-release/) | Explains the trunk-based-development norm this enforces: release tags point only at trunk/main, never at an in-progress feature branch, even for teams that tag directly rather than branching for release. | Beginner |
+| [GitHub Environment Protection with Tags — Anton Sizikov](https://blog.cloud-eng.nl/2022/11/26/environment-protection-tags/) | The complementary layer: GitHub tag protection rules restrict *who* can push a tag matching a pattern (e.g. only admins/maintainers) — a permissions control, distinct from (and worth pairing with) the in-job ancestry check, which is a content-correctness control. | Intermediate |
+
 ---
 
 **Not covered here (already explained in our own project docs):** Clerk/Svix webhook signature verification (`WEBHOOK_SECRET`), and New Relic's in-process log forwarding — both niche/project-specific enough that `DEPLOYMENT.md` and our conversation history are the better reference.
