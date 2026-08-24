@@ -6,11 +6,6 @@ providers:
   file:
     filename: /etc/diun/images.yml
 
-regopts:
-  - name: ghcr
-    selector: name
-    username: saivikrantg
-
 notif:
   webhook:
     endpoint: 'http://webhook:9000/hooks/deploy-backend'
