@@ -28,8 +28,9 @@ export default function Footer() {
         </a>
       </div>
       <div className="footer-right">
+        <span className="footer-muted">&copy; {new Date().getFullYear()} G Sai Vikrant</span>
         <span className="footer-muted">checkpoint</span>
-        <span className="footer-muted">v0.1.0</span>
+        <span className="footer-muted">{__APP_VERSION__}</span>
       </div>
     </div>
   );
