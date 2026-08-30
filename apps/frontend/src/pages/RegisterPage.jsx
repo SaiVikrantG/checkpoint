@@ -16,7 +16,7 @@ export default function RegisterPage() {
       />
       <div className="login-aside">
         <div className="dim">checkpoint.dev</div>
-        <div className="dim">v0.1.0</div>
+        <div className="dim">{__APP_VERSION__}</div>
       </div>
     </div>
   );
