@@ -133,7 +133,7 @@ export default function DevlogsPage() {
       .map(([projectId, entries]) => {
         const byDay = new Map();
         for (const e of entries) {
-          const day = new Date(e.created_at).toISOString().slice(0, 10);
+          const day = new Date(e.created_at).toLocaleDateString('en-CA');
           if (!byDay.has(day)) byDay.set(day, []);
           byDay.get(day).push(e);
         }
