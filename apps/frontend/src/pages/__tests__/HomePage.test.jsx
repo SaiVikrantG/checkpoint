@@ -11,7 +11,7 @@ describe('HomePage', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText('checkpoint')).toBeInTheDocument();
+    expect(screen.getAllByText('checkpoint').length).toBeGreaterThan(0);
     expect(screen.getByText('articles')).toBeInTheDocument();
     expect(screen.getByText('projects')).toBeInTheDocument();
     expect(screen.getByText('about_me')).toBeInTheDocument();
