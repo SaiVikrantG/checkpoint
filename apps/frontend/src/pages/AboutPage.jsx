@@ -88,7 +88,6 @@ export default function AboutPage() {
               >
                 checkpoint
               </a>
-              <span className="about-entry-date">live: checkpoint.vikrant.app</span>
             </div>
             <p className="about-p about-p-dim about-project-desc">
               personal documentation, blogging, and portfolio platform with authentication. go/echo
