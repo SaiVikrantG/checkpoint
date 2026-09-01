@@ -8,7 +8,7 @@ describe('AboutPage', () => {
 
     expect(screen.getByText('// experience')).toBeInTheDocument();
     expect(screen.getByText('// stack')).toBeInTheDocument();
-    expect(screen.getByText('// publications')).toBeInTheDocument();
+    expect(screen.getByText('// projects')).toBeInTheDocument();
     expect(screen.getByText(/resilient kannada scene text detection/i)).toBeInTheDocument();
   });
 });

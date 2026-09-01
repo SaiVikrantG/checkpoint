@@ -76,6 +76,79 @@ export default function AboutPage() {
         </div>
 
         <div className="about-section">
+          <div className="about-section-title">// projects</div>
+
+          <div className="about-entry">
+            <div className="about-entry-head">
+              <a
+                className="about-entry-role about-entry-role-link"
+                href="https://checkpoint.vikrant.app"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                checkpoint
+              </a>
+              <span className="about-entry-date">live: checkpoint.vikrant.app</span>
+            </div>
+            <p className="about-p about-p-dim about-project-desc">
+              personal documentation, blogging, and portfolio platform with authentication. go/echo
+              backend with postgresql (pgx/v5, tern migrations, clerk auth/jwt); interactive
+              knowledge-graph board with d3-force and collaborative tiptap/yjs editing; zerolog + new
+              relic instrumentation; dockerized monorepo with path-filtered github actions ci.
+            </p>
+            <div className="about-tags">
+              <span className="tag">go</span>
+              <span className="tag">echo</span>
+              <span className="tag">postgresql</span>
+              <span className="tag">react</span>
+              <span className="tag">vite</span>
+              <span className="tag">tiptap</span>
+              <span className="tag">d3-force</span>
+              <span className="tag">docker</span>
+            </div>
+          </div>
+
+          <div className="about-entry">
+            <div className="about-entry-head">
+              <a
+                className="about-entry-role about-entry-role-link"
+                href="https://ieeexplore.ieee.org/abstract/document/10499106"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                &#8599; resilient kannada scene text detection
+              </a>
+              <span className="about-entry-date">ieee publication</span>
+            </div>
+            <p className="about-p about-p-dim about-project-desc">
+              research paper published in an ieee conference — built a custom dataset and improved
+              prior detection accuracy by 10% using yolov8 and craft models to detect and annotate
+              kannada scene text.
+            </p>
+          </div>
+
+          <div className="about-entry">
+            <div className="about-entry-head">
+              <span className="about-entry-role">airline management system</span>
+            </div>
+            <p className="about-p about-p-dim about-project-desc">
+              full-stack airline check-in, in-flight, and ancillary management app using a
+              microservices architecture with spring boot backends and a react/typescript frontend.
+              netflix eureka for service discovery/load balancing; pl/sql relational schema design.
+            </p>
+            <div className="about-tags">
+              <span className="tag">react</span>
+              <span className="tag">typescript</span>
+              <span className="tag">spring boot</span>
+              <span className="tag">java</span>
+              <span className="tag">pl/sql</span>
+              <span className="tag">netflix eureka</span>
+              <span className="tag">microservices</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="about-section">
           <div className="about-section-title">// stack</div>
 
           <div className="about-stack-group">
@@ -83,64 +156,36 @@ export default function AboutPage() {
             <div className="about-tags">
               <span className="tag">python</span>
               <span className="tag">javascript</span>
-              <span className="tag">java</span>
+              <span className="tag">go</span>
               <span className="tag">sql</span>
             </div>
           </div>
 
           <div className="about-stack-group">
-            <div className="about-stack-label">ml / ai</div>
-            <div className="about-tags">
-              <span className="tag">rag</span>
-              <span className="tag">langchain</span>
-              <span className="tag">oci genai</span>
-              <span className="tag">huggingface transformers</span>
-              <span className="tag">prompt engineering</span>
-              <span className="tag">reinforcement learning</span>
-            </div>
-          </div>
-
-          <div className="about-stack-group">
-            <div className="about-stack-label">data</div>
-            <div className="about-tags">
-              <span className="tag">oracle 23ai db</span>
-              <span className="tag">vector embeddings</span>
-              <span className="tag">numpy</span>
-              <span className="tag">pandas</span>
-            </div>
-          </div>
-
-          <div className="about-stack-group">
-            <div className="about-stack-label">web / infra</div>
+            <div className="about-stack-label">tech stack</div>
             <div className="about-tags">
               <span className="tag">reactjs</span>
-              <span className="tag">spring boot</span>
-              <span className="tag">docker</span>
-              <span className="tag">websockets</span>
+              <span className="tag">vite</span>
+              <span className="tag">echo</span>
               <span className="tag">git</span>
               <span className="tag">linux</span>
+              <span className="tag">websockets</span>
+              <span className="tag">numpy</span>
+              <span className="tag">pandas</span>
+              <span className="tag">docker</span>
+              <span className="tag">github actions (ci/cd)</span>
+              <span className="tag">langchain</span>
+              <span className="tag">rag</span>
             </div>
           </div>
-        </div>
 
-        <div className="about-section">
-          <div className="about-section-title">// publications</div>
-          <ul className="about-entry-list about-entry-list-links">
-            <li>
-              <a
-                href="https://ieeexplore.ieee.org/abstract/document/10499106"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                &#8599; resilient kannada scene text detection
-              </a>
-              <span className="about-p-dim">
-                {' '}
-                — a pipeline using YOLOv8 and CRAFT models to detect and annotate Kannada scene
-                text, addressing the lack of scene text detection models for the language
-              </span>
-            </li>
-          </ul>
+          <div className="about-stack-group">
+            <div className="about-stack-label">databases</div>
+            <div className="about-tags">
+              <span className="tag">oracle 23ai db</span>
+              <span className="tag">postgresql</span>
+            </div>
+          </div>
         </div>
       </div>
 
