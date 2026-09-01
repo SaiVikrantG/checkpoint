@@ -669,6 +669,15 @@
   display: inline-block;
   width: 80px;
 }
+.about-resume-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: fit-content;
+  margin-top: 20px;
+  text-decoration: none;
+}
 
 .about-story {
   min-width: 0;

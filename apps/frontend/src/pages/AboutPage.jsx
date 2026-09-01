@@ -19,6 +19,15 @@ export default function AboutPage() {
             <span className="dim">role </span> swe @ oracle financial services software
           </div>
         </div>
+
+        <a
+          className="btn-primary about-resume-btn"
+          href="https://drive.google.com/file/d/18lUO7AUMhrEDu2M5o8fJJpCbQqAoWbAy/view?usp=sharing"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          ↓ resume.pdf
+        </a>
       </div>
 
       <div className="about-story">
