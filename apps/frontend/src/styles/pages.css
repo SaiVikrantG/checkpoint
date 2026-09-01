@@ -669,6 +669,15 @@
   display: inline-block;
   width: 80px;
 }
+.about-resume-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: fit-content;
+  margin-top: 20px;
+  text-decoration: none;
+}
 
 .about-story {
   min-width: 0;
@@ -715,10 +724,25 @@
 .about-entry-role {
   color: var(--fg);
 }
+.about-entry-role-link {
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.about-entry-role-link:hover {
+  color: var(--main);
+}
 .about-entry-date {
   margin-left: auto;
   color: var(--sub);
   font-size: 12px;
+}
+.about-entry + .about-entry {
+  margin-top: 28px;
+}
+.about-project-desc {
+  margin-top: 4px;
+  margin-bottom: 12px;
+  max-width: 64ch;
 }
 .about-entry-list {
   font-size: 13px;
