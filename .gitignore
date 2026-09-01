@@ -8,7 +8,6 @@ node_modules/
 .vscode
 .gitignore
 /.claudeignore
-/BACKLOG.md
 /CLAUDE.md
 /DEPLOYMENT.md
 /assets
