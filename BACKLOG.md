@@ -77,6 +77,31 @@ Investigate and document how all middlewares in `apps/login/internal/middlewares
 - [ ] **Devlog batch sync + offline mode** - Batch update API for the devlog compose flow, plus a local queue with sync-on-reconnect for unstable connections
 - [ ] **apps/frontend/src/pages/DevlogsPage.jsx** - Build a real calendar view (currently shows a "coming soon" placeholder when the `cal` chip is selected). Month grid, 7 cols × weeks, each day cell showing an entry count/dot (GitHub-heatmap style); clicking a day filters the reader pane to that day's entries. Needs a decision on how to handle entries outside the currently-loaded page range before implementing.
 
+## Parked Ideas
+
+### Content index + graph layer (devlogs/articles/projects)
+
+**Status**: Parked — not committed, revisit if search + knowledge graph both become real priorities
+
+Unified abstraction sitting on top of the existing `devlogs`/`articles`/`projects` tables (unchanged) to back two planned features together instead of separately:
+- `content_index` table (`content_type, content_id, title, body_text, tags, visibility, author, created_at`) — derived/synced from each domain table on write, backs the planned `GET /api/v1/search/index` endpoint with one query instead of three.
+- `content_edges` table (`source_type, source_id, target_type, target_id, edge_type`) — `belongs_to` edges auto-derived from existing FKs (e.g. devlog → project), explicit `references`/`links_to` edges created when content is manually linked. Backs the project board / knowledge graph view.
+- Both layers key content generically by `(type, id)` so domain services/repositories stay untouched; sync happens via a small `ContentIndexer` called from each service on create/update/delete.
+- Bonus: if the devlog CTF easter egg idea (below) is revisited, the hint chain can ride `content_edges` as a `ctf_next` edge type instead of needing its own schema.
+
+Cost is real: two new tables + sync-on-write logic in three services + eventual graph-rendering UI. Worth it once there's enough content that search/relationships actually matter; pure overhead before that.
+
+### Devlog CTF easter egg
+
+**Status**: Parked
+
+Continuous CTF chain with hints hidden in devlog prose (one ordered chain, not scattered independent eggs). Sketch:
+- `ctf_hints` (`devlog_id, sequence, answer_hash, reward_fragment`) — the authored chain.
+- `ctf_progress` (`user_id or session_token, current_sequence, completed_at`) — one row per player.
+- `POST /api/v1/ctf/submit` validates server-side (hash match + sequence gating) so the flag logic can't be read out of client JS.
+
+Open question before building: anonymous play (session-token cookie) vs. Clerk-auth-only.
+
 ## Frontend Content
 
 ### Low (Content)
