@@ -9,11 +9,12 @@ BACKUP_DIR="$DEPLOY_DIR/backups"
 R2_REMOTE="r2:checkpoint-backups"
 LOCAL_RETENTION_DAYS=7
 
-# Load DB credentials from deploy/.env
-set -a
-# shellcheck disable=SC1091
-source "$DEPLOY_DIR/.env"
-set +a
+# Load DB credentials from deploy/.env (file also contains dotted
+# CHECKPOINT_* keys for the app's koanf config, which aren't valid bash
+# identifiers, so extract only the vars we need instead of sourcing it all)
+POSTGRES_USER="$(grep -m1 '^POSTGRES_USER=' "$DEPLOY_DIR/.env" | cut -d= -f2-)"
+POSTGRES_PASSWORD="$(grep -m1 '^POSTGRES_PASSWORD=' "$DEPLOY_DIR/.env" | cut -d= -f2-)"
+POSTGRES_DB="$(grep -m1 '^POSTGRES_DB=' "$DEPLOY_DIR/.env" | cut -d= -f2-)"
 
 mkdir -p "$BACKUP_DIR"
 
