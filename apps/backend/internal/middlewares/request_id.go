@@ -1,6 +1,8 @@
 package middlewares
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
@@ -8,6 +10,7 @@ import (
 const (
 	RequestIDHeader = "X-Request-ID"
 	RequestIDKey    = "request_id"
+	StartTimeKey    = "start_time"
 )
 
 //This middelware generator(in this case RequestID()) is given to echo basically. At app startup, the middleware generator is called to get the actual middleware
@@ -43,8 +46,10 @@ func RequestID() echo.MiddlewareFunc {
 			if requestID == "" {
 				requestID = uuid.New().String()
 			}
+			start := time.Now()
 
 			c.Set(RequestIDKey, requestID)
+			c.Set(StartTimeKey, start)
 			c.Response().Header().Set(RequestIDHeader, requestID)
 
 			return next(c)

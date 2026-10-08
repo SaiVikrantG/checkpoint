@@ -2,33 +2,19 @@
 
 ## Middleware Logging Architecture
 
-**Status**: Pending  
+**Status**: Done (traced + fixed 2026-10-08)
 **Priority**: Medium  
 **Effort**: Medium
 
-Investigate and document how all middlewares in `apps/login/internal/middlewares/` work together:
+Traced the full middleware pipeline (`apps/backend/internal/middlewares/`) and fixed several real gaps found along the way:
 
-### Middlewares to understand:
-- tracing.go (New Relic + pgx tracer integration)
-- context.go (request context enrichment)
-- rate_limiter.go
-- logger.go
-- cors.go
-- security_headers.go
-- request_id.go
-- panic_recovery.go
+- **tracing.go errors not logged to Zerolog**: turned out to be a non-issue — errors returned from `EnhanceTracing` propagate up to `GlobalErrorHandler`, which already logs them with `.Stack()` and full request context. No fix needed here.
+- **Duplicate error logging**: `RequestLogger` and `GlobalErrorHandler` were both logging the same error per request (once each), with mismatched severity (`RequestLogger` scaled by status, `GlobalErrorHandler` always logged at `Error`). Fixed: `RequestLogger` now skips logging entirely when `v.Error != nil`; `GlobalErrorHandler` is now the single source of truth for error-path logs, with status-based severity and the access-log fields (`latency`, `uri`, `host`, `user_agent`) it was previously missing. `latency` is sourced from a new `StartTimeKey` timestamp set in `request_id.go`, with a `Warn` log if it's ever missing from context.
+- **`user_id` missing from all request logs**: found that `ContextEnhancer.EnhanceContext()` (global middleware) ran *before* `OptionalAuth`/`RequireAuth` (per-route), so `user_id`/`user_role` were never present when the enriched logger was built. Fixed by promoting `OptionalAuth` to global middleware (runs before `EnhanceContext` now), and removing the now-redundant per-route `OptionalAuth` from GET routes in `articles.go`/`devlogs.go`/`projects.go`.
+- **`RequireAuth`'s failure-handler logging**: fixed a wrong import (`pgx-zerolog` aliased as `zerolog` instead of `rs/zerolog`) and wired the request-scoped logger through to Clerk's raw `net/http` failure handler via `context.WithValue`, since `echo.Context` isn't reachable from that layer.
+- **Known, deliberately deferred**: `RequireAuth` now double-verifies the JWT on write routes (once via global `OptionalAuth`, once via its own `clerkhttp` verification) since `OptionalAuth` went global. Left as-is intentionally to profile the real cost before optimizing.
 
-### Known gaps to address:
-1. **tracing.go**: Errors are sent to New Relic but NOT logged to Zerolog (lines 66-68)
-   - Need to add Zerolog logging alongside New Relic error tracking
-   
-2. **database.go**: pgx query tracing only works in local mode (line 95)
-   - Consider making this configurable for production debugging if needed
-
-### Deliverables:
-- Document how middleware pipeline executes
-- Identify and fix logging gaps (ensure both Zerolog and New Relic capture critical events)
-- Consider if pgx logging should be configurable beyond local-only mode
+`database.go`'s pgx query tracing (local-mode-only) was not addressed in this pass — still open, see below.
 
 ---
 
@@ -51,10 +37,10 @@ Investigate and document how all middlewares in `apps/login/internal/middlewares
 - [ ] validation logic needs to be confirmed for all the endpoints
 
 ### Low (Investigation/Clarification)
-- [ ] **Logging Setup** - Understand how the logging setup works in the service (Zerolog + New Relic integration, logger initialization, propagation through context)
+- [x] **Logging Setup** - Traced 2026-10-08: base logger fields set once at startup (`logger.go`), per-request enrichment via `EnhanceContext`, trace IDs via `WithTraceContext`, stack traces via `pkgerrors.MarshalStack` (always registered, but only auto-applied on the base logger in non-prod; prod opts in explicitly per call site). See Middleware Logging Architecture entry above for the fixes that came out of this.
 - [ ] **apps/login/internal/database/database.go** - Review pgx logger initialization as struct method (potential issue on line ~95)
 - [ ] **apps/login/internal/database/database.go** - Verify pgx trace level struct method call doesn't cause issues
-- [ ] **apps/login/internal/middlewares/tracing.go** - Document what this middleware does (code has CHECK comment)
+- [x] **apps/backend/internal/middlewares/tracing.go** - Documented 2026-10-08: `NewRelicMiddleware()` wires `nrecho` for APM transactions; `EnhanceTracing()` adds custom attributes (ip, user agent, request id, user id) to the NR transaction and reports handler errors via `nrpkgerrors.Wrap(err)` + `NoticeError`. CHECK comment can be removed.
 - [ ] **apps/login/internal/middlewares/global.go** - Document CORS implementation details (code has CHECK comment)
 
 ## Feature Gaps

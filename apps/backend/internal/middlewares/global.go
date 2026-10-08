@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"net/http"
+	"time"
 
 	errs "github.com/SaiVikrantG/checkpoint/internal/errors"
 	"github.com/SaiVikrantG/checkpoint/internal/server"
@@ -45,13 +46,7 @@ func (global *GlobalMiddlewares) RequestLogger() echo.MiddlewareFunc {
 			// note that the status code is not set yet as it gets picked up by the global err handler
 			// see here: https://github.com/labstack/echo/issues/2310#issuecomment-1288196898
 			if v.Error != nil {
-				var httpErr *errs.HTTPError
-				var echoErr *echo.HTTPError
-				if errors.As(v.Error, &httpErr) {
-					statusCode = httpErr.Status
-				} else if errors.As(v.Error, &echoErr) {
-					statusCode = echoErr.Code
-				}
+				return nil
 			}
 
 			// Get enhanced logger from context
@@ -61,16 +56,11 @@ func (global *GlobalMiddlewares) RequestLogger() echo.MiddlewareFunc {
 
 			switch {
 			case statusCode >= 500:
-				e = logger.Error().Err(v.Error)
+				e = logger.Error()
 			case statusCode >= 400:
 				e = logger.Warn()
 			default:
 				e = logger.Info()
-			}
-
-			// Add request ID if available
-			if requestID := GetRequestID(c); requestID != "" {
-				e = e.Str("request_id", requestID)
 			}
 
 			// Add user context if available
@@ -81,10 +71,8 @@ func (global *GlobalMiddlewares) RequestLogger() echo.MiddlewareFunc {
 			e.
 				Dur("latency", v.Latency).
 				Int("status", statusCode).
-				Str("method", v.Method).
 				Str("uri", v.URI).
 				Str("host", v.Host).
-				Str("ip", c.RealIP()).
 				Str("user_agent", c.Request().UserAgent()).
 				Msg("API")
 
@@ -150,14 +138,35 @@ func (global *GlobalMiddlewares) GlobalErrorHandler(err error, c echo.Context) {
 		message = http.StatusText(http.StatusInternalServerError)
 	}
 
+	var e *zerolog.Event
 	// Log the original error to help with debugging
 	// Use enhanced logger from context which already includes request_id, method, path, ip, user context, and trace context
 	logger := *GetLogger(c)
 
-	logger.Error().Stack().
+	switch {
+	case status >= 500:
+		e = logger.Error().Stack()
+	case status >= 400:
+		e = logger.Warn()
+	default:
+		e = logger.Info()
+	}
+
+	var latency time.Duration
+	if start, ok := c.Get(StartTimeKey).(time.Time); ok {
+		latency = time.Since(start)
+	} else {
+		logger.Warn().Msg("start_time missing from context, latency will be reported as 0")
+	}
+
+	e.
 		Err(originalErr).
 		Int("status", status).
 		Str("error_code", code).
+		Dur("latency", latency).
+		Str("uri", c.Request().RequestURI).
+		Str("host", c.Request().Host).
+		Str("user_agent", c.Request().UserAgent()).
 		Msg(message)
 
 	if !c.Response().Committed {

@@ -49,6 +49,7 @@ func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services
 		middleware.RequestID(),
 		middlewares.Tracing.NewRelicMiddleware(),
 		middlewares.Tracing.EnhanceTracing(),
+		middlewares.Auth.OptionalAuth,
 		middlewares.ContextEnhancer.EnhanceContext(),
 		middlewares.Global.RequestLogger(),
 		middlewares.Global.Recover(),
