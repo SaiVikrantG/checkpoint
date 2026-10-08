@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -30,25 +31,35 @@ func main() {
 	loggerService := logger.NewLoggerService(cfg.Observability)
 	defer loggerService.ShutDown()
 
-	log := logger.NewLoggerWithService(cfg.Observability, loggerService)
+	log, err := logger.NewLoggerWithService(cfg.Observability, loggerService)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to initialize logger: %v\n", err)
+		loggerService.ShutDown()
+		os.Exit(1)
+	}
+
+	fatal := func(err error, msg string) {
+		loggerService.ShutDown()
+		log.Fatal().Err(err).Msg(msg)
+	}
 
 	if cfg.Primary.Env != "local" {
 		if err := database.Migrate(context.Background(), &log, cfg); err != nil {
-			log.Fatal().Err(err).Msg("failed to migrate database")
+			fatal(err, "failed to migrate database")
 		}
 	}
 
 	// Initialize server
 	srv, err := server.ServerInit(cfg, loggerService, &log)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to initialize server")
+		fatal(err, "failed to initialize server")
 	}
 
 	// Initialize repositories, services, and handlers
 	repos := repository.RepositoryInit(srv)
 	services, serviceErr := service.NewService(srv, repos)
 	if serviceErr != nil {
-		log.Fatal().Err(serviceErr).Msg("could not create services")
+		fatal(serviceErr, "could not create services")
 	}
 	handlers := handler.InitHandlers(srv, services)
 
@@ -63,7 +74,7 @@ func main() {
 	// Start server
 	go func() {
 		if err = srv.StartServer(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatal().Err(err).Msg("failed to start server")
+			fatal(err, "failed to start server")
 		}
 	}()
 
@@ -72,7 +83,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultContextTimeout*time.Second)
 
 	if err = srv.ShutDown(ctx); err != nil {
-		log.Fatal().Err(err).Msg("server forced to shutdown")
+		fatal(err, "server forced to shutdown")
 	}
 	stop()
 	cancel()

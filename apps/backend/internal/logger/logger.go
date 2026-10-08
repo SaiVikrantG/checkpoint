@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/SaiVikrantG/checkpoint/internal/build"
 	"github.com/SaiVikrantG/checkpoint/internal/config"
 	"github.com/newrelic/go-agent/v3/integrations/logcontext-v2/zerologWriter"
 	"github.com/newrelic/go-agent/v3/newrelic"
@@ -60,7 +61,7 @@ func (ls *LoggerService) GetApplication() *newrelic.Application {
 	return ls.nrApp
 }
 
-func NewLoggerWithService(cfg *config.ObservabilityConfig, loggerService *LoggerService) zerolog.Logger {
+func NewLoggerWithService(cfg *config.ObservabilityConfig, loggerService *LoggerService) (zerolog.Logger, error) {
 	var logLevel zerolog.Level
 	level := cfg.GetLogLevel()
 
@@ -97,19 +98,26 @@ func NewLoggerWithService(cfg *config.ObservabilityConfig, loggerService *Logger
 		writer = consoleWriter
 	}
 
+	hostname, err := os.Hostname()
+	if err != nil {
+		return zerolog.Logger{}, fmt.Errorf("failed to get hostname: %w", err)
+	}
+
 	logger := zerolog.New(writer).
 		Level(logLevel).
 		With().
 		Timestamp().
 		Str("service", cfg.ServiceName).
 		Str("environment", cfg.Environment).
+		Str("git_sha", build.GitSHA).
+		Str("hostname", hostname).
 		Logger()
 
 	if !cfg.IsProduction() {
 		logger = logger.With().Stack().Logger()
 	}
 
-	return logger
+	return logger, nil
 }
 
 func (loggerService *LoggerService) NewPgxLogger(level zerolog.Level) zerolog.Logger {

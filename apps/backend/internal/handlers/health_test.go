@@ -23,7 +23,11 @@ func TestCheckHealth(t *testing.T) {
 
 	loggerService := logger.NewLoggerService(cfg.Observability)
 	defer loggerService.ShutDown()
-	log := logger.NewLoggerWithService(cfg.Observability, loggerService)
+	log, err := logger.NewLoggerWithService(cfg.Observability, loggerService)
+
+	if err != nil {
+		t.Fatalf("failed to initialize logger: %v", err)
+	}
 
 	srv, err := server.ServerInit(cfg, loggerService, &log)
 	if err != nil {
