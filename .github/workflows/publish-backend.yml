@@ -53,6 +53,8 @@ jobs:
         with:
           context: apps/backend
           push: true
+          build-args: |
+            GIT_SHA=${{ github.sha }}
           tags: |
             ghcr.io/saivikrantg/checkpoint-backend:latest
             ghcr.io/saivikrantg/checkpoint-backend:${{ github.ref_name }}

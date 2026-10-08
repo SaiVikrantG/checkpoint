@@ -2,6 +2,8 @@
 
 FROM golang:1.26.2-alpine AS builder
 
+ARG GIT_SHA=unknown
+
 WORKDIR /src
 
 COPY go.mod go.sum ./
@@ -9,7 +11,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /out/backend ./cmd/backend/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w -X github.com/SaiVikrantG/checkpoint/internal/build.GitSHA=${GIT_SHA}" -o /out/backend ./cmd/backend/main.go
 
 FROM alpine:3.21
 
