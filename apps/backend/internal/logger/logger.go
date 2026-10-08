@@ -100,7 +100,7 @@ func NewLoggerWithService(cfg *config.ObservabilityConfig, loggerService *Logger
 
 	hostname, err := os.Hostname()
 	if err != nil {
-		return zerolog.Logger{}, fmt.Errorf("Failed to get hostname: %w", err)
+		return zerolog.Logger{}, fmt.Errorf("failed to get hostname: %w", err)
 	}
 
 	logger := zerolog.New(writer).

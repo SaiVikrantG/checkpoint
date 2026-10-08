@@ -14,14 +14,18 @@ import (
 	"github.com/clerk/clerk-sdk-go/v2/jwt"
 	"github.com/rs/zerolog"
 
-	// zerolog "github.com/jackc/pgx-zerolog"
-
 	"github.com/labstack/echo/v4"
 )
 
 type AuthMiddleWare struct {
 	server *server.Server
 }
+
+// loggerCtxKey is a distinct type for the stdlib context.Context key below,
+// so it can't collide with string keys used by other packages. LoggerKey
+// itself (a plain string) is still used separately with echo.Context's own
+// Get/Set, which isn't subject to the same collision risk.
+type loggerCtxKey struct{}
 
 func NewAuthMiddleWare(s *server.Server) *AuthMiddleWare {
 	return &AuthMiddleWare{
@@ -36,7 +40,7 @@ func (auth *AuthMiddleWare) RequireAuth(next echo.HandlerFunc) echo.HandlerFunc 
 		start := time.Now()
 		logger := auth.server.Logger
 
-		if l, ok := r.Context().Value(LoggerKey).(*zerolog.Logger); ok {
+		if l, ok := r.Context().Value(loggerCtxKey{}).(*zerolog.Logger); ok {
 			logger = l
 		}
 
@@ -107,7 +111,7 @@ func (auth *AuthMiddleWare) RequireAuth(next echo.HandlerFunc) echo.HandlerFunc 
 		// Clerk failure handler (plain net/http, no echo.Context) can reach it.
 		logger := GetLogger(c)
 		c.SetRequest(c.Request().WithContext(
-			context.WithValue(c.Request().Context(), LoggerKey, logger),
+			context.WithValue(c.Request().Context(), loggerCtxKey{}, logger),
 		))
 		return wrapped(c)
 	}
