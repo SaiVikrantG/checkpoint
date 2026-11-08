@@ -58,6 +58,11 @@ func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services
 	// register system routes
 	registerSystemRoutes(router, h)
 
+	// register tailnet-trusted routes (top-level, not under /api/v1): the
+	// Obsidian plugin talks to these over the tailnet, so Caddy must block
+	// /tailnet/* on the public listener.
+	registerTailnetRoutes(router, h, middlewares.Tailnet)
+
 	// register versioned routes
 	v1 := router.Group("/api/v1")
 

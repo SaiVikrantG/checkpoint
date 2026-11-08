@@ -8,6 +8,7 @@ import (
 type Middlewares struct {
 	Global          *GlobalMiddlewares
 	Auth            *AuthMiddleWare
+	Tailnet         *TailnetAuthMiddleWare
 	ContextEnhancer *ContextEnhancer
 	RateLimit       *RateLimitMiddleware
 	Tracing         *TracingMiddleware
@@ -22,6 +23,7 @@ func NewMiddlewares(s *server.Server) *Middlewares {
 	return &Middlewares{
 		Global:          NewGlobalMiddlewares(s),
 		Auth:            NewAuthMiddleWare(s),
+		Tailnet:         NewTailnetAuthMiddleWare(s),
 		ContextEnhancer: NewContextEnhancer(s),
 		RateLimit:       NewRateLimitMiddleware(s),
 		Tracing:         NewTracingMiddleware(s, nrApp),
