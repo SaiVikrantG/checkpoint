@@ -1,4 +1,13 @@
 {$DOMAIN} {
+	# /tailnet/* is the tailnet-only backend route group used by the Obsidian
+	# plugin. The real protection is that backend's :8080 is bound to the
+	# tailnet interface only (see docker-compose.yml) — Caddy doesn't proxy
+	# to it here either way. This block exists so public callers hitting the
+	# path through Caddy get a clean 404 instead of the SPA's index.html.
+	handle /tailnet/* {
+		respond 404
+	}
+
 	handle /api/* {
 		reverse_proxy backend:8080
 	}

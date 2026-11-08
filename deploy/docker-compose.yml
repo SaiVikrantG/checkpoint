@@ -20,6 +20,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    # Bind backend's port to the VPS's tailnet interface only — the Obsidian
+    # plugin reaches /tailnet/* over the tailnet; public traffic still comes
+    # in via Caddy on :443, which proxies internally on the compose network.
+    # Public internet cannot see :8080.
+    ports:
+      - "${TAILSCALE_IP:-127.0.0.1}:8080:8080"
     env_file:
       - .env
       - current-tag.env
