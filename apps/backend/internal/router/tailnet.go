@@ -19,5 +19,9 @@ func registerTailnetRoutes(e *echo.Echo, h *handlers.Handlers, tailnet *middlewa
 
 	g.GET("/projects", h.Projects.GetAllProjects())
 	g.POST("/projects", h.Projects.CreateProject())
+
+	g.GET("/devlogs", h.Devlogs.GetAllDevlogs())
+	g.GET("/devlogs/:id", h.Devlogs.GetDevlogByID())
+	g.GET("/devlogs/project/:projectId", h.Devlogs.GetDevlogsByProjectID())
 	g.POST("/devlogs", h.Devlogs.CreateDevlog())
 }
