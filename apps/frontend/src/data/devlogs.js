@@ -15,8 +15,10 @@ export async function getDevlogById(id) {
   return mapDevlog(data);
 }
 
-export async function getDevlogsByProject(projectId, page = 1, limit = 50) {
-  const data = await apiFetch(`/devlogs/project/${projectId}?page=${page}&limit=${limit}`);
+export async function getDevlogsByProject(projectId, page = 1, limit = 50, { mine = false } = {}) {
+  let url = `/devlogs/project/${projectId}?page=${page}&limit=${limit}`;
+  if (mine) url += `&mine=true`;
+  const data = await apiFetch(url);
   return {
     ...data,
     data: data.data.map(mapDevlog),

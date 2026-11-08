@@ -197,7 +197,7 @@ export default function UserNewDevlogPage() {
       setRecentEntries([]);
       return;
     }
-    getDevlogsByProject(proj.id, 1, 5)
+    getDevlogsByProject(proj.id, 1, 5, { mine: true })
       .then((res) => {
         setRecentEntries(res.data);
       })
