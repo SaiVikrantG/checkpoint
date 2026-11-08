@@ -61,11 +61,13 @@ func (q *Queries) DeleteDevlog(ctx context.Context, id int64) error {
 }
 
 const getAllDevlogs = `-- name: GetAllDevlogs :many
-SELECT id, project_id, title, content, is_public, created_by, updated_by, created_at, updated_at
-FROM devlogs
-WHERE (is_public = true OR ($3::text IS NOT NULL AND created_by = $3))
-  AND ($4::text IS NULL OR created_by = $4)
-ORDER BY created_at DESC
+SELECT d.id, d.project_id, d.title, d.content, d.is_public, d.created_by, d.updated_by, d.created_at, d.updated_at
+FROM devlogs d
+INNER JOIN projects p ON p.id = d.project_id
+WHERE ((d.is_public = true AND p.is_public = true)
+       OR ($3::text IS NOT NULL AND d.created_by = $3))
+  AND ($4::text IS NULL OR d.created_by = $4)
+ORDER BY d.created_at DESC
 LIMIT $1 OFFSET $2
 `
 
@@ -112,10 +114,12 @@ func (q *Queries) GetAllDevlogs(ctx context.Context, arg GetAllDevlogsParams) ([
 }
 
 const getDevlogByID = `-- name: GetDevlogByID :one
-SELECT id, project_id, title, content, is_public, created_by, updated_by, created_at, updated_at
-FROM devlogs
-WHERE id = $1
-  AND (is_public = true OR ($2::text IS NOT NULL AND created_by = $2))
+SELECT d.id, d.project_id, d.title, d.content, d.is_public, d.created_by, d.updated_by, d.created_at, d.updated_at
+FROM devlogs d
+INNER JOIN projects p ON p.id = d.project_id
+WHERE d.id = $1
+  AND ((d.is_public = true AND p.is_public = true)
+       OR ($2::text IS NOT NULL AND d.created_by = $2))
 `
 
 type GetDevlogByIDParams struct {
@@ -141,11 +145,13 @@ func (q *Queries) GetDevlogByID(ctx context.Context, arg GetDevlogByIDParams) (D
 }
 
 const getDevlogsByProjectID = `-- name: GetDevlogsByProjectID :many
-SELECT id, project_id, title, content, is_public, created_by, updated_by, created_at, updated_at
-FROM devlogs
-WHERE project_id = $1
-  AND (is_public = true OR ($4::text IS NOT NULL AND created_by = $4))
-ORDER BY created_at DESC
+SELECT d.id, d.project_id, d.title, d.content, d.is_public, d.created_by, d.updated_by, d.created_at, d.updated_at
+FROM devlogs d
+INNER JOIN projects p ON p.id = d.project_id
+WHERE d.project_id = $1
+  AND ((d.is_public = true AND p.is_public = true)
+       OR ($4::text IS NOT NULL AND d.created_by = $4))
+ORDER BY d.created_at DESC
 LIMIT $2 OFFSET $3
 `
 
@@ -192,9 +198,11 @@ func (q *Queries) GetDevlogsByProjectID(ctx context.Context, arg GetDevlogsByPro
 }
 
 const getDevlogsCount = `-- name: GetDevlogsCount :one
-SELECT COUNT(*) FROM devlogs
-WHERE (is_public = true OR ($1::text IS NOT NULL AND created_by = $1))
-  AND ($2::text IS NULL OR created_by = $2)
+SELECT COUNT(*) FROM devlogs d
+INNER JOIN projects p ON p.id = d.project_id
+WHERE ((d.is_public = true AND p.is_public = true)
+       OR ($1::text IS NOT NULL AND d.created_by = $1))
+  AND ($2::text IS NULL OR d.created_by = $2)
 `
 
 type GetDevlogsCountParams struct {
@@ -210,9 +218,11 @@ func (q *Queries) GetDevlogsCount(ctx context.Context, arg GetDevlogsCountParams
 }
 
 const getDevlogsCountByProjectID = `-- name: GetDevlogsCountByProjectID :one
-SELECT COUNT(*) FROM devlogs
-WHERE project_id = $1
-  AND (is_public = true OR ($2::text IS NOT NULL AND created_by = $2))
+SELECT COUNT(*) FROM devlogs d
+INNER JOIN projects p ON p.id = d.project_id
+WHERE d.project_id = $1
+  AND ((d.is_public = true AND p.is_public = true)
+       OR ($2::text IS NOT NULL AND d.created_by = $2))
 `
 
 type GetDevlogsCountByProjectIDParams struct {

@@ -61,7 +61,15 @@ func (h *ArticleHandler) handleGetAllArticlesLogic(c echo.Context, req GetAllArt
 		limit = 20
 	}
 	requestingUserID, _ := c.Get("user_id").(string)
-	return h.articleServices.GetAllArticles(c.Request().Context(), page, limit, req.CreatedBy, requestingUserID)
+	// Strict public: only include the owner branch when the caller is
+	// explicitly asking for their own rows (createdBy filter matches the
+	// authenticated user). Otherwise this is the public feed and the owner's
+	// private rows must not mix in.
+	ownerScope := ""
+	if requestingUserID != "" && req.CreatedBy == requestingUserID {
+		ownerScope = requestingUserID
+	}
+	return h.articleServices.GetAllArticles(c.Request().Context(), page, limit, req.CreatedBy, ownerScope)
 }
 
 func (h *ArticleHandler) GetAllArticles() echo.HandlerFunc {

@@ -61,7 +61,15 @@ func (h *DevlogHandler) handleGetAllDevlogsLogic(c echo.Context, req GetAllDevlo
 		limit = 20
 	}
 	requestingUserID, _ := c.Get("user_id").(string)
-	return h.devlogServices.GetAllDevlogs(c.Request().Context(), page, limit, req.CreatedBy, requestingUserID)
+	// Strict public: only include the owner branch when the caller is
+	// explicitly asking for their own rows (createdBy filter matches the
+	// authenticated user). Otherwise this is the public feed and the owner's
+	// private rows must not mix in.
+	ownerScope := ""
+	if requestingUserID != "" && req.CreatedBy == requestingUserID {
+		ownerScope = requestingUserID
+	}
+	return h.devlogServices.GetAllDevlogs(c.Request().Context(), page, limit, req.CreatedBy, ownerScope)
 }
 
 func (h *DevlogHandler) GetAllDevlogs() echo.HandlerFunc {
@@ -74,6 +82,7 @@ type GetDevlogsByProjectIDRequest struct {
 	ProjectID int64 `param:"projectId"`
 	Page      int   `query:"page"`
 	Limit     int   `query:"limit"`
+	Mine      bool  `query:"mine"`
 }
 
 func (r GetDevlogsByProjectIDRequest) Validate() error {
@@ -111,7 +120,15 @@ func (h *DevlogHandler) handleGetDevlogsByProjectIDLogic(c echo.Context, req Get
 		limit = 20
 	}
 	requestingUserID, _ := c.Get("user_id").(string)
-	return h.devlogServices.GetDevlogsByProjectID(c.Request().Context(), req.ProjectID, page, limit, requestingUserID)
+	// Strict public: this endpoint also powers the owner's dashboard. Only
+	// include the owner branch when the caller explicitly opts in with
+	// `?mine=true` AND is authenticated. Public project pages (mine unset)
+	// see only `row.is_public AND project.is_public`.
+	ownerScope := ""
+	if req.Mine && requestingUserID != "" {
+		ownerScope = requestingUserID
+	}
+	return h.devlogServices.GetDevlogsByProjectID(c.Request().Context(), req.ProjectID, page, limit, ownerScope)
 }
 
 func (h *DevlogHandler) GetDevlogsByProjectID() echo.HandlerFunc {

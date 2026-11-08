@@ -57,7 +57,7 @@ export default function UserDevlogsPage() {
       return;
     }
     setEntriesLoading(true);
-    getDevlogsByProject(projectId, 1, DEVLOG_PAGE_SIZE)
+    getDevlogsByProject(projectId, 1, DEVLOG_PAGE_SIZE, { mine: true })
       .then((res) => {
         devlogCache.current.set(projectId, {
           entries: res.data,
@@ -114,7 +114,7 @@ export default function UserDevlogsPage() {
     if (!selectedProjectId || !hasMoreEntries || loadingMore) return;
     const cached = devlogCache.current.get(selectedProjectId);
     setLoadingMore(true);
-    getDevlogsByProject(selectedProjectId, cached.page + 1, DEVLOG_PAGE_SIZE)
+    getDevlogsByProject(selectedProjectId, cached.page + 1, DEVLOG_PAGE_SIZE, { mine: true })
       .then((res) => {
         const merged = [...cached.entries, ...res.data];
         devlogCache.current.set(selectedProjectId, {
@@ -196,7 +196,7 @@ export default function UserDevlogsPage() {
       composeHtml.current = '';
       setComposeKey((k) => k + 1);
       devlogCache.current.delete(proj?.id);
-      const res = await getDevlogsByProject(proj.id, 1, DEVLOG_PAGE_SIZE);
+      const res = await getDevlogsByProject(proj.id, 1, DEVLOG_PAGE_SIZE, { mine: true });
       devlogCache.current.set(proj.id, {
         entries: res.data,
         page: res.page,

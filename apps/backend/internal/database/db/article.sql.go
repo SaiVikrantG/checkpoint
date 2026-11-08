@@ -74,7 +74,8 @@ const getAllArticles = `-- name: GetAllArticles :many
 SELECT a.id, a.project_id, p.name AS project_name, a.title, a.content, a.slug, a.tags, a.views, a.status, a.is_public, a.created_by, a.updated_by, a.created_at, a.updated_at
 FROM articles a
 LEFT JOIN projects p ON p.id = a.project_id
-WHERE (a.is_public = true OR ($3::text IS NOT NULL AND a.created_by = $3))
+WHERE ((a.is_public = true AND (a.project_id IS NULL OR p.is_public = true))
+       OR ($3::text IS NOT NULL AND a.created_by = $3))
   AND ($4::text IS NULL OR a.created_by = $4)
 ORDER BY a.created_at DESC
 LIMIT $1 OFFSET $2
@@ -145,10 +146,12 @@ func (q *Queries) GetAllArticles(ctx context.Context, arg GetAllArticlesParams) 
 }
 
 const getArticleByID = `-- name: GetArticleByID :one
-SELECT id, project_id, title, content, slug, tags, views, status, is_public, created_by, updated_by, created_at, updated_at
-FROM articles
-WHERE id = $1
-  AND (is_public = true OR ($2::text IS NOT NULL AND created_by = $2))
+SELECT a.id, a.project_id, a.title, a.content, a.slug, a.tags, a.views, a.status, a.is_public, a.created_by, a.updated_by, a.created_at, a.updated_at
+FROM articles a
+LEFT JOIN projects p ON p.id = a.project_id
+WHERE a.id = $1
+  AND ((a.is_public = true AND (a.project_id IS NULL OR p.is_public = true))
+       OR ($2::text IS NOT NULL AND a.created_by = $2))
 `
 
 type GetArticleByIDParams struct {
@@ -198,7 +201,8 @@ SELECT a.id, a.project_id, p.name AS project_name, a.title, a.content, a.slug, a
 FROM articles a
 LEFT JOIN projects p ON p.id = a.project_id
 WHERE a.slug = $1
-  AND (a.is_public = true OR ($2::text IS NOT NULL AND a.created_by = $2))
+  AND ((a.is_public = true AND (a.project_id IS NULL OR p.is_public = true))
+       OR ($2::text IS NOT NULL AND a.created_by = $2))
 `
 
 type GetArticleBySlugParams struct {
@@ -246,9 +250,11 @@ func (q *Queries) GetArticleBySlug(ctx context.Context, arg GetArticleBySlugPara
 }
 
 const getArticlesCount = `-- name: GetArticlesCount :one
-SELECT COUNT(*) FROM articles
-WHERE (is_public = true OR ($1::text IS NOT NULL AND created_by = $1))
-  AND ($2::text IS NULL OR created_by = $2)
+SELECT COUNT(*) FROM articles a
+LEFT JOIN projects p ON p.id = a.project_id
+WHERE ((a.is_public = true AND (a.project_id IS NULL OR p.is_public = true))
+       OR ($1::text IS NOT NULL AND a.created_by = $1))
+  AND ($2::text IS NULL OR a.created_by = $2)
 `
 
 type GetArticlesCountParams struct {
